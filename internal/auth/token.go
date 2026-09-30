@@ -7,8 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Token kinds. Each kind gets its own TTL and its own table (or table row) so
@@ -89,11 +87,4 @@ func NewIdempotencyKey() (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
-// SessionID generates a new session id (a UUID, separate from the token).
-func SessionID() uuid.UUID {
-	// Reuse the id package? We don't want to import infra here.
-	// Use crypto/rand-derived UUIDv4 as a fallback for the session row id.
-	return uuid.New()
 }
