@@ -18,17 +18,14 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/config"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
+	"github.com/Adeyinka7789/ordora/internal/web/handlers"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
 func main() {
-	// Load .env in dev; on the VPS, environment variables come from systemd.
 	_ = godotenv.Load()
-
-	// Structured JSON logs in production; text in dev for readability.
 	setupLogging()
-
 	if err := run(); err != nil {
 		slog.Error("fatal", "err", err)
 		os.Exit(1)
@@ -52,7 +49,7 @@ func run() error {
 	defer db.Close()
 	slog.Info("db connected", "host", cfg.DB.Host, "name", cfg.DB.Name, "user", cfg.DB.User)
 
-	// ---- Auth service (not yet used by HTTP; wired in M1.3b) ----
+	// ---- Auth service ----
 	authService := auth.NewService(auth.Deps{
 		DB:       db,
 		Users:    postgres.NewUserRepo(db),
@@ -63,7 +60,6 @@ func run() error {
 		IDs:      id.Generator{},
 		Mailer:   auth.LogMailer{},
 	})
-	_ = authService // silence unused; will be used in M1.3b
 
 	// ---- Templates ----
 	templatesDir := filepath.Join("internal", "web", "templates")
@@ -72,10 +68,20 @@ func run() error {
 		return fmt.Errorf("renderer: %w", err)
 	}
 
+	// ---- Handlers ----
+	authH := &handlers.AuthHandler{
+		Auth:     authService,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+	dashH := &handlers.DashboardHandler{
+		Renderer: renderer,
+	}
+
 	// ---- Router ----
 	mux := http.NewServeMux()
 
-	// Static files
+	// Static
 	staticDir := filepath.Join("internal", "web", "static")
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
@@ -86,14 +92,12 @@ func run() error {
 		})
 	})
 
-	// Health: liveness. Never touches the DB.
+	// Health
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status":"ok"}`)
 	})
-
-	// Ready: readiness. Pings the DB.
 	mux.HandleFunc("GET /ready", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
@@ -106,11 +110,37 @@ func run() error {
 		fmt.Fprint(w, `{"status":"ready"}`)
 	})
 
+	// ---- Auth routes ----
+	mux.HandleFunc("GET /register", authH.RegisterPage)
+	mux.HandleFunc("POST /register", authH.Register)
+	mux.HandleFunc("GET /login", authH.LoginPage)
+	mux.HandleFunc("POST /login", authH.Login)
+	mux.HandleFunc("POST /logout", authH.Logout)
+	mux.HandleFunc("GET /verify", authH.VerifyEmail)
+	mux.HandleFunc("GET /password/forgot", authH.ForgotPage)
+	mux.HandleFunc("POST /password/forgot", authH.Forgot)
+	mux.HandleFunc("GET /password/reset", authH.ResetPage)
+	mux.HandleFunc("POST /password/reset", authH.Reset)
+
+	// ---- Dashboard (requires auth) ----
+	mux.Handle("GET /dashboard", middleware.RequireAuth(http.HandlerFunc(dashH.Index)))
+
 	// ---- Middleware chain ----
+	//
+	// Order (outermost to innermost):
+	//   Recover -> RequestID -> Logger -> Session -> CSRF -> mux
+	//
+	// Session must run before CSRF (CSRF does not need it but templates do).
+	// Session must run before any handler that reads the context.
 	handler := chain(mux,
 		middleware.Recover,
 		middleware.RequestID,
 		middleware.Logger,
+		middleware.SessionMiddleware(authService, cfg.Session.CookieName),
+		middleware.CSRF(middleware.CSRFConfig{
+			CookieName: cfg.Session.CSRFCookieName,
+			Secure:     !cfg.IsDev(),
+		}),
 	)
 
 	srv := &http.Server{
@@ -121,7 +151,6 @@ func run() error {
 		IdleTimeout:  cfg.HTTP.IdleTimeout,
 	}
 
-	// ---- Graceful shutdown ----
 	errCh := make(chan error, 1)
 	go func() {
 		slog.Info("http listening", "addr", cfg.HTTP.Addr, "env", cfg.Env)
@@ -146,7 +175,6 @@ func run() error {
 	return nil
 }
 
-// chain composes middleware right-to-left so the first argument is outermost.
 func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
 	for i := len(mws) - 1; i >= 0; i-- {
 		h = mws[i](h)

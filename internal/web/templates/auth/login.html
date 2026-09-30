@@ -1,0 +1,27 @@
+{{ define "auth/login.html" }}
+<h1>Sign in</h1>
+
+{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+{{ if .Notice }}<div class="flash flash-notice">{{ .Notice }}</div>{{ end }}
+
+<form method="post" action="/login" class="form">
+  <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+  <label>
+    Email
+    <input type="email" name="email" value="{{ .Email }}" required autofocus>
+  </label>
+
+  <label>
+    Password
+    <input type="password" name="password" required>
+  </label>
+
+  <button type="submit" class="btn-primary">Sign in</button>
+</form>
+
+<p class="auth-alt">
+  <a href="/password/forgot">Forgot password?</a> ·
+  <a href="/register">Create an account</a>
+</p>
+{{ end }}

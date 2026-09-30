@@ -14,6 +14,8 @@ type ctxKey string
 
 const (
 	ctxKeyRequestID ctxKey = "request_id"
+	ctxKeySession   ctxKey = "auth_session"
+	ctxKeyCSRFToken ctxKey = "csrf_token"
 )
 
 // RequestID assigns a UUID to every request and stores it in the context and

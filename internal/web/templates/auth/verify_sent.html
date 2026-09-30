@@ -1,0 +1,19 @@
+{{ define "auth/verify_sent.html" }}
+<h1>{{ .Title }}</h1>
+
+{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+{{ if .Notice }}<div class="flash flash-notice">{{ .Notice }}</div>{{ end }}
+
+{{ if and .Email (not .Notice) }}
+  <p>We sent a verification link to <strong>{{ .Email }}</strong>. Click it to activate your account.</p>
+{{ end }}
+
+{{ if .VerifyLink }}
+  <div class="dev-box">
+    <p class="hint">Development mode: use this link to verify immediately.</p>
+    <p><a href="{{ .VerifyLink }}">{{ .VerifyLink }}</a></p>
+  </div>
+{{ end }}
+
+<p class="auth-alt"><a href="/login">Go to sign in</a></p>
+{{ end }}

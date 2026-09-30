@@ -1,0 +1,34 @@
+{{ define "auth/register.html" }}
+<h1>Create your account</h1>
+
+{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+
+<form method="post" action="/register" class="form">
+  <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+  <label>
+    Your name
+    <input type="text" name="name" value="{{ .Name }}" required autofocus>
+  </label>
+
+  <label>
+    Business name
+    <input type="text" name="business_name" value="{{ .BusinessName }}" placeholder="Optional — we'll pick a default">
+  </label>
+
+  <label>
+    Email
+    <input type="email" name="email" value="{{ .Email }}" required>
+  </label>
+
+  <label>
+    Password
+    <input type="password" name="password" minlength="10" required>
+    <small class="hint">At least 10 characters.</small>
+  </label>
+
+  <button type="submit" class="btn-primary">Create account</button>
+</form>
+
+<p class="auth-alt">Already have an account? <a href="/login">Sign in</a></p>
+{{ end }}

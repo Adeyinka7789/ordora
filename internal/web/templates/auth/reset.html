@@ -1,0 +1,20 @@
+{{ define "auth/reset.html" }}
+<h1>Choose a new password</h1>
+
+{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+
+<form method="post" action="/password/reset" class="form">
+  <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+  <input type="hidden" name="token" value="{{ .ResetToken }}">
+
+  <label>
+    New password
+    <input type="password" name="password" minlength="10" required autofocus>
+    <small class="hint">At least 10 characters.</small>
+  </label>
+
+  <button type="submit" class="btn-primary">Set new password</button>
+</form>
+
+<p class="auth-alt"><a href="/login">Back to sign in</a></p>
+{{ end }}

@@ -117,13 +117,6 @@ func NewService(d Deps) *Service {
 	}
 }
 
-func (s *Service) nowFunc() time.Time {
-	if s == nil || s.now == nil {
-		return time.Now()
-	}
-	return s.now()
-}
-
 // -----------------------------------------------------------------------------
 // Inputs
 // -----------------------------------------------------------------------------
@@ -193,7 +186,7 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (*RegisterResu
 		return nil, err
 	}
 
-	now := s.nowFunc()
+	now := s.now()
 	userID := s.ids.New()
 	orgID := s.ids.New()
 
@@ -324,7 +317,7 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 	if err != nil {
 		return nil, err
 	}
-	now := s.nowFunc()
+	now := s.now()
 	sess := &Session{
 		ID:             s.ids.New(),
 		UserID:         u.ID,
@@ -397,7 +390,7 @@ func loadOrgTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*org.Organization,
 // -----------------------------------------------------------------------------
 
 func (s *Service) Logout(ctx context.Context, sessionID uuid.UUID) error {
-	return s.sessions.Revoke(ctx, sessionID, s.nowFunc())
+	return s.sessions.Revoke(ctx, sessionID, s.now())
 }
 
 // -----------------------------------------------------------------------------
@@ -413,7 +406,7 @@ func (s *Service) VerifyEmail(ctx context.Context, rawToken string) (*user.User,
 		}
 		return nil, err
 	}
-	now := s.nowFunc()
+	now := s.now()
 	if err := s.users.MarkEmailVerified(ctx, t.UserID, now); err != nil {
 		return nil, err
 	}
@@ -442,7 +435,7 @@ func (s *Service) RequestPasswordReset(ctx context.Context, rawEmail string) err
 	if err != nil {
 		return err
 	}
-	now := s.nowFunc()
+	now := s.now()
 	t := &AuthToken{
 		ID:        s.ids.New(),
 		UserID:    u.ID,
@@ -464,7 +457,7 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return err
 	}
 	hash := HashToken(rawToken)
-	t, err := s.tokens.Consume(ctx, hash, string(TokenPasswordReset), s.nowFunc())
+	t, err := s.tokens.Consume(ctx, hash, string(TokenPasswordReset), s.now())
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return ErrTokenInvalid
@@ -475,11 +468,11 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	if err != nil {
 		return err
 	}
-	if err := s.users.UpdatePasswordHash(ctx, t.UserID, pwHash, s.nowFunc()); err != nil {
+	if err := s.users.UpdatePasswordHash(ctx, t.UserID, pwHash, s.now()); err != nil {
 		return err
 	}
 	// Revoke all sessions: password change logs everyone out.
-	return s.sessions.RevokeAllForUser(ctx, t.UserID, s.nowFunc())
+	return s.sessions.RevokeAllForUser(ctx, t.UserID, s.now())
 }
 
 // -----------------------------------------------------------------------------
@@ -525,6 +518,12 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 		User:    u,
 		Scope:   scope,
 	}, nil
+}
+
+// SendVerificationEmail sends a verification email to the given user. The
+// raw token is passed in the URL already. Used by the register handler.
+func (s *Service) SendVerificationEmail(ctx context.Context, u *user.User, link string) error {
+	return s.mailer.SendVerifyEmail(ctx, u.Email, u.Name, link)
 }
 
 // ErrNotFound is returned by stores when a row is missing.

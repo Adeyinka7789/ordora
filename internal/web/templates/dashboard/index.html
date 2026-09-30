@@ -1,0 +1,18 @@
+{{ define "dashboard/index.html" }}
+<section class="dashboard">
+  <h1>Welcome, {{ .UserName }}.</h1>
+  <p class="lede">
+    You're signed in as <strong>{{ .UserEmail }}</strong>
+    with role <strong>{{ .OrgRole }}</strong>.
+  </p>
+
+  <form method="post" action="/logout" class="inline-form">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <button type="submit" class="btn-secondary">Sign out</button>
+  </form>
+
+  <div class="notice">
+    <p>Your dashboard is empty. In the next milestone you'll see orders, customers, and payments here.</p>
+  </div>
+</section>
+{{ end }}
