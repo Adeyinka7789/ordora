@@ -2,49 +2,150 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
+	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+
+	"github.com/Adeyinka7789/ordora/internal/config"
+	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
+	"github.com/Adeyinka7789/ordora/internal/web/middleware"
+	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
 func main() {
-	// Load .env if present. In production, environment variables are set by systemd.
+	// Load .env in dev; on the VPS, environment variables come from systemd.
 	_ = godotenv.Load()
 
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		os.Getenv("ORDORA_DB_USER"),
-		os.Getenv("ORDORA_DB_PASSWORD"),
-		os.Getenv("ORDORA_DB_HOST"),
-		os.Getenv("ORDORA_DB_PORT"),
-		os.Getenv("ORDORA_DB_NAME"),
-		os.Getenv("ORDORA_DB_SSLMODE"),
+	// Structured JSON logs in production; text in dev for readability.
+	setupLogging()
+
+	if err := run(); err != nil {
+		slog.Error("fatal", "err", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("config: %w", err)
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// ---- Database ----
+	db, err := postgres.Open(ctx, cfg.DB.DSN())
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+	defer db.Close()
+	slog.Info("db connected", "host", cfg.DB.Host, "name", cfg.DB.Name, "user", cfg.DB.User)
+
+	// ---- Templates ----
+	templatesDir := filepath.Join("internal", "web", "templates")
+	renderer, err := render.New(templatesDir)
+	if err != nil {
+		return fmt.Errorf("renderer: %w", err)
+	}
+
+	// ---- Router ----
+	mux := http.NewServeMux()
+
+	// Static files
+	staticDir := filepath.Join("internal", "web", "static")
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+
+	// Home
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		renderer.Page(w, http.StatusOK, "layouts/app.html", "partials/home.html", map[string]any{
+			"Title": "",
+		})
+	})
+
+	// Health: liveness. Never touches the DB.
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, `{"status":"ok"}`)
+	})
+
+	// Ready: readiness. Pings the DB.
+	mux.HandleFunc("GET /ready", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		w.Header().Set("Content-Type", "application/json")
+		if err := db.Ping(ctx); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			fmt.Fprintf(w, `{"status":"degraded","error":%q}`, err.Error())
+			return
+		}
+		fmt.Fprint(w, `{"status":"ready"}`)
+	})
+
+	// ---- Middleware chain ----
+	handler := chain(mux,
+		middleware.Recover,
+		middleware.RequestID,
+		middleware.Logger,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	srv := &http.Server{
+		Addr:         cfg.HTTP.Addr,
+		Handler:      handler,
+		ReadTimeout:  cfg.HTTP.ReadTimeout,
+		WriteTimeout: cfg.HTTP.WriteTimeout,
+		IdleTimeout:  cfg.HTTP.IdleTimeout,
+	}
+
+	// ---- Graceful shutdown ----
+	errCh := make(chan error, 1)
+	go func() {
+		slog.Info("http listening", "addr", cfg.HTTP.Addr, "env", cfg.Env)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errCh <- err
+		}
+	}()
+
+	select {
+	case err := <-errCh:
+		return err
+	case <-ctx.Done():
+		slog.Info("shutdown signal received")
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.HTTP.ShutdownTimeout)
 	defer cancel()
-
-	pool, err := pgxpool.New(ctx, dsn)
-	if err != nil {
-		log.Fatalf("failed to create pool: %v", err)
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("shutdown: %w", err)
 	}
-	defer pool.Close()
+	slog.Info("stopped cleanly")
+	return nil
+}
 
-	var version string
-	if err := pool.QueryRow(ctx, "SELECT version()").Scan(&version); err != nil {
-		log.Fatalf("failed to query version: %v", err)
+// chain composes middleware right-to-left so the first argument is outermost.
+func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
 	}
+	return h
+}
 
-	var currentUser string
-	if err := pool.QueryRow(ctx, "SELECT current_user").Scan(&currentUser); err != nil {
-		log.Fatalf("failed to query current_user: %v", err)
+func setupLogging() {
+	env := os.Getenv("ORDORA_ENV")
+	var h slog.Handler
+	if env == "production" {
+		h = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	} else {
+		h = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
-
-	fmt.Println("Connected successfully.")
-	fmt.Println("  Postgres:", version)
-	fmt.Println("  As user: ", currentUser)
+	slog.SetDefault(slog.New(h))
 }

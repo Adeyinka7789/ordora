@@ -1,0 +1,26 @@
+{{ define "layouts/app.html" }}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if .Data }}{{ with .Data }}{{ if .Title }}{{ .Title }} — Ordora{{ else }}Ordora{{ end }}{{ end }}{{ else }}Ordora{{ end }}</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">Ordora</a>
+    <nav>
+      <a href="/health">Health</a>
+    </nav>
+  </header>
+  <main class="container">
+    {{ .Content }}
+  </main>
+  <footer class="footer">
+    <small>&copy; 2026 Ordora</small>
+  </footer>
+</body>
+</html>
+{{ end }}
