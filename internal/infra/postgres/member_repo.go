@@ -9,11 +9,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 )
 
-// MemberRepo persists organization_members. Member rows are tenant-scoped;
-// every operation must run inside WithTenant.
+// MemberRepo persists organization_members. Tenant-scoped.
 type MemberRepo struct {
 	db *DB
 }
@@ -37,33 +37,23 @@ func (r *MemberRepo) AddTx(ctx context.Context, tx pgx.Tx, orgID, userID uuid.UU
 }
 
 // ListForUser returns all active memberships for a user across orgs.
-// Uses WithTx because membership data spans orgs — but RLS still enforces
-// per-org via the query joining to orgs the user can see. Because we don't
-// have a tenant yet (this is used at login), we run with the sentinel tenant
-// and rely on the "auth read" policy we'll add in M1.3.
 //
-// For now: this query is admin-only and will be wrapped in a security-definer
-// function later. Marked TODO.
-func (r *MemberRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]Membership, error) {
-	var out []Membership
+// Implementation note: this calls the SECURITY DEFINER function
+// list_user_memberships, created in migration 0005. It must, because
+// organization_members has RLS and we don't have a tenant yet at login time.
+func (r *MemberRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]auth.Membership, error) {
+	var out []auth.Membership
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
-		const q = `
-			SELECT om.organization_id, om.role, o.name, o.slug
-			FROM organization_members om
-			JOIN organizations o ON o.id = om.organization_id
-			WHERE om.user_id = $1 AND om.status = 'ACTIVE'
-			ORDER BY om.created_at ASC
-		`
+		const q = `SELECT organization_id, organization_name, organization_slug, role FROM list_user_memberships($1)`
 		rows, err := tx.Query(ctx, q, userID)
 		if err != nil {
 			return fmt.Errorf("member_repo: list: %w", Classify(err))
 		}
 		defer rows.Close()
-
 		for rows.Next() {
-			var m Membership
+			var m auth.Membership
 			var roleStr string
-			if err := rows.Scan(&m.OrgID, &roleStr, &m.OrgName, &m.OrgSlug); err != nil {
+			if err := rows.Scan(&m.OrgID, &m.OrgName, &m.OrgSlug, &roleStr); err != nil {
 				return fmt.Errorf("member_repo: scan: %w", err)
 			}
 			m.Role = tenant.Role(roleStr)
@@ -90,12 +80,4 @@ func (r *MemberRepo) GetRole(ctx context.Context, orgID, userID uuid.UUID) (tena
 		return nil
 	})
 	return role, err
-}
-
-// Membership is a lightweight projection used by the login flow.
-type Membership struct {
-	OrgID   uuid.UUID
-	OrgName string
-	OrgSlug string
-	Role    tenant.Role
 }

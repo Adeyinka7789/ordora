@@ -14,7 +14,9 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
+	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -49,6 +51,19 @@ func run() error {
 	}
 	defer db.Close()
 	slog.Info("db connected", "host", cfg.DB.Host, "name", cfg.DB.Name, "user", cfg.DB.User)
+
+	// ---- Auth service (not yet used by HTTP; wired in M1.3b) ----
+	authService := auth.NewService(auth.Deps{
+		DB:       db,
+		Users:    postgres.NewUserRepo(db),
+		Orgs:     postgres.NewOrgRepo(db),
+		Members:  postgres.NewMemberRepo(db),
+		Sessions: postgres.NewSessionRepo(db),
+		Tokens:   postgres.NewAuthTokenRepo(db),
+		IDs:      id.Generator{},
+		Mailer:   auth.LogMailer{},
+	})
+	_ = authService // silence unused; will be used in M1.3b
 
 	// ---- Templates ----
 	templatesDir := filepath.Join("internal", "web", "templates")

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 )
 
@@ -19,21 +20,8 @@ type SessionRepo struct {
 
 func NewSessionRepo(db *DB) *SessionRepo { return &SessionRepo{db: db} }
 
-// Session mirrors a sessions row.
-type Session struct {
-	ID             uuid.UUID
-	UserID         uuid.UUID
-	TokenHash      []byte
-	OrganizationID *uuid.UUID
-	UserAgent      string
-	IP             string
-	ExpiresAt      time.Time
-	RevokedAt      *time.Time
-	CreatedAt      time.Time
-}
-
 // Create inserts a session.
-func (r *SessionRepo) Create(ctx context.Context, s *Session) error {
+func (r *SessionRepo) Create(ctx context.Context, s *auth.Session) error {
 	const q = `
 		INSERT INTO sessions (id, user_id, token_hash, organization_id, user_agent, ip, expires_at, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -52,9 +40,8 @@ func (r *SessionRepo) Create(ctx context.Context, s *Session) error {
 	return nil
 }
 
-// GetActiveByTokenHash returns a non-revoked, non-expired session by its
-// token hash. Returns ErrNotFound if none.
-func (r *SessionRepo) GetActiveByTokenHash(ctx context.Context, hash []byte) (*Session, error) {
+// GetActiveByTokenHash returns a non-revoked, non-expired session by hash.
+func (r *SessionRepo) GetActiveByTokenHash(ctx context.Context, hash []byte) (*auth.Session, error) {
 	const q = `
 		SELECT id, user_id, token_hash, organization_id, COALESCE(user_agent,''), COALESCE(ip::text,''),
 		       expires_at, revoked_at, created_at
@@ -63,7 +50,7 @@ func (r *SessionRepo) GetActiveByTokenHash(ctx context.Context, hash []byte) (*S
 		  AND revoked_at IS NULL
 		  AND expires_at > now()
 	`
-	var s *Session
+	var s *auth.Session
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		var e error
 		s, e = scanSession(tx.QueryRow(ctx, q, hash))
@@ -99,8 +86,7 @@ func (r *SessionRepo) SetActiveOrg(ctx context.Context, sessionID, orgID uuid.UU
 	})
 }
 
-// Touch extends a session's expiry. Used for sliding expiry, throttled by
-// the caller to avoid write amplification.
+// Touch extends a session's expiry.
 func (r *SessionRepo) Touch(ctx context.Context, sessionID uuid.UUID, newExpiry time.Time) error {
 	const q = `UPDATE sessions SET expires_at = $2 WHERE id = $1 AND revoked_at IS NULL`
 	return r.db.WithTx(ctx, func(tx pgx.Tx) error {
@@ -110,13 +96,10 @@ func (r *SessionRepo) Touch(ctx context.Context, sessionID uuid.UUID, newExpiry 
 }
 
 // RoleForSession resolves the session user's role in the session's org.
-// Helper used by session middleware.
-func (r *SessionRepo) RoleForSession(ctx context.Context, s *Session) (tenant.Role, error) {
+func (r *SessionRepo) RoleForSession(ctx context.Context, s *auth.Session) (tenant.Role, error) {
 	if s.OrganizationID == nil {
 		return "", fmt.Errorf("session_repo: session has no active org")
 	}
-	// Reuse MemberRepo via composition later; for now do a direct query
-	// inside a WithTenant.
 	var role tenant.Role
 	err := r.db.WithTenant(ctx, *s.OrganizationID, func(tx pgx.Tx) error {
 		const q = `
@@ -136,9 +119,9 @@ func (r *SessionRepo) RoleForSession(ctx context.Context, s *Session) (tenant.Ro
 	return role, err
 }
 
-func scanSession(row pgx.Row) (*Session, error) {
+func scanSession(row pgx.Row) (*auth.Session, error) {
 	var (
-		s         Session
+		s         auth.Session
 		orgID     *uuid.UUID
 		userAgent string
 		ip        string

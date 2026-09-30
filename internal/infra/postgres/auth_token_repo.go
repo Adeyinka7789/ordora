@@ -12,27 +12,15 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/auth"
 )
 
-// AuthTokenRepo persists auth_tokens (email verify + password reset).
-// Not tenant-scoped.
+// AuthTokenRepo persists auth_tokens. Not tenant-scoped.
 type AuthTokenRepo struct {
 	db *DB
 }
 
 func NewAuthTokenRepo(db *DB) *AuthTokenRepo { return &AuthTokenRepo{db: db} }
 
-// AuthToken is a row of auth_tokens.
-type AuthToken struct {
-	ID         uuid.UUID
-	UserID     uuid.UUID
-	Kind       string
-	TokenHash  []byte
-	ExpiresAt  time.Time
-	ConsumedAt *time.Time
-	CreatedAt  time.Time
-}
-
 // Create inserts a new auth token.
-func (r *AuthTokenRepo) Create(ctx context.Context, t *AuthToken) error {
+func (r *AuthTokenRepo) Create(ctx context.Context, t *auth.AuthToken) error {
 	const q = `
 		INSERT INTO auth_tokens (id, user_id, kind, token_hash, expires_at, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -46,10 +34,12 @@ func (r *AuthTokenRepo) Create(ctx context.Context, t *AuthToken) error {
 	})
 }
 
-// Consume looks up an active token by hash, marks it consumed, and returns it.
-// Atomic: the SELECT FOR UPDATE ensures two concurrent requests cannot both
-// consume the same token.
-func (r *AuthTokenRepo) Consume(ctx context.Context, hash []byte, kind auth.TokenKind, now time.Time) (*AuthToken, error) {
+// Consume looks up an active token by hash and kind, marks it consumed,
+// returns it. Atomic via SELECT ... FOR UPDATE.
+//
+// The kind is a plain string so the caller (auth) decides what kinds exist;
+// this package only stores and retrieves.
+func (r *AuthTokenRepo) Consume(ctx context.Context, hash []byte, kind string, now time.Time) (*auth.AuthToken, error) {
 	const selectQ = `
 		SELECT id, user_id, kind, token_hash, expires_at, consumed_at, created_at
 		FROM auth_tokens
@@ -58,7 +48,7 @@ func (r *AuthTokenRepo) Consume(ctx context.Context, hash []byte, kind auth.Toke
 	`
 	const updateQ = `UPDATE auth_tokens SET consumed_at = $2 WHERE id = $1`
 
-	var t *AuthToken
+	var t *auth.AuthToken
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		var (
 			id         uuid.UUID
@@ -69,7 +59,7 @@ func (r *AuthTokenRepo) Consume(ctx context.Context, hash []byte, kind auth.Toke
 			consumedAt *time.Time
 			createdAt  time.Time
 		)
-		if err := tx.QueryRow(ctx, selectQ, hash, string(kind), now).Scan(
+		if err := tx.QueryRow(ctx, selectQ, hash, kind, now).Scan(
 			&id, &userID, &kindStr, &tokenHash, &expiresAt, &consumedAt, &createdAt,
 		); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
@@ -80,7 +70,7 @@ func (r *AuthTokenRepo) Consume(ctx context.Context, hash []byte, kind auth.Toke
 		if _, err := tx.Exec(ctx, updateQ, id, now); err != nil {
 			return fmt.Errorf("auth_token_repo: consume: %w", Classify(err))
 		}
-		t = &AuthToken{
+		t = &auth.AuthToken{
 			ID:         id,
 			UserID:     userID,
 			Kind:       kindStr,
@@ -94,7 +84,7 @@ func (r *AuthTokenRepo) Consume(ctx context.Context, hash []byte, kind auth.Toke
 	return t, err
 }
 
-// DeleteExpired removes expired tokens. Called from a periodic job later.
+// DeleteExpired removes expired tokens.
 func (r *AuthTokenRepo) DeleteExpired(ctx context.Context, now time.Time) (int64, error) {
 	var n int64
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
