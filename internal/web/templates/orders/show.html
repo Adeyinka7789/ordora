@@ -1,0 +1,28 @@
+{{ define "orders/show.html" }}
+<section class="page-header">
+  <div>
+    <h1>{{ .Order.Number }}</h1>
+    <p class="muted">{{ .Order.Title }}</p>
+  </div>
+  <a href="/orders" class="btn-secondary">← Back</a>
+</section>
+
+<dl class="detail-grid">
+  <dt>Status</dt>
+  <dd><span class="status-pill status-{{ .Order.Status }}">{{ .Order.Status.Label }}</span></dd>
+
+  <dt>Customer</dt>
+  <dd>{{ if .Customer }}{{ .Customer.Name }}{{ else }}<span class="muted">—</span>{{ end }}</dd>
+
+  <dt>Total</dt>
+  <dd>{{ currency .Order.Total.Amount .Order.Currency }}</dd>
+
+  <dt>Paid</dt>
+  <dd>{{ currency .Order.Paid.Amount .Order.Currency }}</dd>
+
+  <dt>Balance</dt>
+  <dd>{{ currency .Balance .Order.Currency }}</dd>
+</dl>
+
+<p class="muted">The full order detail page (with items and status timeline) arrives in the next step.</p>
+{{ end }}

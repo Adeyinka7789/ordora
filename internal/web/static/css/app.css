@@ -473,3 +473,64 @@ html, body {
 .topbar nav a:hover {
   color: var(--fg);
 }
+
+/* ---- Order list filters ---- */
+.orders-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.orders-filters input[type="search"] {
+  flex: 1 1 320px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0b0e13;
+  color: var(--fg);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.orders-filters select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0b0e13;
+  color: var(--fg);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.orders-filters input:focus,
+.orders-filters select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---- Numeric columns ---- */
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Status pills ---- */
+.status-pill {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.status-NEW              { background: #1f2937; color: #cbd5e1; }
+.status-CONFIRMED        { background: rgba(56, 139, 253, 0.15); color: #79c0ff; }
+.status-IN_PROGRESS      { background: rgba(210, 153, 34, 0.15); color: #e3b341; }
+.status-READY            { background: rgba(163, 113, 247, 0.15); color: #d2a8ff; }
+.status-OUT_FOR_DELIVERY { background: rgba(255, 123, 114, 0.15); color: #ffa198; }
+.status-DELIVERED        { background: rgba(63, 185, 80, 0.15); color: #7ee787; }
+.status-COMPLETED        { background: rgba(63, 185, 80, 0.25); color: #7ee787; }
+.status-CANCELLED        { background: rgba(248, 81, 73, 0.15); color: #ff7b72; }

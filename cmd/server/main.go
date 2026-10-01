@@ -14,6 +14,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
@@ -78,7 +79,30 @@ func run() error {
 		Renderer: renderer,
 	}
 
-	customerH := handlers.NewCustomerHandler(postgres.NewCustomerRepo(db), renderer)
+	custRepo := postgres.NewCustomerRepo(db)
+	customerH := handlers.NewCustomerHandler(custRepo, renderer)
+
+	// ---- Services ----
+	auditRepo := postgres.NewAuditRepo(db)
+	orderRepo := postgres.NewOrderRepo(db)
+	numberRepo := postgres.NewOrderNumberRepo(db)
+
+	orderService := app.NewOrderService(app.OrderServiceDeps{
+		DB:        db,
+		Customers: custRepo,
+		Orders:    orderRepo,
+		OrderRead: orderRepo,
+		Numbers:   numberRepo,
+		Audit:     auditRepo,
+		IDs:       id.Generator{},
+	})
+
+	orderH := &handlers.OrderHandler{
+		Service:   orderService,
+		OrderRepo: orderRepo,
+		CustRepo:  custRepo,
+		Renderer:  renderer,
+	}
 
 	// ---- Router ----
 	mux := http.NewServeMux()
@@ -139,6 +163,12 @@ func run() error {
 	//
 	// Order (outermost to innermost):
 	//   Recover -> RequestID -> Logger -> Session -> CSRF -> mux
+
+	// ---- Orders (requires auth + tenant) ----
+	mux.Handle("GET /orders", middleware.RequireTenant(http.HandlerFunc(orderH.Index)))
+	mux.Handle("GET /orders/new", middleware.RequireTenant(http.HandlerFunc(orderH.New)))
+	mux.Handle("POST /orders", middleware.RequireTenant(http.HandlerFunc(orderH.Create)))
+	mux.Handle("GET /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Show)))
 	//
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.

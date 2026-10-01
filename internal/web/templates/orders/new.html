@@ -1,0 +1,14 @@
+{{ define "orders/new.html" }}
+<section class="page-header">
+  <h1>New order</h1>
+  <a href="/orders" class="btn-secondary">← Back to orders</a>
+</section>
+
+{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+
+<p class="muted">
+  The full order form (with dynamic line items) arrives in the next step.
+  For now, the create action is reachable via
+  <code>POST /orders</code> with the right fields.
+</p>
+{{ end }}
