@@ -79,6 +79,15 @@ func (m Money) Equal(other Money) bool {
 	return m.minor == other.minor && m.currency == other.currency
 }
 
+// MustNew is a convenience for tests and constants. It panics on error.
+func MustNew(minor int64, currency string) Money {
+	m, err := New(minor, currency)
+	if err != nil {
+		panic(err)
+	}
+	return m
+}
+
 // String formats the amount for display. It is intended for logs and debug,
 // not for user-facing currency formatting.
 func (m Money) String() string {

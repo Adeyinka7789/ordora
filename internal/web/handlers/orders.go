@@ -12,6 +12,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/customer"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
+	"github.com/Adeyinka7789/ordora/internal/domain/payment"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -23,6 +24,7 @@ type OrderHandler struct {
 	OrderRepo   *postgres.OrderRepo
 	CustRepo    *postgres.CustomerRepo
 	Attachments *app.AttachmentService
+	Payments    *app.PaymentService
 	Renderer    *render.Renderer
 }
 
@@ -96,6 +98,8 @@ type orderShowPage struct {
 	Order       *order.Order
 	OrderID     uuid.UUID
 	Attachments []*attachment.Attachment
+	Payments    []*payment.Payment
+	PayStatus   payment.Status
 }
 
 // -----------------------------------------------------------------------------
@@ -566,6 +570,13 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	if list, err := h.Attachments.List(r.Context(), scope, attachment.EntityOrder, o.ID); err == nil {
 		page.Attachments = list
 	}
+
+	// Load payments (best-effort).
+	if list, err := h.Payments.ListForOrder(r.Context(), scope, o.ID); err == nil {
+		page.Payments = list
+	}
+	page.PayStatus = payment.DeriveStatus(o.Total, o.Paid)
+
 	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/show.html", page)
 }
 

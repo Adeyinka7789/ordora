@@ -5,6 +5,7 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
+	"github.com/Adeyinka7789/ordora/internal/domain/payment"
 )
 
 // timelineFragment is the data passed to orders/_timeline.html when rendered
@@ -23,4 +24,14 @@ type attachmentsFragment struct {
 	OrderID     uuid.UUID
 	Attachments []*attachment.Attachment
 	CSRFToken   string
+}
+
+// paymentsFragment is passed to orders/_payments.html.
+type paymentsFragment struct {
+	Order     *order.Order
+	Payments  []*payment.Payment
+	Balance   int64
+	PayStatus payment.Status
+	CSRFToken string
+	Error     string
 }

@@ -115,11 +115,27 @@ func run() error {
 		IDs:       id.Generator{},
 	})
 
+	paymentRepo := postgres.NewPaymentRepo(db)
+	paymentService := app.NewPaymentService(app.PaymentServiceDeps{
+		DB:          db,
+		Payments:    paymentRepo,
+		PaymentRead: paymentRepo,
+		Orders:      orderRepo,
+		Audit:       auditRepo,
+		IDs:         id.Generator{},
+	})
+	paymentH := &handlers.PaymentHandler{
+		Service:  paymentService,
+		Orders:   orderService,
+		Renderer: renderer,
+	}
+
 	orderH := &handlers.OrderHandler{
 		Service:     orderService,
 		OrderRepo:   orderRepo,
 		CustRepo:    custRepo,
 		Attachments: attachService,
+		Payments:    paymentService,
 		Renderer:    renderer,
 	}
 
@@ -192,6 +208,7 @@ func run() error {
 	mux.Handle("POST /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Update)))
 	mux.Handle("POST /orders/{id}/status", middleware.RequireTenant(http.HandlerFunc(orderH.ChangeStatus)))
 	//
+	mux.Handle("POST /orders/{id}/payments", middleware.RequireTenant(http.HandlerFunc(paymentH.Record)))
 
 	// ---- Attachments ----
 	mux.Handle("POST /orders/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToOrder)))

@@ -1,0 +1,89 @@
+{{ define "orders/_payments.html" }}
+<div id="payments-card" class="card">
+  <h2>Payments</h2>
+
+  {{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+
+  <dl class="totals-list">
+    <dt>Total</dt>
+    <dd>{{ currency .Order.Total.Amount .Order.Currency }}</dd>
+
+    <dt>Paid</dt>
+    <dd>{{ currency .Order.Paid.Amount .Order.Currency }}</dd>
+
+    <dt>Balance</dt>
+    <dd class="{{ if gt .Balance 0 }}owes{{ else }}paid{{ end }}">
+      {{ currency .Balance .Order.Currency }}
+    </dd>
+
+    <dt>Status</dt>
+    <dd><span class="status-pill status-{{ .PayStatus }}">{{ .PayStatus.Label }}</span></dd>
+  </dl>
+
+  {{ if .Payments }}
+    <ul class="payment-list">
+      {{ range .Payments }}
+        <li class="{{ if or .IsReversal .IsReversed }}payment-reversed{{ end }}">
+          <div class="payment-main">
+            <span class="payment-amount">{{ currency .Amount.Amount .Amount.Currency }}</span>
+            <span class="payment-method muted">{{ .Method.Label }}</span>
+          </div>
+          <div class="payment-meta muted">
+            {{ .PaidAt.Format "Jan 2, 2006" }}
+            {{ if .Reference }} · {{ .Reference }}{{ end }}
+            {{ if .IsReversed }} · reversed{{ end }}
+            {{ if .IsReversal }} · reversal{{ end }}
+          </div>
+          {{ if .Notes }}<div class="payment-notes muted">{{ .Notes }}</div>{{ end }}
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p class="muted">No payments recorded yet.</p>
+  {{ end }}
+
+  {{ if ne .Order.Status "CANCELLED" }}
+    <form hx-post="/orders/{{ .Order.ID }}/payments"
+          hx-target="#payments-card"
+          hx-swap="outerHTML"
+          class="payment-form">
+      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+      <div class="form-row">
+        <label>
+          Amount
+          <input type="text" name="amount" placeholder="0.00" required>
+        </label>
+        <label>
+          Method
+          <select name="method" required>
+            <option value="BANK_TRANSFER">Bank transfer</option>
+            <option value="CASH">Cash</option>
+            <option value="CARD">Card</option>
+            <option value="POS">POS</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>
+          Payment date
+          <input type="date" name="paid_at" value="{{ .Order.CreatedAt.Format "2006-01-02" }}">
+        </label>
+        <label>
+          Reference
+          <input type="text" name="reference" placeholder="Bank ref, POS slip, etc." maxlength="200">
+        </label>
+      </div>
+
+      <label>
+        Notes
+        <input type="text" name="notes" maxlength="2000">
+      </label>
+
+      <button type="submit" class="btn-primary">Record payment</button>
+    </form>
+  {{ end }}
+</div>
+{{ end }}
