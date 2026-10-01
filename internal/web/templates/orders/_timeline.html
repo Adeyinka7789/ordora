@@ -1,0 +1,39 @@
+{{ define "orders/_timeline.html" }}
+<div id="order-timeline" class="card timeline-card">
+  <h2>Status</h2>
+
+  {{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+
+  <ol class="timeline">
+    {{ $current := .Order.Status }}
+    <li class="{{ statusClass $current "NEW" }}"><span>New</span></li>
+    <li class="{{ statusClass $current "CONFIRMED" }}"><span>Confirmed</span></li>
+    <li class="{{ statusClass $current "IN_PROGRESS" }}"><span>In progress</span></li>
+    <li class="{{ statusClass $current "READY" }}"><span>Ready</span></li>
+    <li class="{{ statusClass $current "OUT_FOR_DELIVERY" }}"><span>Out for delivery</span></li>
+    <li class="{{ statusClass $current "DELIVERED" }}"><span>Delivered</span></li>
+    <li class="{{ statusClass $current "COMPLETED" }}"><span>Completed</span></li>
+  </ol>
+
+  {{ if eq $current "CANCELLED" }}
+    <div class="cancelled-note">This order was cancelled.</div>
+  {{ else if not $current.IsTerminal }}
+    <form hx-post="/orders/{{ .Order.ID }}/status"
+          hx-target="#order-timeline"
+          hx-swap="outerHTML"
+          class="status-form">
+      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+      <input type="hidden" name="prev_status" value="{{ $current }}">
+      <label>
+        Change status to:
+        <select name="status">
+          {{ range $current.NextStatuses }}
+            <option value="{{ . }}">{{ .Label }}</option>
+          {{ end }}
+        </select>
+      </label>
+      <button type="submit" class="btn-primary">Update</button>
+    </form>
+  {{ end }}
+</div>
+{{ end }}

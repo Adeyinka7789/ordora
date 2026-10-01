@@ -39,6 +39,14 @@ type ordersIndexPage struct {
 	FlashError  string
 }
 
+// orderTimelineData is passed to the timeline fragment both from the show
+// page and from the HTMX status-change response.
+type orderTimelineData struct {
+	Order     *order.Order
+	CSRFToken string
+	Error     string
+}
+
 type orderNewPage struct {
 	Title       string
 	CSRFToken   string
@@ -49,6 +57,8 @@ type orderNewPage struct {
 	FormDueDate string
 	FormItems   []orderFormItem
 	FormCustID  string
+	FormDisc    string
+	FormTax     string
 }
 
 type orderFormItem struct {
@@ -57,12 +67,28 @@ type orderFormItem struct {
 	UnitPrice   string
 }
 
+type orderEditPage struct {
+	Title       string
+	CSRFToken   string
+	Order       *order.Order
+	Customers   []*customer.Customer
+	Error       string
+	FormTitle   string
+	FormDesc    string
+	FormDueDate string
+	FormItems   []orderFormItem
+	FormDisc    string
+	FormTax     string
+	FormCustID  string
+}
+
 type orderShowPage struct {
-	Title     string
-	CSRFToken string
-	Order     *order.Order
-	Customer  *customer.Customer
-	Balance   int64
+	orderTimelineData
+	Title       string
+	Customer    *customer.Customer
+	Balance     int64
+	FlashNotice string
+	FlashError  string
 }
 
 // -----------------------------------------------------------------------------
@@ -230,6 +256,238 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/orders/"+o.ID.String(), http.StatusSeeOther)
 }
 
+func (h *OrderHandler) Edit(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	oid, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+
+	o, err := h.Service.GetOrder(r.Context(), scope, oid)
+	if err != nil {
+		if errors.Is(err, order.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, "could not load order", http.StatusInternalServerError)
+		return
+	}
+	if o.Status.IsTerminal() {
+		http.Redirect(w, r, "/orders/"+o.ID.String(), http.StatusSeeOther)
+		return
+	}
+
+	customers, err := h.CustRepo.List(r.Context(), scope, postgres.ListOptions{Limit: 500})
+	if err != nil {
+		http.Error(w, "could not load customers", http.StatusInternalServerError)
+		return
+	}
+
+	page := orderEditPage{
+		Title:      "Edit " + o.Number,
+		CSRFToken:  csrfFromCtx(r),
+		Order:      o,
+		Customers:  customers.Customers,
+		FormCustID: o.CustomerID.String(),
+		FormTitle:  o.Title,
+		FormDesc:   o.Description,
+		FormDisc:   formatMoneyMinor(o.Discount.Amount()),
+		FormTax:    formatMoneyMinor(o.Tax.Amount()),
+	}
+	if o.ExpectedCompletion != nil {
+		page.FormDueDate = o.ExpectedCompletion.Format("2006-01-02")
+	}
+	for _, it := range o.Items {
+		page.FormItems = append(page.FormItems, orderFormItem{
+			Description: it.Description,
+			Quantity:    formatQuantity(it.Quantity),
+			UnitPrice:   formatMoneyMinor(it.UnitPrice.Amount()),
+		})
+	}
+	if len(page.FormItems) == 0 {
+		page.FormItems = []orderFormItem{{}}
+	}
+	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/edit.html", page)
+}
+
+// Update handles POST /orders/{id}.
+func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	oid, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+
+	in, err := parseUpdateOrderInput(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = h.Service.UpdateOrder(r.Context(), scope, oid, *in)
+	if err != nil {
+		if errors.Is(err, order.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		// Re-render with error.
+		o, _ := h.Service.GetOrder(r.Context(), scope, oid)
+		customers, _ := h.CustRepo.List(r.Context(), scope, postgres.ListOptions{Limit: 500})
+		page := orderEditPage{
+			Title:     "Edit order",
+			CSRFToken: csrfFromCtx(r),
+			Order:     o,
+			Customers: customers.Customers,
+			Error:     humanizeOrderError(err),
+			FormTitle: in.Title,
+			FormDesc:  in.Description,
+			FormDisc:  formatMoneyMinor(in.DiscountMinor),
+			FormTax:   formatMoneyMinor(in.TaxMinor),
+		}
+		for _, it := range in.Items {
+			page.FormItems = append(page.FormItems, orderFormItem{
+				Description: it.Description,
+				Quantity:    formatQuantity(it.QuantityScaled),
+				UnitPrice:   formatMoneyMinor(it.UnitPriceMinor),
+			})
+		}
+		if len(page.FormItems) == 0 {
+			page.FormItems = []orderFormItem{{}}
+		}
+		h.Renderer.Page(w, http.StatusBadRequest, "layouts/app.html", "orders/edit.html", page)
+		return
+	}
+
+	http.Redirect(w, r, "/orders/"+oid.String()+"?notice=Order+updated.", http.StatusSeeOther)
+}
+
+// ChangeStatus handles POST /orders/{id}/status.
+//
+// Returns the timeline fragment if HTMX, otherwise redirects to the order.
+func (h *OrderHandler) ChangeStatus(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	oid, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	to := order.Status(formValue(r, "status"))
+	if !to.IsValid() {
+		http.Error(w, "invalid status", http.StatusBadRequest)
+		return
+	}
+
+	o, err := h.Service.ChangeStatus(r.Context(), scope, oid, to)
+	if err != nil {
+		if errors.Is(err, order.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		// HTMX: return the timeline with an error banner.
+		if isHTMX(r) {
+			page := orderShowPage{
+				Order:     &order.Order{ID: oid, Status: order.Status(formValue(r, "prev_status"))},
+				CSRFToken: csrfFromCtx(r),
+			}
+			// Re-fetch to render valid data.
+			if isHTMX(r) {
+				existing, _ := h.Service.GetOrder(r.Context(), scope, oid)
+				h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", orderTimelineData{
+					Order:     existing,
+					CSRFToken: csrfFromCtx(r),
+					Error:     humanizeOrderError(err),
+				})
+				return
+			}
+			h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", map[string]any{
+				"Order":     page.Order,
+				"Error":     humanizeOrderError(err),
+				"CSRFToken": page.CSRFToken,
+			})
+			return
+		}
+		http.Redirect(w, r, "/orders/"+oid.String()+"?error="+humanizeOrderError(err), http.StatusSeeOther)
+		return
+	}
+
+	if isHTMX(r) {
+		h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", orderTimelineData{
+			Order:     o,
+			CSRFToken: csrfFromCtx(r),
+		})
+		return
+	}
+	http.Redirect(w, r, "/orders/"+oid.String()+"?notice=Status+updated.", http.StatusSeeOther)
+}
+
+// parseUpdateOrderInput reads the shared form fields (used by Update).
+func parseUpdateOrderInput(r *http.Request) (*app.UpdateOrderInput, error) {
+	in := &app.UpdateOrderInput{
+		Title:       formValue(r, "title"),
+		Description: formValue(r, "description"),
+	}
+	if due := formValue(r, "expected_completion"); due != "" {
+		t, err := time.Parse("2006-01-02", due)
+		if err != nil {
+			return nil, errors.New("invalid expected completion date")
+		}
+		in.ExpectedCompletion = &t
+	}
+	if d := formValue(r, "discount"); d != "" {
+		v, err := parseMoneyMinor(d)
+		if err != nil {
+			return nil, errors.New("invalid discount")
+		}
+		in.DiscountMinor = v
+	}
+	if tx := formValue(r, "tax"); tx != "" {
+		v, err := parseMoneyMinor(tx)
+		if err != nil {
+			return nil, errors.New("invalid tax")
+		}
+		in.TaxMinor = v
+	}
+	itemCount, _ := strconv.Atoi(formValue(r, "item_count"))
+	for i := 0; i < itemCount; i++ {
+		desc := formValue(r, "items["+strconv.Itoa(i)+"][description]")
+		qtyRaw := formValue(r, "items["+strconv.Itoa(i)+"][quantity]")
+		priceRaw := formValue(r, "items["+strconv.Itoa(i)+"][unit_price]")
+		if desc == "" && qtyRaw == "" && priceRaw == "" {
+			continue
+		}
+		q, err := parseQuantity(qtyRaw)
+		if err != nil {
+			return nil, errors.New("invalid quantity on line " + strconv.Itoa(i+1))
+		}
+		p, err := parseMoneyMinor(priceRaw)
+		if err != nil {
+			return nil, errors.New("invalid unit price on line " + strconv.Itoa(i+1))
+		}
+		in.Items = append(in.Items, app.CreateOrderItemInput{
+			Description:    desc,
+			QuantityScaled: q,
+			UnitPriceMinor: p,
+		})
+	}
+	return in, nil
+}
+
 // respondCreateError re-renders the new-order page with an error message and
 // the previously-entered values, so the user does not have to retype anything.
 func (h *OrderHandler) respondCreateError(w http.ResponseWriter, r *http.Request, orgID uuid.UUID, msg string, in *app.CreateOrderInput) {
@@ -295,11 +553,19 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := orderShowPage{
-		Title:     o.Number,
-		CSRFToken: csrfFromCtx(r),
-		Order:     o,
-		Customer:  cust,
-		Balance:   o.Balance().Amount(),
+		orderTimelineData: orderTimelineData{
+			Order:     o,
+			CSRFToken: csrfFromCtx(r),
+		},
+		Title:    o.Number,
+		Customer: cust,
+		Balance:  o.Balance().Amount(),
+	}
+	if v := queryValue(r, "notice"); v != "" {
+		page.FlashNotice = v
+	}
+	if v := queryValue(r, "error"); v != "" {
+		page.FlashError = v
 	}
 	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/show.html", page)
 }

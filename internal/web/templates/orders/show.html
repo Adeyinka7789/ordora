@@ -1,28 +1,64 @@
 {{ define "orders/show.html" }}
-<section class="page-header">
+<section class="page-header order-header">
   <div>
     <h1>{{ .Order.Number }}</h1>
     <p class="muted">{{ .Order.Title }}</p>
   </div>
-  <a href="/orders" class="btn-secondary">← Back</a>
+  <div class="actions">
+    {{ if not .Order.Status.IsTerminal }}
+      <a href="/orders/{{ .Order.ID }}/edit" class="btn-secondary">Edit</a>
+    {{ end }}
+    <a href="/orders" class="btn-secondary">← All orders</a>
+  </div>
 </section>
 
-<dl class="detail-grid">
-  <dt>Status</dt>
-  <dd><span class="status-pill status-{{ .Order.Status }}">{{ .Order.Status.Label }}</span></dd>
+{{ if .FlashNotice }}<div class="flash flash-notice">{{ .FlashNotice }}</div>{{ end }}
+{{ if .FlashError }}<div class="flash flash-error">{{ .FlashError }}</div>{{ end }}
 
-  <dt>Customer</dt>
-  <dd>{{ if .Customer }}{{ .Customer.Name }}{{ else }}<span class="muted">—</span>{{ end }}</dd>
+<div class="order-layout">
+  <div class="order-main">
+    <div class="card">
+      <h2>Customer</h2>
+      {{ if .Customer }}
+        <p><a href="/customers/{{ .Customer.ID }}">{{ .Customer.Name }}</a></p>
+        {{ if .Customer.Email }}<p class="muted">{{ .Customer.Email }}</p>{{ end }}
+        {{ if .Customer.Phone }}<p class="muted">{{ .Customer.Phone }}</p>{{ end }}
+      {{ else }}
+        <p class="muted">Customer not available.</p>
+      {{ end }}
+    </div>
 
-  <dt>Total</dt>
-  <dd>{{ currency .Order.Total.Amount .Order.Currency }}</dd>
+    <div class="card">
+      <h2>Items</h2>
+      {{ template "orders/_items.html" .Order }}
+    </div>
 
-  <dt>Paid</dt>
-  <dd>{{ currency .Order.Paid.Amount .Order.Currency }}</dd>
+    {{ if .Order.Description }}
+      <div class="card">
+        <h2>Notes</h2>
+        <p class="notes">{{ .Order.Description }}</p>
+      </div>
+    {{ end }}
 
-  <dt>Balance</dt>
-  <dd>{{ currency .Balance .Order.Currency }}</dd>
-</dl>
+    <div class="card">
+      <h2>Totals</h2>
+      <dl class="totals-list">
+        <dt>Subtotal</dt><dd>{{ currency .Order.Subtotal.Amount .Order.Currency }}</dd>
+        {{ if gt .Order.Discount.Amount 0 }}
+          <dt>Discount</dt><dd>− {{ currency .Order.Discount.Amount .Order.Currency }}</dd>
+        {{ end }}
+        {{ if gt .Order.Tax.Amount 0 }}
+          <dt>Tax</dt><dd>{{ currency .Order.Tax.Amount .Order.Currency }}</dd>
+        {{ end }}
+        <dt class="total-label">Total</dt><dd class="total-value">{{ currency .Order.Total.Amount .Order.Currency }}</dd>
+        <dt>Paid</dt><dd>{{ currency .Order.Paid.Amount .Order.Currency }}</dd>
+        <dt>Balance</dt><dd class="{{ if gt .Balance 0 }}owes{{ else }}paid{{ end }}">{{ currency .Balance .Order.Currency }}</dd>
+      </dl>
+    </div>
+  </div>
 
-<p class="muted">The full order detail page (with items and status timeline) arrives in the next step.</p>
+  <aside class="order-aside">
+    {{ template "orders/_timeline.html" . }}
+  </aside>
+</div>
 {{ end }}

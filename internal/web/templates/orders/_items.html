@@ -1,0 +1,22 @@
+{{ define "orders/_items.html" }}
+<table class="data-table items-readonly">
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th class="num">Qty</th>
+      <th class="num">Unit price</th>
+      <th class="num">Subtotal</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Items }}
+      <tr>
+        <td>{{ .Description }}</td>
+        <td class="num">{{ formatQty .Quantity }}</td>
+        <td class="num">{{ currency .UnitPrice.Amount .UnitPrice.Currency }}</td>
+        <td class="num">{{ currency .Subtotal.Amount .Subtotal.Currency }}</td>
+      </tr>
+    {{ end }}
+  </tbody>
+</table>
+{{ end }}

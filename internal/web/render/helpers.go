@@ -44,5 +44,41 @@ func funcMap() template.FuncMap {
 			}
 			return fmt.Sprintf("%s %d.%02d", code, major, frac)
 		},
+		"formatQty": func(scaled int64) string {
+			// Quantity is scaled by 1000. Format with up to 3 decimals,
+			// trimming trailing zeros.
+			s := fmt.Sprintf("%.3f", float64(scaled)/1000.0)
+			s = strings.TrimRight(s, "0")
+			s = strings.TrimRight(s, ".")
+			if s == "" {
+				return "0"
+			}
+			return s
+		},
+		"statusClass": func(current, step interface{}) string {
+			c := fmt.Sprintf("%v", current)
+			s := fmt.Sprintf("%v", step)
+			order := []string{"NEW", "CONFIRMED", "IN_PROGRESS", "READY", "OUT_FOR_DELIVERY", "DELIVERED", "COMPLETED"}
+			ci, si := -1, -1
+			for i, v := range order {
+				if v == c {
+					ci = i
+				}
+				if v == s {
+					si = i
+				}
+			}
+			if c == "CANCELLED" {
+				return "step"
+			}
+			switch {
+			case si < ci:
+				return "step done"
+			case si == ci:
+				return "step active"
+			default:
+				return "step"
+			}
+		},
 	}
 }

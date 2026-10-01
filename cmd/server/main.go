@@ -169,6 +169,9 @@ func run() error {
 	mux.Handle("GET /orders/new", middleware.RequireTenant(http.HandlerFunc(orderH.New)))
 	mux.Handle("POST /orders", middleware.RequireTenant(http.HandlerFunc(orderH.Create)))
 	mux.Handle("GET /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Show)))
+	mux.Handle("GET /orders/{id}/edit", middleware.RequireTenant(http.HandlerFunc(orderH.Edit)))
+	mux.Handle("POST /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Update)))
+	mux.Handle("POST /orders/{id}/status", middleware.RequireTenant(http.HandlerFunc(orderH.ChangeStatus)))
 	//
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.

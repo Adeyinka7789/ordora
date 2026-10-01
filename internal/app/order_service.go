@@ -39,6 +39,8 @@ type CustomerReader interface {
 // OrderWriter is the write side of the order repo.
 type OrderWriter interface {
 	CreateTx(ctx context.Context, tx pgx.Tx, o *order.Order) error
+	UpdateTx(ctx context.Context, tx pgx.Tx, o *order.Order) error
+	ChangeStatusTx(ctx context.Context, tx pgx.Tx, o *order.Order, from, to order.Status, actorUserID uuid.UUID, now time.Time) error
 }
 
 // OrderReader is the read side.
@@ -290,4 +292,137 @@ func mustJSON(v any) []byte {
 		return nil
 	}
 	return b
+}
+
+// UpdateOrderInput is the request shape for editing an order.
+// Only mutable fields are included: items, title, description, discount,
+// tax, expected completion. Customer and status are changed elsewhere.
+type UpdateOrderInput struct {
+	Title              string
+	Description        string
+	ExpectedCompletion *time.Time
+	Items              []CreateOrderItemInput
+	DiscountMinor      int64
+	TaxMinor           int64
+}
+
+// UpdateOrder replaces the mutable fields on an order. The state machine is
+// untouched — status changes go through ChangeStatus.
+func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, in UpdateOrderInput) (*order.Order, error) {
+	if strings.TrimSpace(in.Title) == "" {
+		return nil, ErrOrderTitleRequired
+	}
+	if len(in.Items) == 0 {
+		return nil, ErrOrderNoItems
+	}
+
+	var updated *order.Order
+	err := s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		o, err := s.orderRead.GetByID(ctx, scope, id)
+		if err != nil {
+			return err
+		}
+
+		if o.Status.IsTerminal() {
+			return order.ErrInvalidTransition
+		}
+
+		// Replace items wholesale. Build a new slice.
+		o.Items = nil
+		for i, itemIn := range in.Items {
+			unit, err := money.New(itemIn.UnitPriceMinor, o.Currency)
+			if err != nil {
+				return fmt.Errorf("item %d: %w", i, err)
+			}
+			item, err := order.NewItem(s.ids.New(), itemIn.Description, itemIn.QuantityScaled, unit, i)
+			if err != nil {
+				return fmt.Errorf("item %d: %w", i, err)
+			}
+			if err := o.AddItem(item); err != nil {
+				return err
+			}
+		}
+
+		o.Title = strings.TrimSpace(in.Title)
+		o.Description = in.Description
+		o.ExpectedCompletion = in.ExpectedCompletion
+
+		// Reset discount/tax before re-applying, so removal works.
+		zero, _ := money.New(0, o.Currency)
+		o.Discount = zero
+		o.Tax = zero
+		if err := o.SetDiscount(zero); err != nil {
+			return err
+		}
+		if err := o.SetTax(zero); err != nil {
+			return err
+		}
+		if in.DiscountMinor > 0 {
+			d, _ := money.New(in.DiscountMinor, o.Currency)
+			if err := o.SetDiscount(d); err != nil {
+				return err
+			}
+		}
+		if in.TaxMinor > 0 {
+			t, _ := money.New(in.TaxMinor, o.Currency)
+			if err := o.SetTax(t); err != nil {
+				return err
+			}
+		}
+
+		o.UpdatedAt = s.now()
+		if err := o.Validate(); err != nil {
+			return err
+		}
+		if err := s.orders.UpdateTx(ctx, tx, o); err != nil {
+			return err
+		}
+		if s.audit != nil {
+			_ = s.audit.RecordTx(ctx, tx, audit.Entry{
+				OrganizationID: scope.OrgID,
+				ActorUserID:    scope.UserID,
+				Action:         "order.updated",
+				EntityType:     "ORDER",
+				EntityID:       o.ID,
+				After:          mustJSON(map[string]any{"total_minor": o.Total.Amount()}),
+			})
+		}
+		updated = o
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
+}
+
+// ChangeStatus transitions an order to a new status. Enforces the state
+// machine, updates the timestamp, and writes an audit entry — all in one
+// transaction.
+func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, to order.Status) (*order.Order, error) {
+	if !to.IsValid() {
+		return nil, order.ErrInvalidTransition
+	}
+
+	var updated *order.Order
+	err := s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		o, err := s.orderRead.GetByID(ctx, scope, id)
+		if err != nil {
+			return err
+		}
+
+		from := o.Status
+		if err := o.ChangeStatus(to, s.now()); err != nil {
+			return err
+		}
+		if err := s.orders.ChangeStatusTx(ctx, tx, o, from, to, scope.UserID, s.now()); err != nil {
+			return err
+		}
+		updated = o
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
