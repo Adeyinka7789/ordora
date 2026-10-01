@@ -19,6 +19,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/config"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
+	"github.com/Adeyinka7789/ordora/internal/infra/storage"
 	"github.com/Adeyinka7789/ordora/internal/web/handlers"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -85,6 +86,21 @@ func run() error {
 	// ---- Services ----
 	auditRepo := postgres.NewAuditRepo(db)
 	orderRepo := postgres.NewOrderRepo(db)
+	// ---- Attachments ----
+	blobs, err := storage.NewLocalFS(cfg.Storage.LocalDir)
+	if err != nil {
+		return fmt.Errorf("storage: %w", err)
+	}
+	attachRepo := postgres.NewAttachmentRepo(db)
+	attachService := app.NewAttachmentService(app.AttachmentServiceDeps{
+		Blobs: blobs,
+		Repo:  attachRepo,
+		IDs:   id.Generator{},
+	})
+	attachH := &handlers.AttachmentHandler{
+		Service:  attachService,
+		Renderer: renderer,
+	}
 	numberRepo := postgres.NewOrderNumberRepo(db)
 
 	orderService := app.NewOrderService(app.OrderServiceDeps{
@@ -98,10 +114,11 @@ func run() error {
 	})
 
 	orderH := &handlers.OrderHandler{
-		Service:   orderService,
-		OrderRepo: orderRepo,
-		CustRepo:  custRepo,
-		Renderer:  renderer,
+		Service:     orderService,
+		OrderRepo:   orderRepo,
+		CustRepo:    custRepo,
+		Attachments: attachService,
+		Renderer:    renderer,
 	}
 
 	// ---- Router ----
@@ -173,6 +190,10 @@ func run() error {
 	mux.Handle("POST /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Update)))
 	mux.Handle("POST /orders/{id}/status", middleware.RequireTenant(http.HandlerFunc(orderH.ChangeStatus)))
 	//
+
+	// ---- Attachments ----
+	mux.Handle("POST /orders/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToOrder)))
+	mux.Handle("GET /attachments/{id}", middleware.RequireTenant(http.HandlerFunc(attachH.Download)))
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.
 	handler := chain(mux,

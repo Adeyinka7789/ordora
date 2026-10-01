@@ -55,6 +55,7 @@
         <dt>Balance</dt><dd class="{{ if gt .Balance 0 }}owes{{ else }}paid{{ end }}">{{ currency .Balance .Order.Currency }}</dd>
       </dl>
     </div>
+    {{ template "orders/_attachments.html" . }}
   </div>
 
   <aside class="order-aside">

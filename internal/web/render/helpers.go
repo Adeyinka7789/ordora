@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -79,6 +80,32 @@ func funcMap() template.FuncMap {
 			default:
 				return "step"
 			}
+		},
+
+		"csrfToken": func(data any) string {
+			if data == nil {
+				return ""
+			}
+			rv := reflect.ValueOf(data)
+			if rv.Kind() == reflect.Ptr {
+				if rv.IsNil() {
+					return ""
+				}
+				rv = rv.Elem()
+			}
+			switch rv.Kind() {
+			case reflect.Map:
+				v := rv.MapIndex(reflect.ValueOf("CSRFToken"))
+				if v.IsValid() {
+					return fmt.Sprintf("%v", v.Interface())
+				}
+			case reflect.Struct:
+				f := rv.FieldByName("CSRFToken")
+				if f.IsValid() && f.Kind() == reflect.String {
+					return f.String()
+				}
+			}
+			return ""
 		},
 	}
 }

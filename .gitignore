@@ -9,6 +9,8 @@
 /ordora-migrate
 /bin/
 
+/uploads/
+
 # Test output
 *.test
 *.out

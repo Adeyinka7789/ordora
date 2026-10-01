@@ -5,9 +5,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .Data }}{{ with .Data }}{{ if .Title }}{{ .Title }} — Ordora{{ else }}Ordora{{ end }}{{ end }}{{ else }}Ordora{{ end }}</title>
+  <meta name="csrf-token" content="{{ csrfToken .Data }}">
   <link rel="stylesheet" href="/static/css/app.css">
   <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js" defer></script>
+  <script>
+    document.addEventListener('htmx:configRequest', function (e) {
+      var meta = document.querySelector('meta[name="csrf-token"]');
+      if (meta && meta.content) {
+        e.detail.headers['X-CSRF-Token'] = meta.content;
+      }
+    });
+  </script>
 </head>
+
 <body>
   <header class="topbar">
     <a href="/" class="brand">Ordora</a>

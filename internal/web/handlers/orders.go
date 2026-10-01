@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
+	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/customer"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
@@ -18,10 +19,11 @@ import (
 
 // OrderHandler serves /orders/*.
 type OrderHandler struct {
-	Service   *app.OrderService
-	OrderRepo *postgres.OrderRepo
-	CustRepo  *postgres.CustomerRepo
-	Renderer  *render.Renderer
+	Service     *app.OrderService
+	OrderRepo   *postgres.OrderRepo
+	CustRepo    *postgres.CustomerRepo
+	Attachments *app.AttachmentService
+	Renderer    *render.Renderer
 }
 
 // -----------------------------------------------------------------------------
@@ -41,11 +43,6 @@ type ordersIndexPage struct {
 
 // orderTimelineData is passed to the timeline fragment both from the show
 // page and from the HTMX status-change response.
-type orderTimelineData struct {
-	Order     *order.Order
-	CSRFToken string
-	Error     string
-}
 
 type orderNewPage struct {
 	Title       string
@@ -82,13 +79,23 @@ type orderEditPage struct {
 	FormCustID  string
 }
 
+// orderShowPage is passed to orders/show.html. The timeline and attachments
+// fragments are rendered with the same page object (their `.Order`,
+// `.CSRFToken`, `.Error`, `.OrderID`, and `.Attachments` fields all resolve
+// against this struct), so no embedding or dict helper is needed.
 type orderShowPage struct {
-	orderTimelineData
 	Title       string
+	CSRFToken   string
 	Customer    *customer.Customer
 	Balance     int64
 	FlashNotice string
 	FlashError  string
+
+	// Fields consumed by embedded fragments.
+	Error       string
+	Order       *order.Order
+	OrderID     uuid.UUID
+	Attachments []*attachment.Attachment
 }
 
 // -----------------------------------------------------------------------------
@@ -401,33 +408,21 @@ func (h *OrderHandler) ChangeStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		// HTMX: return the timeline with an error banner.
 		if isHTMX(r) {
-			page := orderShowPage{
-				Order:     &order.Order{ID: oid, Status: order.Status(formValue(r, "prev_status"))},
+			existing, _ := h.Service.GetOrder(r.Context(), scope, oid)
+			h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", timelineFragment{
+				Order:     existing,
 				CSRFToken: csrfFromCtx(r),
-			}
-			// Re-fetch to render valid data.
-			if isHTMX(r) {
-				existing, _ := h.Service.GetOrder(r.Context(), scope, oid)
-				h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", orderTimelineData{
-					Order:     existing,
-					CSRFToken: csrfFromCtx(r),
-					Error:     humanizeOrderError(err),
-				})
-				return
-			}
-			h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", map[string]any{
-				"Order":     page.Order,
-				"Error":     humanizeOrderError(err),
-				"CSRFToken": page.CSRFToken,
+				Error:     humanizeOrderError(err),
 			})
 			return
 		}
+
 		http.Redirect(w, r, "/orders/"+oid.String()+"?error="+humanizeOrderError(err), http.StatusSeeOther)
 		return
 	}
 
 	if isHTMX(r) {
-		h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", orderTimelineData{
+		h.Renderer.Fragment(w, r, http.StatusOK, "orders/_timeline.html", timelineFragment{
 			Order:     o,
 			CSRFToken: csrfFromCtx(r),
 		})
@@ -553,19 +548,23 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := orderShowPage{
-		orderTimelineData: orderTimelineData{
-			Order:     o,
-			CSRFToken: csrfFromCtx(r),
-		},
-		Title:    o.Number,
-		Customer: cust,
-		Balance:  o.Balance().Amount(),
+		Title:     o.Number,
+		CSRFToken: csrfFromCtx(r),
+		Customer:  cust,
+		Balance:   o.Balance().Amount(),
+		Order:     o,
+		OrderID:   o.ID,
 	}
+
 	if v := queryValue(r, "notice"); v != "" {
 		page.FlashNotice = v
 	}
 	if v := queryValue(r, "error"); v != "" {
 		page.FlashError = v
+	}
+	// Load attachments (best-effort; if it fails, page still renders).
+	if list, err := h.Attachments.List(r.Context(), scope, attachment.EntityOrder, o.ID); err == nil {
+		page.Attachments = list
 	}
 	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/show.html", page)
 }

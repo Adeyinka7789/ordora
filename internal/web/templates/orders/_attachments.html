@@ -1,0 +1,32 @@
+{{ define "orders/_attachments.html" }}
+<div id="attachments" class="card">
+  <h2>Attachments</h2>
+
+  {{ if .Attachments }}
+    <ul class="attachment-list">
+      {{ range .Attachments }}
+        <li>
+          <a href="/attachments/{{ .ID }}" class="attachment-link">
+            <span class="attachment-icon">{{ if .IsImage }}🖼{{ else }}📄{{ end }}</span>
+            <span class="attachment-name">{{ .Filename }}</span>
+            <span class="attachment-size muted">{{ .HumanSize }}</span>
+          </a>
+        </li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p class="muted">No attachments yet.</p>
+  {{ end }}
+
+  <form hx-post="/orders/{{ .OrderID }}/attachments"
+        hx-target="#attachments"
+        hx-swap="outerHTML"
+        hx-encoding="multipart/form-data"
+        class="attachment-upload">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required>
+    <button type="submit" class="btn-secondary">Upload</button>
+  </form>
+  <p class="hint">JPG, PNG, WEBP, GIF, or PDF · up to 10 MiB</p>
+</div>
+{{ end }}
