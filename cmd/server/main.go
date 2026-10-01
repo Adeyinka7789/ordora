@@ -78,6 +78,8 @@ func run() error {
 		Renderer: renderer,
 	}
 
+	customerH := handlers.NewCustomerHandler(postgres.NewCustomerRepo(db), renderer)
+
 	// ---- Router ----
 	mux := http.NewServeMux()
 
@@ -125,6 +127,14 @@ func run() error {
 	// ---- Dashboard (requires auth) ----
 	mux.Handle("GET /dashboard", middleware.RequireAuth(http.HandlerFunc(dashH.Index)))
 
+	// ---- Customers (requires auth + tenant) ----
+	mux.Handle("GET /customers", middleware.RequireTenant(http.HandlerFunc(customerH.Index)))
+	mux.Handle("GET /customers/new", middleware.RequireTenant(http.HandlerFunc(customerH.New)))
+	mux.Handle("POST /customers", middleware.RequireTenant(http.HandlerFunc(customerH.Create)))
+	mux.Handle("GET /customers/{id}", middleware.RequireTenant(http.HandlerFunc(customerH.Show)))
+	mux.Handle("GET /customers/{id}/edit", middleware.RequireTenant(http.HandlerFunc(customerH.Edit)))
+	mux.Handle("POST /customers/{id}", middleware.RequireTenant(http.HandlerFunc(customerH.Update)))
+	mux.Handle("POST /customers/{id}/delete", middleware.RequireTenant(http.HandlerFunc(customerH.Delete)))
 	// ---- Middleware chain ----
 	//
 	// Order (outermost to innermost):
