@@ -247,3 +247,229 @@ html, body {
   border-radius: 8px;
   color: var(--muted);
 }
+
+/* ---- Page header ---- */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+}
+
+.page-header .actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+/* ---- Search bar ---- */
+.search-bar {
+  margin-bottom: 1rem;
+}
+
+.search-bar input {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0b0e13;
+  color: var(--fg);
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---- Data table ---- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.data-table thead th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  background: #0b0e13;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody td {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.data-table tbody tr:hover {
+  background: #0b0e13;
+}
+
+.data-table a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.data-table a:hover {
+  text-decoration: underline;
+}
+
+.row-actions {
+  text-align: right;
+}
+
+/* ---- Empty state ---- */
+.empty-state {
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.empty-state p {
+  margin: 0.5rem 0;
+}
+
+/* ---- Pagination ---- */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.pagination a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.pagination a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Forms ---- */
+.form-wide {
+  max-width: 640px;
+}
+
+.form-wide textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #0b0e13;
+  color: var(--fg);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.form-wide textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* ---- Danger button ---- */
+.btn-danger {
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  background: transparent;
+  color: #ff7b72;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-danger:hover {
+  background: rgba(248, 81, 73, 0.1);
+}
+
+/* ---- Detail grid ---- */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.5rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 0 0 2rem;
+}
+
+.detail-grid dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  align-self: start;
+  padding-top: 0.15rem;
+}
+
+.detail-grid dd {
+  margin: 0;
+}
+
+.notes {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ---- Future section ---- */
+.future-section {
+  padding: 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.future-section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* ---- Topbar nav ---- */
+.topbar nav a {
+  color: var(--muted);
+  text-decoration: none;
+  margin-left: 1rem;
+}
+
+.topbar nav a:hover {
+  color: var(--fg);
+}
