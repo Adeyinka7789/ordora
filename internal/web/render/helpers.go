@@ -107,5 +107,9 @@ func funcMap() template.FuncMap {
 			}
 			return ""
 		},
+
+		"divf": func(minor int64, divisor float64) float64 {
+			return float64(minor) / divisor
+		},
 	}
 }

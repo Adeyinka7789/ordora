@@ -1,0 +1,21 @@
+{{ define "products/_picker.html" }}
+<div class="picker-results">
+  {{ if not .Products }}
+    <p class="muted">No products found.</p>
+  {{ else }}
+    <ul class="picker-list">
+      {{ range .Products }}
+        <li>
+          <button type="button" class="picker-item"
+                  data-name="{{ .Name }}"
+                  data-price="{{ printf "%.2f" (divf .UnitPrice.Amount 100) }}"
+                  data-desc="{{ .Description }}">
+            <span class="picker-name">{{ .Name }}</span>
+            <span class="picker-price">{{ currency .UnitPrice.Amount .Currency }}</span>
+          </button>
+        </li>
+      {{ end }}
+    </ul>
+  {{ end }}
+</div>
+{{ end }}

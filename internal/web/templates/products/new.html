@@ -1,0 +1,37 @@
+{{ define "products/new.html" }}
+<section class="page-header">
+  <h1>New product</h1>
+  <a href="/products" class="btn-secondary">← Back</a>
+</section>
+
+{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+
+<form method="post" action="/products" class="form form-wide">
+  <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+  <label>
+    Name *
+    <input type="text" name="name" value="{{ .FormName }}" required autofocus maxlength="200" placeholder="e.g. Senator Outfit">
+  </label>
+
+  <label>
+    SKU
+    <input type="text" name="sku" value="{{ .FormSKU }}" maxlength="64" placeholder="Optional stock-keeping code">
+  </label>
+
+  <label>
+    Unit price *
+    <input type="text" name="unit_price" value="{{ .FormPrice }}" required placeholder="0.00">
+  </label>
+
+  <label>
+    Description
+    <textarea name="description" rows="3" maxlength="5000">{{ .FormDesc }}</textarea>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" class="btn-primary">Create product</button>
+    <a href="/products" class="btn-secondary">Cancel</a>
+  </div>
+</form>
+{{ end }}

@@ -1131,3 +1131,96 @@ a.stat-card:hover {
   font-size: 0.9rem;
   font-family: inherit;
 }
+
+/* ---- Products ---- */
+.row-archived {
+  opacity: 0.6;
+}
+
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.checkbox-inline input {
+  margin: 0;
+}
+
+/* ---- Items actions row ---- */
+.items-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---- Product picker ---- */
+.product-picker {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.picker-header {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.picker-header input[type="search"] {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #0b0e13;
+  color: var(--fg);
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.picker-header input[type="search"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.picker-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.picker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.picker-item:hover {
+  background: #0b0e13;
+}
+
+.picker-item .picker-name {
+  font-weight: 500;
+}
+
+.picker-item .picker-price {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}

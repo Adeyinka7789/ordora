@@ -127,4 +127,53 @@
   });
 
   updateTotals();
+
+    // ---- Product picker ----
+  const pickBtn = document.getElementById('pick-product');
+  const picker = document.getElementById('product-picker');
+  const pickerClose = document.getElementById('picker-close');
+  const pickerResults = document.getElementById('picker-results');
+
+  if (pickBtn && picker && pickerClose) {
+    pickBtn.addEventListener('click', () => {
+      picker.hidden = !picker.hidden;
+      if (!picker.hidden) {
+        // Trigger initial load.
+        const search = document.getElementById('picker-search');
+        if (search) search.dispatchEvent(new Event('input'));
+      }
+    });
+    pickerClose.addEventListener('click', () => { picker.hidden = true; });
+  }
+
+  // Delegate clicks on picker items.
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest('.picker-item');
+    if (!item) return;
+    addRowFromProduct({
+      name: item.dataset.name || '',
+      price: item.dataset.price || '0.00',
+      desc: item.dataset.desc || '',
+    });
+    picker.hidden = true;
+  });
+
+  function addRowFromProduct(prod) {
+    // Add a new row, then fill its fields.
+    addRow();
+    const rows = body.querySelectorAll('.item-row');
+    const lastRow = rows[rows.length - 1];
+    if (!lastRow) return;
+
+    const descInput = lastRow.querySelector('input[name$="[description]"]');
+    const priceInput = lastRow.querySelector('.price-input');
+    const qtyInput = lastRow.querySelector('.qty-input');
+
+    if (descInput) descInput.value = prod.name;
+    if (priceInput) priceInput.value = prod.price;
+    if (qtyInput && !qtyInput.value) qtyInput.value = '1';
+
+    updateRowSubtotal(lastRow);
+    updateTotals();
+  }
 })();

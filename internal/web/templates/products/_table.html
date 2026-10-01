@@ -1,0 +1,59 @@
+{{ define "products/_table.html" }}
+<div id="products-table">
+  {{ if not .Products }}
+    <div class="empty-state">
+      {{ if .Query }}
+        <p>No products match <strong>{{ .Query }}</strong>.</p>
+      {{ else }}
+        <p>No products yet.</p>
+        <p><a href="/products/new" class="btn-primary">Add your first product</a></p>
+      {{ end }}
+    </div>
+  {{ else }}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>SKU</th>
+          <th class="num">Price</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Products }}
+          <tr {{ if not .Active }}class="row-archived"{{ end }}>
+            <td><a href="/products/{{ .ID }}">{{ .Name }}</a></td>
+            <td>{{ if .SKU }}{{ .SKU }}{{ else }}<span class="muted">—</span>{{ end }}</td>
+            <td class="num">{{ currency .UnitPrice.Amount .Currency }}</td>
+            <td>
+              {{ if .Active }}
+                <span class="status-pill status-CONFIRMED">Active</span>
+              {{ else }}
+                <span class="status-pill status-CANCELLED">Archived</span>
+              {{ end }}
+            </td>
+            <td class="row-actions"><a href="/products/{{ .ID }}/edit">Edit</a></td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+
+    {{ if gt .Pagination.TotalPages 1 }}
+      <nav class="pagination">
+        {{ if .Pagination.HasPrev }}
+          <a href="/products?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
+             hx-get="/products?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
+             hx-target="#products-table" hx-swap="outerHTML" hx-push-url="true">← Previous</a>
+        {{ end }}
+        <span class="muted">Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
+        {{ if .Pagination.HasNext }}
+          <a href="/products?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
+             hx-get="/products?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
+             hx-target="#products-table" hx-swap="outerHTML" hx-push-url="true">Next →</a>
+        {{ end }}
+      </nav>
+    {{ end }}
+  {{ end }}
+</div>
+{{ end }}

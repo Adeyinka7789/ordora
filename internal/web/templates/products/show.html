@@ -1,0 +1,41 @@
+{{ define "products/show.html" }}
+<section class="page-header">
+  <div>
+    <h1>{{ .Product.Name }}</h1>
+    <p class="muted">{{ if .Product.SKU }}SKU: {{ .Product.SKU }}{{ else }}Product{{ end }}</p>
+  </div>
+  <div class="actions">
+    <a href="/products/{{ .Product.ID }}/edit" class="btn-secondary">Edit</a>
+    {{ if .Product.Active }}
+      <form method="post" action="/products/{{ .Product.ID }}/archive" class="inline-form"
+            onsubmit="return confirm('Archive this product? It won\'t be selectable in new orders.');">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="btn-danger">Archive</button>
+      </form>
+    {{ end }}
+  </div>
+</section>
+
+<dl class="detail-grid">
+  <dt>Price</dt>
+  <dd>{{ currency .Product.UnitPrice.Amount .Product.Currency }}</dd>
+
+  <dt>Status</dt>
+  <dd>
+    {{ if .Product.Active }}
+      <span class="status-pill status-CONFIRMED">Active</span>
+    {{ else }}
+      <span class="status-pill status-CANCELLED">Archived</span>
+    {{ end }}
+  </dd>
+
+  <dt>Description</dt>
+  <dd>{{ if .Product.Description }}{{ .Product.Description }}{{ else }}<span class="muted">—</span>{{ end }}</dd>
+
+  <dt>Created</dt>
+  <dd>{{ .Product.CreatedAt.Format "Jan 2, 2006" }}</dd>
+
+  <dt>Updated</dt>
+  <dd>{{ .Product.UpdatedAt.Format "Jan 2, 2006" }}</dd>
+</dl>
+{{ end }}

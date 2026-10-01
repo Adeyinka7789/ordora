@@ -136,6 +136,18 @@ func run() error {
 		Renderer:      renderer,
 	}
 
+	// ---- Products ----
+	productRepo := postgres.NewProductRepo(db)
+	productService := app.NewProductService(app.ProductServiceDeps{
+		Store: productRepo,
+		IDs:   id.Generator{},
+	})
+	productH := &handlers.ProductHandler{
+		Service:  productService,
+		Repo:     productRepo,
+		Renderer: renderer,
+	}
+
 	orderH := &handlers.OrderHandler{
 		Service:     orderService,
 		OrderRepo:   orderRepo,
@@ -201,6 +213,15 @@ func run() error {
 	mux.Handle("POST /customers/{id}", middleware.RequireTenant(http.HandlerFunc(customerH.Update)))
 	mux.Handle("POST /customers/{id}/delete", middleware.RequireTenant(http.HandlerFunc(customerH.Delete)))
 	// ---- Middleware chain ----
+	// ---- Products ----
+	mux.Handle("GET /products", middleware.RequireTenant(http.HandlerFunc(productH.Index)))
+	mux.Handle("GET /products/new", middleware.RequireTenant(http.HandlerFunc(productH.New)))
+	mux.Handle("POST /products", middleware.RequireTenant(http.HandlerFunc(productH.Create)))
+	mux.Handle("GET /products/picker", middleware.RequireTenant(http.HandlerFunc(productH.Picker)))
+	mux.Handle("GET /products/{id}", middleware.RequireTenant(http.HandlerFunc(productH.Show)))
+	mux.Handle("GET /products/{id}/edit", middleware.RequireTenant(http.HandlerFunc(productH.Edit)))
+	mux.Handle("POST /products/{id}", middleware.RequireTenant(http.HandlerFunc(productH.Update)))
+	mux.Handle("POST /products/{id}/archive", middleware.RequireTenant(http.HandlerFunc(productH.Archive)))
 	//
 	// Order (outermost to innermost):
 	//   Recover -> RequestID -> Logger -> Session -> CSRF -> mux
