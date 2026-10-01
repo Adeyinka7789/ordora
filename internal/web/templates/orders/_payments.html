@@ -35,6 +35,50 @@
             {{ if .IsReversal }} · reversal{{ end }}
           </div>
           {{ if .Notes }}<div class="payment-notes muted">{{ .Notes }}</div>{{ end }}
+
+          {{ $atts := index $.AttachmentsByPayment .ID }}
+          {{ if $atts }}
+            <ul class="payment-receipts">
+              {{ range $atts }}
+                <li>
+                  <a href="/attachments/{{ .ID }}">
+                    <span class="attachment-icon">{{ if .IsImage }}🖼{{ else }}📄{{ end }}</span>
+                    {{ .Filename }}
+                    <span class="muted small">{{ .HumanSize }}</span>
+                  </a>
+                </li>
+              {{ end }}
+            </ul>
+          {{ end }}
+
+          {{ if not (or .IsReversal .IsReversed) }}
+            <form hx-post="/payments/{{ .ID }}/attachments"
+                  hx-target="#payments-card"
+                  hx-swap="outerHTML"
+                  hx-encoding="multipart/form-data"
+                  class="payment-receipt-upload">
+              <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+              <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required>
+              <button type="submit" class="btn-secondary btn-tiny">Upload receipt</button>
+            </form>
+          {{ end }}
+                      <details class="reverse-payment">
+              <summary>Reverse this payment</summary>
+              <form hx-post="/payments/{{ .ID }}/reverse"
+                    hx-target="#payments-card"
+                    hx-swap="outerHTML"
+                    class="reverse-form">
+                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                <label>
+                  Reason (required)
+                  <input type="text" name="reason" required maxlength="500" placeholder="e.g. Duplicate entry">
+                </label>
+                <button type="submit" class="btn-danger btn-tiny"
+                        onclick="return confirm('Reverse this payment? This cannot be undone.');">
+                  Confirm reversal
+                </button>
+              </form>
+            </details>
         </li>
       {{ end }}
     </ul>

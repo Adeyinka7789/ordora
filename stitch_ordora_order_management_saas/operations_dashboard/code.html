@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-tertiary-fixed":"#002113","secondary-fixed":"#dae2fd","surface-variant":"#d3e4fe","surface-bright":"#f8f9ff","tertiary-fixed-dim":"#4edea3","on-secondary-fixed":"#131b2e","primary-container":"#4f46e5","on-background":"#0b1c30","surface-container-lowest":"#ffffff","on-secondary-fixed-variant":"#3f465c","secondary-container":"#dae2fd","surface-container-high":"#dce9ff","inverse-surface":"#213145","on-secondary-container":"#5c647a","outline":"#777587","outline-variant":"#c7c4d8","primary-fixed-dim":"#c3c0ff","surface-dim":"#cbdbf5","on-primary":"#ffffff","on-primary-fixed":"#0f0069","on-surface-variant":"#464555","on-tertiary":"#ffffff","inverse-primary":"#c3c0ff","error":"#ba1a1a","surface-container-highest":"#d3e4fe","primary-fixed":"#e2dfff","surface-container-low":"#eff4ff","surface":"#f8f9ff","error-container":"#ffdad6","on-tertiary-fixed-variant":"#005236","secondary-fixed-dim":"#bec6e0","tertiary":"#005338","background":"#f8f9ff","tertiary-fixed":"#6ffbbe","primary":"#3525cd","tertiary-container":"#006e4b","on-primary-fixed-variant":"#3323cc","on-primary-container":"#dad7ff","on-error-container":"#93000a","on-surface":"#0b1c30","secondary":"#565e74","on-tertiary-container":"#67f4b7","on-secondary":"#ffffff","surface-tint":"#4d44e3","on-error":"#ffffff","surface-container":"#e5eeff","inverse-on-surface":"#eaf1ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"gutter":"1rem","space-md":"0.75rem","gutter-desktop":"1.5rem","margin":"1rem","margin-desktop":"2rem","space-sm":"0.5rem","space-xl":"2rem","space-lg":"1.25rem","space-xs":"0.25rem"},fontFamily:{"code-md":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"label-md":["Inter"],"display-lg":["Inter"],"body-md":["Inter"],"headline-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-sm":["Inter"],"body-lg":["Inter"]},fontSize:{"code-md":["12px",{"lineHeight":"16px","letterSpacing":"-0.01em","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-md":["18px",{"lineHeight":"24px","letterSpacing":"-0.015em","fontWeight":"600"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"600"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.025em","fontWeight":"700"}],"body-md":["13px",{"lineHeight":"18px","letterSpacing":"-0.005em","fontWeight":"400"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-lg-mobile":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"400"}],"body-lg":["15px",{"lineHeight":"22px","letterSpacing":"-0.01em","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-16 px-space-md border-b border-outline-variant/30 flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Ordora Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VQgCiovf-L6q6y6tlgYb6LUrgEfY8OKWAhSqTRjh_v2UekjXlL3TyCCALRJeYVhYTfJW1rlvFWJyaebaQ2Sv8VBLKNt0bAMvHUtA6fDy0SINIfXaYvPlPOR4r3FrQvGy-Bz24dZx2WKPBElPLJphlyRNoqwwkB4geSHaSpucL9RBPYgVApfqJry3gS22hSx7WwDeXS5mK1QFgpF7xzFLSP2I2Oq_Blw338D4eDSwWL4685370CjCErmFU"/><span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Ordora</span></div><span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-medium">v2.4</span></div><div class="p-space-sm border-b border-outline-variant/20"><button class="w-full flex items-center justify-between p-space-sm rounded bg-surface-container-low hover:bg-surface-container transition-colors text-left"><div class="flex flex-col min-w-0 pr-space-xs"><div class="flex items-center gap-space-xs"><span class="font-label-md text-label-md text-on-surface font-medium truncate">Ade Atelier & Bespoke</span></div><span class="font-label-sm text-label-sm text-primary font-semibold uppercase tracking-wider">Pro Tier</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">unfold_more</span></button></div><div class="px-space-md pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Operations</span></div><nav class="flex flex-col gap-0.5 px-space-sm" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><a aria-current="page" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors bg-primary-container text-on-primary font-semibold shadow-sm" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="orders" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">receipt_long</span><span>Orders</span></div><span class="font-code-md text-code-md px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed font-semibold">124</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="customers" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">group</span><span>Customers</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="payments-ledger" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span><span>Payments & Ledger</span></div></a><div class="px-space-sm pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Channels & Tools</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="public-storefront" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">storefront</span><span>Public Storefront</span></div><span class="material-symbols-outlined text-[16px] text-outline">open_in_new</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="reports-analytics" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">query_stats</span><span>Reports & Analytics</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="settings" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">settings</span><span>Settings</span></div></a></nav></div><div class="p-space-sm border-t border-outline-variant/30 flex flex-col gap-space-xs bg-surface-container-lowest"><div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30 flex flex-col gap-space-xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Intake Link</span><button class="flex items-center gap-0.5 text-primary hover:text-on-primary-fixed-variant text-[11px] font-medium transition-colors"><span class="material-symbols-outlined text-[14px]">content_copy</span><span>Copy</span></button></div><div class="font-code-md text-code-md text-on-surface font-medium truncate">ordora.com/order/ade-atelier</div></div><div class="pt-space-xs px-space-xs flex items-center justify-between"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant">Postgres Sync Active</span></div><a class="font-label-sm text-label-sm text-primary hover:underline font-medium" data-path="portal-view" href="#">Portal View</a></div></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md flex-1 max-w-lg"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-space-sm text-on-surface-variant text-[18px]">search</span><input class="w-full h-9 pl-9 pr-12 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:bg-surface-container-lowest transition-all" placeholder="Search orders, customers, receipts ⌘K" type="text"/><span class="font-code-md text-code-md absolute right-space-sm text-outline border border-outline-variant/40 rounded px-1 py-0.5 bg-surface-container-lowest">⌘K</span></div></div><div class="flex items-center gap-space-md"><button class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span><span>New Order</span></button><div class="h-5 w-px bg-outline-variant/40"></div><button class="relative p-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-error text-on-error font-code-md text-[10px] flex items-center justify-center font-bold">3</span></button><div class="flex items-center gap-space-sm pl-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant/40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5IEtS4jVWJaEjtKwRz3fpVgtmwEUmvac-keeUZTNm0JN3DQzqL1T4E2Ro1FJL1rmvvBk_7HXcPnGVHx-bYZohfJdLdsxsWuc4BRE7HKvTmcAiWiLDvuPPizV24Cz8JckEzV07XsTL6t9U_4Xqns_gakS0zQVYtXiAlu-b8A0Y7YtCXuTa27kzcsdavJxWqCSd5yKTIdG4FoEZLbzvYHoFeT1hcBbPUI8w_Z81ixqbq8RVAvHVMCpHDQ"/><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">Michael Adebayo</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-tight">Business Owner</span></div></div></div></header><main class="w-full pt-16 flex-1 bg-surface"><div class="flex flex-col w-full">
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+<!-- Top Operations Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Good morning, Michael</h1>
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span>Live Sync: Connected</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2 mt-0.5">
+<span>Thursday, Oct 24, 2026</span>
+<span class="text-outline-variant">•</span>
+<span>Atelier Victoria Island, Lagos</span>
+</p>
+</div>
+<div class="flex items-center gap-space-sm flex-wrap">
+<button class="h-9 px-space-md rounded bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-label-md text-label-md font-medium shadow-sm transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-on-surface-variant">file_download</span>
+<span>Export CSV</span>
+</button>
+<button class="h-9 px-space-md rounded bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-label-md text-label-md font-medium shadow-sm transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-on-surface-variant">tune</span>
+<span>Filters</span>
+</button>
+<button class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors group">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>New Order</span>
+<kbd class="font-code-md text-[10px] px-1.5 py-0.5 rounded bg-primary text-on-primary font-semibold">N</kbd>
+</button>
+</div>
+</div>
+<!-- KPI Metric Cards Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Total Orders -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Active Orders</span>
+<div class="font-display-lg text-display-lg text-on-surface mt-1 font-bold tracking-tight">128</div>
+</div>
+<div class="w-9 h-9 rounded bg-secondary-container/60 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-space-md pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="inline-flex items-center font-semibold text-tertiary-container bg-surface-container-low px-1.5 py-0.5 rounded text-label-sm">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span>14.2%
+          </span>
+<span class="text-on-surface-variant">vs. last month</span>
+</div>
+</div>
+<!-- Outstanding Balance -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Outstanding Balance</span>
+<div class="font-headline-lg text-headline-lg text-on-surface mt-1 font-bold tracking-tight">₦2,450,000</div>
+</div>
+<div class="w-9 h-9 rounded bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 mt-space-md pt-space-xs">
+<div class="w-full bg-surface-container-low rounded-full h-1.5 overflow-hidden">
+<div class="bg-tertiary h-1.5 rounded-full" style="width: 78.1%"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>78% collected</span>
+<span class="text-error font-medium">19 orders pending</span>
+</div>
+</div>
+</div>
+<!-- Due Today -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Due Today</span>
+<div class="font-display-lg text-display-lg text-on-surface mt-1 font-bold tracking-tight">8 <span class="font-headline-md text-headline-md font-medium text-on-surface-variant">Orders</span></div>
+</div>
+<div class="w-9 h-9 rounded bg-amber-50 flex items-center justify-center text-amber-700">
+<span class="material-symbols-outlined text-[20px]">schedule</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-space-md pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span>3 in final finishing</span>
+</div>
+<span class="font-label-sm text-label-sm font-semibold text-primary">Inspect</span>
+</div>
+</div>
+<!-- Overdue / Attention -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Overdue / Action</span>
+<div class="font-display-lg text-display-lg text-error mt-1 font-bold tracking-tight">4 <span class="font-headline-md text-headline-md font-medium text-error">Orders</span></div>
+</div>
+<div class="w-9 h-9 rounded bg-error-container/60 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+</div>
+</div>
+<div class="flex items-center justify-between mt-space-md pt-space-xs font-body-sm text-body-sm">
+<span class="text-error font-medium">Customer delays flagged</span>
+<button class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-error-container text-on-error-container font-semibold hover:opacity-90 transition-opacity">Review</button>
+</div>
+</div>
+</div>
+<!-- Operational Status Pipeline Navigation Strip -->
+<div class="bg-surface-container-lowest rounded shadow-sm p-space-sm flex flex-col gap-space-xs">
+<div class="flex items-center justify-between px-space-xs pb-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Fulfillment Stage Pipeline</span>
+<span class="font-code-md text-code-md text-on-surface-variant">Real-time atelier workflow</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 text-center">
+<!-- Stage 1 -->
+<button class="flex flex-col items-center p-2 rounded bg-surface-container-low hover:bg-surface-container transition-all text-left group" data-filter="NEW">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">New</span>
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+</div>
+<div class="w-full flex items-baseline justify-between mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">12</span>
+<span class="font-code-md text-code-md text-outline">₦840k</span>
+</div>
+</button>
+<!-- Stage 2 -->
+<button class="flex flex-col items-center p-2 rounded bg-surface-container-low hover:bg-surface-container transition-all text-left group" data-filter="CONFIRMED">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Confirmed</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+<div class="w-full flex items-baseline justify-between mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">18</span>
+<span class="font-code-md text-code-md text-outline">₦1.9M</span>
+</div>
+</button>
+<!-- Stage 3 (Active selected state style) -->
+<button class="flex flex-col items-center p-2 rounded bg-primary-container text-on-primary transition-all text-left shadow-sm" data-filter="IN_PROGRESS">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-sm text-label-sm text-on-primary-container font-semibold">In Progress</span>
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed"></span>
+</div>
+<div class="w-full flex items-baseline justify-between mt-1">
+<span class="font-headline-md text-headline-md font-bold">34</span>
+<span class="font-code-md text-code-md text-on-primary-container">₦4.2M</span>
+</div>
+</button>
+<!-- Stage 4 -->
+<button class="flex flex-col items-center p-2 rounded bg-surface-container-low hover:bg-surface-container transition-all text-left group" data-filter="READY">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Ready</span>
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+</div>
+<div class="w-full flex items-baseline justify-between mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">16</span>
+<span class="font-code-md text-code-md text-outline">₦1.1M</span>
+</div>
+</button>
+<!-- Stage 5 -->
+<button class="flex flex-col items-center p-2 rounded bg-surface-container-low hover:bg-surface-container transition-all text-left group" data-filter="OUT_FOR_DELIVERY">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">In Transit</span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+<div class="w-full flex items-baseline justify-between mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">8</span>
+<span class="font-code-md text-code-md text-outline">₦620k</span>
+</div>
+</button>
+<!-- Stage 6 -->
+<button class="flex flex-col items-center p-2 rounded bg-surface-container-low hover:bg-surface-container transition-all text-left group" data-filter="DELIVERED">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Delivered</span>
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span>
+</div>
+<div class="w-full flex items-baseline justify-between mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">22</span>
+<span class="font-code-md text-code-md text-outline">₦1.8M</span>
+</div>
+</button>
+<!-- Stage 7 -->
+<button class="flex flex-col items-center p-2 rounded bg-surface-container-low hover:bg-surface-container transition-all text-left group" data-filter="COMPLETED">
+<div class="flex items-center justify-between w-full">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Archived</span>
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+</div>
+<div class="w-full flex items-baseline justify-between mt-1">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">14</span>
+<span class="font-code-md text-code-md text-outline">₦740k</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Main Content Layout (Table + Side Panels) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- Primary Operational Orders Table (8 cols on XL) -->
+<div class="xl:col-span-8 flex flex-col gap-space-sm bg-surface-container-lowest rounded shadow-sm overflow-hidden">
+<!-- Table Controls & Secondary Tabs -->
+<div class="p-space-md flex flex-col gap-space-sm bg-surface-container-lowest">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<!-- Tabs -->
+<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+<button class="px-3 py-1.5 rounded font-label-md text-label-md font-semibold bg-surface-container-low text-primary flex items-center gap-1.5 whitespace-nowrap">
+<span>All Orders</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.2 rounded-full bg-secondary-container text-on-secondary-fixed">128</span>
+</button>
+<button class="px-3 py-1.5 rounded font-label-md text-label-md font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors whitespace-nowrap flex items-center gap-1.5">
+<span>Needs Action</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.2 rounded-full bg-error-container text-on-error-container font-semibold">12</span>
+</button>
+<button class="px-3 py-1.5 rounded font-label-md text-label-md font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors whitespace-nowrap flex items-center gap-1.5">
+<span>Pending Payment</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.2 rounded-full bg-surface-container-high text-on-surface-variant">19</span>
+</button>
+<button class="px-3 py-1.5 rounded font-label-md text-label-md font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors whitespace-nowrap">
+<span>Due This Week (24)</span>
+</button>
+</div>
+<!-- Table quick stats -->
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+<span class="font-label-sm text-label-sm">5 orders completed today</span>
+</div>
+</div>
+<!-- Search & Direct Filter Bar -->
+<div class="flex flex-col sm:flex-row items-center gap-space-xs pt-1">
+<div class="relative w-full flex items-center">
+<span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+<input class="w-full h-9 pl-9 pr-24 rounded bg-surface-container-low font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" id="orderSearchInput" placeholder="Search by Order #, Customer, Phone, or Title..." type="text"/>
+<div class="absolute right-2.5 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="font-label-sm text-[10px] uppercase font-bold text-outline">Live</span>
+</div>
+</div>
+<div class="flex items-center gap-1 w-full sm:w-auto shrink-0">
+<select class="h-9 px-2.5 rounded bg-surface-container-low font-label-md text-label-md text-on-surface-variant focus:outline-none">
+<option>All Crafts (Fashion, Furniture, Tech)</option>
+<option>Bespoke Tailoring</option>
+<option>Artisan Furniture</option>
+<option>Device Repair</option>
+<option>Catering & Bakery</option>
+</select>
+<button class="h-9 w-9 rounded bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">view_column</span>
+</button>
+</div>
+</div>
+</div>
+<!-- High-Density Orders Data Table -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left font-body-md text-body-md">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-2.5 px-space-md font-semibold">Order ID</th>
+<th class="py-2.5 px-space-md font-semibold">Customer</th>
+<th class="py-2.5 px-space-md font-semibold">Order Spec / Item</th>
+<th class="py-2.5 px-space-md font-semibold">Stage</th>
+<th class="py-2.5 px-space-md font-semibold text-right">Financials</th>
+<th class="py-2.5 px-space-md font-semibold">Payment</th>
+<th class="py-2.5 px-space-md font-semibold">Due</th>
+<th class="py-2.5 px-space-md font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-none text-on-surface">
+<!-- Row 1: Bespoke Agbada -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="font-code-md text-code-md font-semibold text-primary">ORD-2026-00128</span>
+<button class="text-outline hover:text-primary transition-colors" onclick="navigator.clipboard.writeText('ORD-2026-00128')" title="Copy ID">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+<span class="font-label-sm text-[10px] text-outline">Bespoke Apparel</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center font-bold">
+                      JO
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">John Okafor</span>
+<span class="font-code-md text-code-md text-on-surface-variant">+234 803 491 8821</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col max-w-[210px]">
+<span class="font-label-md text-label-md text-on-surface font-medium truncate">2 Senator Outfits + Agbada Embroidery</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Navy Cashmere Wool • Gold threading</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-amber-100 text-amber-900">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+<span>IN_PROGRESS</span>
+</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-semibold text-on-surface">₦180,000</span>
+<span class="font-code-md text-[11px] text-error font-medium">Bal: ₦100,000</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm font-semibold text-on-surface">
+                    PARTIAL
+                  </span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-medium text-amber-700">Today, 4:00 PM</span>
+<span class="font-code-md text-[10px] text-outline">Fitting Room 2</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Record Payment">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Send Client Tracking Link">
+<span class="material-symbols-outlined text-[18px]">send_to_mobile</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="Order Details">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Wedding Cake Bakery -->
+<tr class="hover:bg-surface-container-low/60 transition-colors bg-surface-container-low/20">
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="font-code-md text-code-md font-semibold text-primary">ORD-2026-00127</span>
+<button class="text-outline hover:text-primary transition-colors" title="Copy ID">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+<span class="font-label-sm text-[10px] text-outline">Artisan Pastry</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md flex items-center justify-center font-bold">
+                      SJ
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Sarah Jenkins</span>
+<span class="font-code-md text-code-md text-on-surface-variant">sarah.j@crestline.ng</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col max-w-[210px]">
+<span class="font-label-md text-label-md text-on-surface font-medium truncate">3-Tier Wedding Cake (Red Velvet)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Sugar floral garnish • Pearl finish</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+<span>READY</span>
+</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-semibold text-on-surface">₦320,000</span>
+<span class="font-code-md text-[11px] text-tertiary font-medium">Settled 100%</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">
+                    PAID
+                  </span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-medium text-on-surface">Tomorrow, 11 AM</span>
+<span class="font-code-md text-[10px] text-outline">Cold Van Reserved</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">local_shipping</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">send_to_mobile</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Walnut Desk Furniture -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="font-code-md text-code-md font-semibold text-primary">ORD-2026-00125</span>
+<button class="text-outline hover:text-primary transition-colors" title="Copy ID">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+<span class="font-label-sm text-[10px] text-outline">Custom Woodwork</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center font-bold">
+                      DB
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Dr. David Bello</span>
+<span class="font-code-md text-code-md text-on-surface-variant">+234 812 094 3302</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col max-w-[210px]">
+<span class="font-label-md text-label-md text-on-surface font-medium truncate">Custom Walnut Executive Desk</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Live edge slab • Concealed power dock</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-purple-100 text-purple-900">
+<span class="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+<span>OUT_FOR_DELIVERY</span>
+</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-semibold text-on-surface">₦750,000</span>
+<span class="font-code-md text-[11px] text-error font-medium">Bal: ₦250,000</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm font-semibold text-on-surface">
+                    PARTIAL
+                  </span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-medium text-on-surface">Today, 2:30 PM</span>
+<span class="font-code-md text-[10px] text-outline">Driver: GOKADA Express</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">navigation</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Tech Device Repair (Overdue) -->
+<tr class="hover:bg-surface-container-low/60 transition-colors bg-error-container/10">
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="font-code-md text-code-md font-semibold text-error">ORD-2026-00121</span>
+<button class="text-outline hover:text-error transition-colors" title="Copy ID">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+<span class="font-label-sm text-[10px] text-error font-medium">Precision Repair</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-error-container text-on-error-container font-label-md text-label-md flex items-center justify-center font-bold">
+                      FA
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Fatima Al-Hassan</span>
+<span class="font-code-md text-code-md text-on-surface-variant">+234 901 884 1029</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col max-w-[210px]">
+<span class="font-label-md text-label-md text-on-surface font-medium truncate">iPhone 15 Pro OLED & Battery</span>
+<span class="font-body-sm text-body-sm text-error truncate">Awaiting original OEM adhesive</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-red-100 text-red-900">
+<span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+<span>OVERDUE</span>
+</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-semibold text-on-surface">₦115,000</span>
+<span class="font-code-md text-[11px] text-error font-medium">Bal: ₦115,000</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">
+                    UNPAID
+                  </span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-error">Yesterday (Oct 23)</span>
+<span class="font-code-md text-[10px] text-error">Urgent notification sent</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-error hover:bg-error-container transition-colors" title="Contact Immediately">
+<span class="material-symbols-outlined text-[18px]">phone_forwarded</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 5: Tailored Two-Piece -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="font-code-md text-code-md font-semibold text-primary">ORD-2026-00120</span>
+<button class="text-outline hover:text-primary transition-colors" title="Copy ID">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+</div>
+<span class="font-label-sm text-[10px] text-outline">Bespoke Apparel</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-secondary-container text-on-secondary-fixed font-label-md text-label-md flex items-center justify-center font-bold">
+                      TA
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Tunde Adeleke</span>
+<span class="font-code-md text-code-md text-on-surface-variant">tunde@zenithgroup.org</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col max-w-[210px]">
+<span class="font-label-md text-label-md text-on-surface font-medium truncate">Double Breasted Houndstooth Suit</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Horn buttons • Basted canvas structure</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-blue-100 text-blue-900">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+<span>CONFIRMED</span>
+</span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-semibold text-on-surface">₦240,000</span>
+<span class="font-code-md text-[11px] text-tertiary font-medium">Bal: ₦0</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">
+                    PAID
+                  </span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-medium text-on-surface">Oct 28</span>
+<span class="font-code-md text-[10px] text-outline">Pattern Cut Complete</span>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">assignment</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer -->
+<div class="p-space-md bg-surface-container-lowest flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span>Showing <strong class="text-on-surface font-semibold">1-5</strong> of 128 orders</span>
+<span class="text-outline-variant">•</span>
+<span class="text-outline">Latency: 14ms (PostgreSQL Replica)</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant disabled:opacity-50 font-medium">Prev</button>
+<button class="h-7 w-7 rounded bg-primary-container text-on-primary font-bold">1</button>
+<button class="h-7 w-7 rounded bg-surface-container-low text-on-surface font-medium hover:bg-surface-container">2</button>
+<button class="h-7 w-7 rounded bg-surface-container-low text-on-surface font-medium hover:bg-surface-container">3</button>
+<span class="px-1 text-outline">...</span>
+<button class="h-7 w-7 rounded bg-surface-container-low text-on-surface font-medium hover:bg-surface-container">26</button>
+<button class="h-7 px-2 rounded bg-surface-container-low text-on-surface font-medium hover:bg-surface-container">Next</button>
+</div>
+</div>
+</div>
+<!-- Right Column: Dispatch & Quick Payment Activity Feed (4 cols on XL) -->
+<div class="xl:col-span-4 flex flex-col gap-space-lg">
+<!-- Today's Dispatch Schedule Card -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Dispatch Schedule</h2>
+</div>
+<span class="font-code-md text-code-md px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed font-bold">
+              4 Today
+            </span>
+</div>
+<!-- Dispatch Items -->
+<div class="flex flex-col gap-space-sm">
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1.5 hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-primary">ORD-2026-00125</span>
+<span class="font-label-sm text-label-sm font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">2:30 PM</span>
+</div>
+<span class="font-label-md text-label-md font-medium text-on-surface truncate">Custom Walnut Desk • Dr. Bello</span>
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-outline">pin_drop</span>
+<span class="truncate">Ikoyi, Phase 1</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline font-medium">Van #4</span>
+</div>
+</div>
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1.5 hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-primary">ORD-2026-00122</span>
+<span class="font-label-sm text-label-sm font-bold text-on-surface bg-surface-container px-1.5 py-0.2 rounded">3:45 PM</span>
+</div>
+<span class="font-label-md text-label-md font-medium text-on-surface truncate">3x Aso-Ebi Sets • Madam Folake</span>
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-outline">pin_drop</span>
+<span class="truncate">Lekki Phase 2</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline font-medium">Express Courier</span>
+</div>
+</div>
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1.5 hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-primary">ORD-2026-00119</span>
+<span class="font-label-sm text-label-sm font-bold text-on-surface bg-surface-container px-1.5 py-0.2 rounded">5:15 PM</span>
+</div>
+<span class="font-label-md text-label-md font-medium text-on-surface truncate">Restored Leather Chesterfield • K. Martins</span>
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-outline">pin_drop</span>
+<span class="truncate">Victoria Island Extension</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline font-medium">Flatbed 2</span>
+</div>
+</div>
+</div>
+<button class="w-full py-2 rounded bg-surface-container-low hover:bg-surface-container text-primary font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-1">
+<span>Manage All Dispatches</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<!-- Recent Payment Activity Ledger -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container text-[20px]">account_balance</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Recent Ledger Feed</h2>
+</div>
+<a class="font-label-sm text-label-sm text-primary font-medium hover:underline" data-path="payments-ledger" href="#">Full Ledger</a>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+<span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Dr. David Bello</span>
+<span class="font-code-md text-[11px] text-on-surface-variant">Access Bank Transfer • 18m ago</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-bold text-tertiary">+₦500,000</span>
+<span class="font-label-sm text-[10px] text-outline">RCPT #8812</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded bg-secondary-container flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[18px]">credit_card</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Sarah Jenkins</span>
+<span class="font-code-md text-[11px] text-on-surface-variant">Online POS Card • 1h ago</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-bold text-tertiary">+₦320,000</span>
+<span class="font-label-sm text-[10px] text-outline">RCPT #8811</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">John Okafor</span>
+<span class="font-code-md text-[11px] text-on-surface-variant">Workshop Deposit • 3h ago</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-code-md text-code-md font-bold text-tertiary">+₦80,000</span>
+<span class="font-label-sm text-[10px] text-outline">RCPT #8810</span>
+</div>
+</div>
+</div>
+<!-- Total Balance Widget banner -->
+<div class="p-space-sm rounded bg-surface-container-low flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Daily Settlement Target</span>
+<span class="font-code-md text-code-md font-semibold text-on-surface">₦900,000 / ₦1,200,000 (75%)</span>
+</div>
+<div class="w-12 h-12 flex items-center justify-center">
+<!-- Mini SVG circular progress ring -->
+<svg class="w-10 h-10 -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-tertiary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="75, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Atelier Fabricator Production Note Card -->
+<div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-center gap-2 text-primary font-semibold font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Workshop Material Inventory Notice</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+            Italian wool roll #98 & 35mm concealed hinges arrived from Apapa depot. 4 backlog orders can now advance to basted stage.
+          </p>
+<div class="pt-1 flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline">Updated by Head Tailor (Sule)</span>
+<button class="text-primary font-medium hover:underline">Batch Update (4)</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive script for client-side search filtering simulation and feedback -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('orderSearchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const val = e.target.value.toLowerCase();
+          const rows = document.querySelectorAll('tbody tr');
+          rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(val) ? '' : 'none';
+          });
+        });
+      }
+
+      // Shortcut listener: press 'N' to open order
+      window.addEventListener('keydown', (e) => {
+        if ((e.key === 'n' || e.key === 'N') && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          const newOrderBtn = document.querySelector('button kbd')?.parentElement;
+          if (newOrderBtn) {
+            newOrderBtn.classList.add('scale-95');
+            setTimeout(() => newOrderBtn.classList.remove('scale-95'), 150);
+          }
+        }
+      });
+    });
+  </script>
+</div></main></div></body></html>

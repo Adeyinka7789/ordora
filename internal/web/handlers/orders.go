@@ -94,12 +94,13 @@ type orderShowPage struct {
 	FlashError  string
 
 	// Fields consumed by embedded fragments.
-	Error       string
-	Order       *order.Order
-	OrderID     uuid.UUID
-	Attachments []*attachment.Attachment
-	Payments    []*payment.Payment
-	PayStatus   payment.Status
+	Error                string
+	Order                *order.Order
+	OrderID              uuid.UUID
+	Attachments          []*attachment.Attachment
+	Payments             []*payment.Payment
+	PayStatus            payment.Status
+	AttachmentsByPayment map[uuid.UUID][]*attachment.Attachment
 }
 
 // -----------------------------------------------------------------------------
@@ -572,8 +573,20 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load payments (best-effort).
+	// Load payments (best-effort).
 	if list, err := h.Payments.ListForOrder(r.Context(), scope, o.ID); err == nil {
 		page.Payments = list
+
+		// Load per-payment receipts.
+		byPayment := make(map[uuid.UUID][]*attachment.Attachment, len(list))
+		for _, p := range list {
+			atts, err := h.Attachments.List(r.Context(), scope, attachment.EntityPayment, p.ID)
+			if err != nil {
+				continue
+			}
+			byPayment[p.ID] = atts
+		}
+		page.AttachmentsByPayment = byPayment
 	}
 	page.PayStatus = payment.DeriveStatus(o.Total, o.Paid)
 

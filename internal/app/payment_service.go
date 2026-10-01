@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,12 +19,14 @@ import (
 // PaymentWriter is the write side of the payment repo.
 type PaymentWriter interface {
 	CreateTx(ctx context.Context, tx pgx.Tx, p *payment.Payment) error
+	MarkReversedTx(ctx context.Context, tx pgx.Tx, originalID, reversalID uuid.UUID) error
 }
 
 // PaymentReader is the read side.
 type PaymentReader interface {
 	ListForOrder(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) ([]*payment.Payment, error)
 	GetByID(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*payment.Payment, error)
+	GetByIDTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*payment.Payment, error)
 }
 
 // PaymentService orchestrates recording payments against orders.
@@ -77,12 +80,15 @@ type RecordPaymentInput struct {
 }
 
 var (
-	ErrPaymentAmountRequired = errors.New("payment service: amount is required")
-	ErrPaymentMethodInvalid  = errors.New("payment service: invalid payment method")
-	ErrOrderNotFound         = errors.New("payment service: order not found")
-	ErrOverpaymentNotAllowed = errors.New("payment service: amount exceeds outstanding balance")
-	ErrOrderIsCancelled      = errors.New("payment service: order is cancelled")
-	ErrPaidAtInFuture        = errors.New("payment service: payment date cannot be in the future")
+	ErrPaymentAmountRequired  = errors.New("payment service: amount is required")
+	ErrPaymentMethodInvalid   = errors.New("payment service: invalid payment method")
+	ErrOrderNotFound          = errors.New("payment service: order not found")
+	ErrOverpaymentNotAllowed  = errors.New("payment service: amount exceeds outstanding balance")
+	ErrOrderIsCancelled       = errors.New("payment service: order is cancelled")
+	ErrPaidAtInFuture         = errors.New("payment service: payment date cannot be in the future")
+	ErrCannotReverseReversal  = errors.New("payment service: cannot reverse a reversal")
+	ErrPaymentAlreadyReversed = errors.New("payment service: payment is already reversed")
+	ErrReasonRequired         = errors.New("payment service: reason is required")
 )
 
 // -----------------------------------------------------------------------------
@@ -182,4 +188,107 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 // ListForOrder returns the payment history for an order.
 func (s *PaymentService) ListForOrder(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) ([]*payment.Payment, error) {
 	return s.paymentR.ListForOrder(ctx, scope, orderID)
+}
+
+// ReverseInput describes a reversal request.
+type ReverseInput struct {
+	PaymentID  uuid.UUID
+	Reason     string
+	ReversedAt time.Time
+}
+
+// ReversePayment creates a reversal of an existing payment.
+//
+// The reversal is a new payment row with:
+//   - amount equal to the original
+//   - reverses = original.ID
+//   - notes = "Reversed: <reason>"
+//
+// The original's reversed_by is set to the reversal's id. The DB trigger
+// recalculates orders.amount_paid_minor because both rows are excluded from
+// the sum.
+//
+// Rules:
+//   - The payment must belong to the caller's tenant.
+//   - Cannot reverse a reversal.
+//   - Cannot reverse an already-reversed payment.
+//   - Reason is required.
+func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.TenantScope, in ReverseInput) (*order.Order, error) {
+	if strings.TrimSpace(in.Reason) == "" {
+		return nil, ErrReasonRequired
+	}
+	reversedAt := in.ReversedAt
+	if reversedAt.IsZero() {
+		reversedAt = s.now()
+	}
+
+	var updated *order.Order
+	err := s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		// Load original. We use the tx-aware getter so we're in the same
+		// transaction as the insert.
+		orig, err := s.paymentR.GetByIDTx(ctx, tx, in.PaymentID)
+		if err != nil {
+			return err
+		}
+		if orig.IsReversal() {
+			return ErrCannotReverseReversal
+		}
+		if orig.IsReversed() {
+			return ErrPaymentAlreadyReversed
+		}
+
+		// Build the reversal row.
+		rev, err := payment.New(
+			s.ids.New(), scope.OrgID, orig.OrderID,
+			orig.Amount, orig.Method,
+			"REVERSAL", reversedAt, "Reversed: "+in.Reason,
+			scope.UserID, s.now(),
+		)
+		if err != nil {
+			return err
+		}
+		// Mark it as a reversal of the original.
+		rev.Reverses = &orig.ID
+
+		if err := s.payments.CreateTx(ctx, tx, rev); err != nil {
+			return err
+		}
+		if err := s.payments.MarkReversedTx(ctx, tx, orig.ID, rev.ID); err != nil {
+			return err
+		}
+
+		// Reload order to see the trigger's effect.
+		reloaded, err := s.orders.GetByID(ctx, scope, orig.OrderID)
+		if err != nil {
+			return err
+		}
+		updated = reloaded
+
+		if s.audit != nil {
+			if err := s.audit.RecordTx(ctx, tx, audit.Entry{
+				OrganizationID: scope.OrgID,
+				ActorUserID:    scope.UserID,
+				Action:         "payment.reversed",
+				EntityType:     "PAYMENT",
+				EntityID:       orig.ID,
+				After: mustJSON(map[string]any{
+					"reversal_id":  rev.ID.String(),
+					"amount_minor": orig.Amount.Amount(),
+					"reason":       in.Reason,
+				}),
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
+}
+
+// GetPayment is a thin wrapper for loading a payment.
+func (s *PaymentService) GetPayment(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*payment.Payment, error) {
+	return s.paymentR.GetByID(ctx, scope, id)
 }

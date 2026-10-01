@@ -99,10 +99,7 @@ func run() error {
 		Repo:  attachRepo,
 		IDs:   id.Generator{},
 	})
-	attachH := &handlers.AttachmentHandler{
-		Service:  attachService,
-		Renderer: renderer,
-	}
+
 	numberRepo := postgres.NewOrderNumberRepo(db)
 
 	orderService := app.NewOrderService(app.OrderServiceDeps{
@@ -125,9 +122,18 @@ func run() error {
 		IDs:         id.Generator{},
 	})
 	paymentH := &handlers.PaymentHandler{
-		Service:  paymentService,
-		Orders:   orderService,
-		Renderer: renderer,
+		Service:     paymentService,
+		Orders:      orderService,
+		Attachments: attachService,
+		Renderer:    renderer,
+	}
+
+	attachH := &handlers.AttachmentHandler{
+		Service:       attachService,
+		PaymentLookup: paymentRepo,
+		OrderService:  orderService,
+		PaymentSvc:    paymentService,
+		Renderer:      renderer,
 	}
 
 	orderH := &handlers.OrderHandler{
@@ -208,7 +214,10 @@ func run() error {
 	mux.Handle("POST /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Update)))
 	mux.Handle("POST /orders/{id}/status", middleware.RequireTenant(http.HandlerFunc(orderH.ChangeStatus)))
 	//
+	// ---- Payments ----
 	mux.Handle("POST /orders/{id}/payments", middleware.RequireTenant(http.HandlerFunc(paymentH.Record)))
+	mux.Handle("POST /payments/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToPayment)))
+	mux.Handle("POST /payments/{id}/reverse", middleware.RequireTenant(http.HandlerFunc(paymentH.Reverse)))
 
 	// ---- Attachments ----
 	mux.Handle("POST /orders/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToOrder)))

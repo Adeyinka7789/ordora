@@ -28,10 +28,11 @@ type attachmentsFragment struct {
 
 // paymentsFragment is passed to orders/_payments.html.
 type paymentsFragment struct {
-	Order     *order.Order
-	Payments  []*payment.Payment
-	Balance   int64
-	PayStatus payment.Status
-	CSRFToken string
-	Error     string
+	Order                *order.Order
+	Payments             []*payment.Payment
+	Balance              int64
+	PayStatus            payment.Status
+	CSRFToken            string
+	Error                string
+	AttachmentsByPayment map[uuid.UUID][]*attachment.Attachment
 }

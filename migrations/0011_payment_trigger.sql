@@ -21,12 +21,13 @@ DECLARE
 BEGIN
     v_order_id := COALESCE(NEW.order_id, OLD.order_id);
 
-    UPDATE orders
+        UPDATE orders
        SET amount_paid_minor = COALESCE((
              SELECT SUM(amount_minor)
                FROM payments
               WHERE order_id = v_order_id
                 AND reversed_by IS NULL
+                AND reverses   IS NULL
            ), 0),
            updated_at = now()
      WHERE id = v_order_id;
@@ -46,4 +47,5 @@ UPDATE orders o
            FROM payments p
           WHERE p.order_id = o.id
             AND p.reversed_by IS NULL
+            AND p.reverses   IS NULL
        ), 0);

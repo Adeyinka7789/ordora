@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-highest":"#d3e4fe","secondary":"#565e74","surface-container":"#e5eeff","on-error-container":"#93000a","on-primary-fixed-variant":"#3323cc","surface-container-high":"#dce9ff","error":"#ba1a1a","surface-container-lowest":"#ffffff","secondary-fixed-dim":"#bec6e0","on-primary-fixed":"#0f0069","surface-dim":"#cbdbf5","inverse-on-surface":"#eaf1ff","error-container":"#ffdad6","on-surface":"#0b1c30","on-tertiary":"#ffffff","surface-bright":"#f8f9ff","primary-fixed":"#e2dfff","primary-container":"#4f46e5","tertiary-fixed-dim":"#4edea3","primary-fixed-dim":"#c3c0ff","outline-variant":"#c7c4d8","on-tertiary-container":"#67f4b7","surface-container-low":"#eff4ff","background":"#f8f9ff","surface-variant":"#d3e4fe","on-primary":"#ffffff","primary":"#3525cd","on-tertiary-fixed-variant":"#005236","tertiary":"#005338","on-secondary":"#ffffff","surface-tint":"#4d44e3","on-secondary-fixed":"#131b2e","on-secondary-fixed-variant":"#3f465c","outline":"#777587","secondary-fixed":"#dae2fd","on-surface-variant":"#464555","surface":"#f8f9ff","inverse-surface":"#213145","on-background":"#0b1c30","on-error":"#ffffff","on-tertiary-fixed":"#002113","on-primary-container":"#dad7ff","on-secondary-container":"#5c647a","secondary-container":"#dae2fd","tertiary-fixed":"#6ffbbe","tertiary-container":"#006e4b","inverse-primary":"#c3c0ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"margin-desktop":"2rem","space-xs":"0.25rem","space-sm":"0.5rem","gutter-desktop":"1.5rem","margin":"1rem","space-xl":"2rem","space-md":"0.75rem","space-lg":"1.25rem","gutter":"1rem"},fontFamily:{"body-lg":["Inter"],"headline-md":["Inter"],"headline-lg":["Inter"],"label-md":["Inter"],"body-md":["Inter"],"label-sm":["Inter"],"code-md":["Inter"],"headline-lg-mobile":["Inter"],"display-lg":["Inter"],"body-sm":["Inter"]},fontSize:{"body-lg":["15px",{lineHeight:"22px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-md":["18px",{lineHeight:"24px",letterSpacing:"-0.015em",fontWeight:"600"}],"headline-lg":["24px",{lineHeight:"32px",letterSpacing:"-0.02em",fontWeight:"600"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.01em",fontWeight:"600"}],"body-md":["13px",{lineHeight:"18px",letterSpacing:"-0.005em",fontWeight:"400"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.02em",fontWeight:"500"}],"code-md":["12px",{lineHeight:"16px",letterSpacing:"-0.01em",fontWeight:"500"}],"headline-lg-mobile":["20px",{lineHeight:"28px",letterSpacing:"-0.015em",fontWeight:"600"}],"display-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.025em",fontWeight:"700"}],"body-sm":["12px",{lineHeight:"16px",letterSpacing:"0em",fontWeight:"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface"><header class="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full max-w-[1440px] mx-auto px-margin md:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><img alt="Brand logo. - Primary color: #4f46e5
+- Font: inter
+- Mode: light
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTrgqtTwQeKEnpxXCXO30wfHKv0wjK6qKGZcOdKXsXUvg5UKFT09vR8kJ2aJCTs-LhFonhaXjgCANwAkraXj_apM4MCSoHCo_GGs8o5iMO1BFXe3S7cem0WHGvA1vBMjZ1psOp2MlVrnv-IjjSfa8fBf_WgdeIIAjhNcl9XUkwvHvII90pmw5FC05GwU0UQmehYFtLkeuuxlqXZmZCB7XWRmF-1wt1VGetY_eEEP7LCjLrKW4wX2c2QA"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-md text-headline-md text-on-surface tracking-tight leading-none">Ade Atelier & Bespoke</span><span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-[12px] text-tertiary">lock</span>SSL Encrypted</span></div><span class="font-label-sm text-label-sm text-on-surface-variant leading-none mt-0.5">Customer Portal · Powered by Ordora</span></div></div><nav class="hidden lg:flex items-center gap-space-sm" data-active-classes="bg-surface-container text-on-surface font-semibold rounded-lg"><a class="px-space-md py-1.5 font-body-md text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors rounded-lg" data-path="order-tracking" href="#">Track Order</a><a aria-current="page" class="px-space-md py-1.5 transition-colors bg-surface-container text-on-surface font-semibold rounded-lg" data-path="bespoke-intake" href="#">New Request</a><a class="px-space-md py-1.5 font-body-md text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors rounded-lg" data-path="measurements-profile" href="#">Measurements</a><a class="px-space-md py-1.5 font-body-md text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors rounded-lg" data-path="invoices-receipts" href="#">Invoices</a><a class="px-space-md py-1.5 font-body-md text-body-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors rounded-lg" data-path="support-help" href="#">Support</a></nav><div class="flex items-center gap-space-sm"><div class="hidden sm:flex items-center gap-space-xs px-2 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-code-md text-code-md"><span class="w-2 h-2 rounded-full bg-tertiary"></span><span>NGN (₦)</span></div><a class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-label-md text-label-md transition-colors" data-path="support-help" href="#"><span class="material-symbols-outlined text-[16px]">help_center</span><span>Concierge</span></a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full">
+<!-- Atelier Visual Hero Banner -->
+<section class="relative w-full bg-surface-container-low overflow-hidden">
+<div class="absolute -top-32 -right-20 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none"></div>
+<div class="absolute bottom-0 -left-20 w-80 h-80 rounded-full bg-tertiary/10 blur-2xl pointer-events-none"></div>
+<div class="relative max-w-[1440px] mx-auto px-margin md:px-margin-desktop py-space-xl">
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-lg">
+<div class="flex flex-col max-w-3xl">
+<div class="flex flex-wrap items-center gap-space-xs mb-space-xs">
+<span class="px-2 py-0.5 rounded-full bg-primary text-on-primary font-label-sm text-label-sm uppercase tracking-wider">Ade Atelier & Bespoke</span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">check_circle</span>
+              Verified Bespoke Merchant (Lagos)
+            </span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-surface tracking-tight mb-space-xs">
+            Place a Custom Bespoke Order
+          </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-space-md max-w-2xl">
+            Bespoke Tailoring, Traditional Senator Outfits & Luxury Ceremonial Wear — Victoria Island, Lagos. Tell us about your project, upload reference photos or swatches, and get an instant cost estimate and direct fulfillment tracking.
+          </p>
+<!-- Trust Badges Bar -->
+<div class="flex flex-wrap items-center gap-space-md pt-space-xs">
+<div class="flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">bolt</span>
+<span class="font-label-md text-label-md text-on-surface">5–7 Working Days Turnaround</span>
+</div>
+<div class="flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-[18px]">verified</span>
+<span class="font-label-md text-label-md text-on-surface">100% Fit & Satisfaction Guarantee</span>
+</div>
+<div class="flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">room</span>
+<span class="font-label-md text-label-md text-on-surface">Studio Fittings in Lekki & VI</span>
+</div>
+</div>
+</div>
+<!-- Studio Quick Preview Accent Card -->
+<div class="hidden xl:flex flex-col w-72 p-space-md rounded-xl bg-surface-container-lowest shadow-md">
+<div class="relative w-full h-32 rounded-lg overflow-hidden mb-space-sm">
+<img class="w-full h-full object-cover" data-alt="Sophisticated bespoke tailoring atelier in Victoria Island Lagos, showing tailored navy agbada and minimalist fabrics on wooden mannequin, warm editorial lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBh3VJ6A7SvTzRibupO9uqx3EKx-Rx3UeKiWYEWRBNVlgtniZikIWEv6iIT4WFcnnCYye3rDS0tvIv6kAejVKslshPXOABNfeok3n0B0LBpSSRbL858zC7KTCLl2ow5If5MpBUiD3Xd2vmjQEmcRaHzLTZAvcWQ6pYq7oH-shnQNwSBDHAJtKuScSLenUDwppOyeILVSn8llxCkFZ05XbusuIbRZjiqZBBbE3zV4PdZj4iQjQZfrwJ41A"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/80 via-transparent to-transparent flex items-end p-space-xs">
+<span class="font-label-sm text-label-sm text-surface-bright">VI Studio Fitting Room 2</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Master Tailor on duty</p>
+<p class="font-headline-md text-headline-md text-on-surface">Adeola Adeleke</p>
+</div>
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse" title="Available for consultation"></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Intake Form & Sticky Live Estimator -->
+<section class="w-full max-w-[1440px] mx-auto px-margin md:px-margin-desktop py-space-xl">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter-desktop items-start">
+<!-- Primary Form Flow (7 / 8 cols) -->
+<form class="lg:col-span-7 xl:col-span-8 flex flex-col gap-space-xl" id="bespokeIntakeForm" onsubmit="event.preventDefault(); submitBespokeOrder();">
+<!-- SECTION 1: Client & Delivery Info -->
+<div class="flex flex-col p-space-lg md:p-space-xl rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md bg-surface-container-low/50 -mx-space-lg -mt-space-lg md:-mx-space-xl md:-mt-space-xl px-space-lg md:px-space-xl pt-space-lg rounded-t-xl">
+<div class="flex items-center gap-space-sm">
+<span class="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-on-primary font-headline-md text-headline-md">1</span>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Contact & Delivery Information</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Where should we deliver your finished bespoke garments?</p>
+</div>
+</div>
+<span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant">STEP 01/03</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="clientName">Full Name & Title *</label>
+<input class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none" id="clientName" placeholder="e.g. Adekunle Gold" required="" type="text" value="Chief Babatunde Adeleke"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="clientEmail">Email Address (Order Tracking & Invoices) *</label>
+<input class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none" id="clientEmail" placeholder="your.name@domain.com" required="" type="email" value="babatunde.adeleke@lagos.org"/>
+</div>
+<div class="flex flex-col gap-1 md:col-span-2">
+<label class="font-label-md text-label-md text-on-surface" for="clientPhone">WhatsApp / Mobile Phone *</label>
+<div class="flex gap-space-xs">
+<span class="h-9 px-3 flex items-center rounded bg-surface-container font-code-md text-code-md text-on-surface-variant">🇳🇬 +234</span>
+<input class="h-9 px-3 flex-1 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none" id="clientPhone" placeholder="803 123 4567" required="" type="tel" value="803 456 7890"/>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Instant WhatsApp notifications will be sent at each tailoring milestone.</span>
+</div>
+<!-- Delivery Preference Radio Segment -->
+<div class="flex flex-col gap-space-sm md:col-span-2 pt-space-xs">
+<label class="font-label-md text-label-md text-on-surface">Delivery Method</label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm" id="deliveryToggleGroup">
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container cursor-pointer transition-colors" id="courierOptionLabel">
+<input checked="" class="mt-1" name="deliveryMethod" onchange="updateDeliveryOption('courier')" type="radio" value="courier"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">local_shipping</span>
+                      Doorstep Courier Delivery
+                    </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Lagos Island, Mainland or Nationwide (+₦3,500)</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer transition-colors" id="pickupOptionLabel">
+<input class="mt-1" name="deliveryMethod" onchange="updateDeliveryOption('pickup')" type="radio" value="pickup"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">storefront</span>
+                      Studio Pickup (VI Lagos)
+                    </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Free · Ade Atelier Studio, 14 Karimu Kotun, VI</span>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-1 md:col-span-2" id="deliveryAddressWrapper">
+<label class="font-label-md text-label-md text-on-surface" for="deliveryAddress">Delivery Address (Lagos or Nationwide)</label>
+<input class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none" id="deliveryAddress" placeholder="Apartment / Suite, Street, Area, City, State" type="text" value="Plot 18, Admiralty Way, Lekki Phase 1, Lagos"/>
+</div>
+</div>
+</div>
+<!-- SECTION 2: Order Specs & Garment Customization -->
+<div class="flex flex-col p-space-lg md:p-space-xl rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md bg-surface-container-low/50 -mx-space-lg -mt-space-lg md:-mx-space-xl md:-mt-space-xl px-space-lg md:px-space-xl pt-space-lg rounded-t-xl">
+<div class="flex items-center gap-space-sm">
+<span class="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-on-primary font-headline-md text-headline-md">2</span>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Order Specifications & Garment Style</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Select silhouette, quantity, fabric source, and custom sartorial accents.</p>
+</div>
+</div>
+<span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant">STEP 02/03</span>
+</div>
+<!-- Garment Type Selector Pills -->
+<div class="flex flex-col gap-space-xs mb-space-lg">
+<label class="font-label-md text-label-md text-on-surface">Garment Type / Silhouette</label>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-space-xs" id="garmentPillsGroup">
+<button class="garment-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-primary text-on-primary shadow-sm text-center transition-all" onclick="selectGarment(this, 'senator', 60000)" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1">styler</span>
+<span class="font-label-md text-label-md">Senator Outfit</span>
+<span class="font-code-md text-code-md opacity-90">₦60,000</span>
+</button>
+<button class="garment-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high text-center transition-all" onclick="selectGarment(this, 'agbada', 85000)" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1">dry_cleaning</span>
+<span class="font-label-md text-label-md">Agbada 3-Piece</span>
+<span class="font-code-md text-code-md text-on-surface-variant">₦85,000</span>
+</button>
+<button class="garment-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high text-center transition-all" onclick="selectGarment(this, 'kaftan', 55000)" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1">accessibility_new</span>
+<span class="font-label-md text-label-md">Traditional Kaftan</span>
+<span class="font-code-md text-code-md text-on-surface-variant">₦55,000</span>
+</button>
+<button class="garment-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high text-center transition-all" onclick="selectGarment(this, 'suit', 95000)" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1">checkroom</span>
+<span class="font-label-md text-label-md">Suit / Blazer</span>
+<span class="font-code-md text-code-md text-on-surface-variant">₦95,000</span>
+</button>
+<button class="garment-pill flex flex-col items-center justify-center p-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high text-center transition-all" onclick="selectGarment(this, 'accessories', 20000)" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1">military_tech</span>
+<span class="font-label-md text-label-md">Cap & Accessories</span>
+<span class="font-code-md text-code-md text-on-surface-variant">₦20,000</span>
+</button>
+</div>
+</div>
+<!-- Quantity Counter + Colorway Selector -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md mb-space-lg">
+<div class="flex flex-col gap-1 p-space-md rounded-lg bg-surface-container-low">
+<label class="font-label-md text-label-md text-on-surface">Quantity of Garments</label>
+<div class="flex items-center gap-space-md mt-1">
+<button class="w-8 h-8 rounded bg-surface-container-lowest text-on-surface flex items-center justify-center shadow-sm hover:bg-surface-container transition-colors" onclick="changeQuantity(-1)" type="button">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="font-headline-lg text-headline-lg text-on-surface w-8 text-center tabular-nums" id="quantityDisplay">2</span>
+<button class="w-8 h-8 rounded bg-surface-container-lowest text-on-surface flex items-center justify-center shadow-sm hover:bg-surface-container transition-colors" onclick="changeQuantity(1)" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+<span class="font-body-sm text-body-sm text-on-surface-variant">garments in this order</span>
+</div>
+</div>
+<div class="flex flex-col gap-1 p-space-md rounded-lg bg-surface-container-low">
+<label class="font-label-md text-label-md text-on-surface">Preferred Colorway / Palette</label>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="w-6 h-6 rounded-full bg-[#0b1c30] shadow-sm ring-2 ring-primary ring-offset-2" title="Midnight Navy (Selected)"></span>
+<span class="w-6 h-6 rounded-full bg-[#1b2a1e] shadow-sm cursor-pointer hover:scale-105" title="Forest Agbada Green"></span>
+<span class="w-6 h-6 rounded-full bg-[#dfdcd5] shadow-sm cursor-pointer hover:scale-105" title="Pure Ivory Linen"></span>
+<span class="w-6 h-6 rounded-full bg-[#6d2121] shadow-sm cursor-pointer hover:scale-105" title="Ceremonial Wine / Oxblood"></span>
+<span class="w-6 h-6 rounded-full bg-[#1e1e1e] shadow-sm cursor-pointer hover:scale-105" title="Onyx Black"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant ml-2">Midnight Navy</span>
+</div>
+</div>
+</div>
+<!-- Fabric Sourcing Options -->
+<div class="flex flex-col gap-space-xs mb-space-lg">
+<label class="font-label-md text-label-md text-on-surface">Fabric Sourcing Preference *</label>
+<div class="flex flex-col gap-space-xs" id="fabricSelectorList">
+<label class="fabric-option flex items-center justify-between p-space-md rounded-lg bg-surface-container cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<input checked="" name="fabricOption" onchange="updateFabricChoice('italian-wool', 35000)" type="radio" value="italian-wool"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Source Premium Italian Wool / Cashmere Blend</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Recommended for high-end structure & wrinkle resistance</span>
+</div>
+</div>
+<span class="font-code-md text-code-md text-primary font-semibold">+₦35,000 / garment</span>
+</label>
+<label class="fabric-option flex items-center justify-between p-space-md rounded-lg bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<input name="fabricOption" onchange="updateFabricChoice('brocade', 25000)" type="radio" value="brocade"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Source Authentic Guinea Brocade / Cotton Damask</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Crisp hand feel, luxury woven sheen, breathability</span>
+</div>
+</div>
+<span class="font-code-md text-code-md text-on-surface-variant">+₦25,000 / garment</span>
+</label>
+<label class="fabric-option flex items-center justify-between p-space-md rounded-lg bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<input name="fabricOption" onchange="updateFabricChoice('aso-oke', 40000)" type="radio" value="aso-oke"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Source Handwoven Aso-Oke (Metallic or Classic Warp)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ceremonial cap, sash or front panel embroidery accents</span>
+</div>
+</div>
+<span class="font-code-md text-code-md text-on-surface-variant">+₦40,000 fixed</span>
+</label>
+<label class="fabric-option flex items-center justify-between p-space-md rounded-lg bg-surface-container-low cursor-pointer transition-all">
+<div class="flex items-center gap-space-md">
+<input name="fabricOption" onchange="updateFabricChoice('client-fabric', 0)" type="radio" value="client-fabric"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">I will provide my own fabric (Drop-off / Courier to VI Atelier)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Requires 4.0 meters per Senator outfit, 7.0m for Agbada set</span>
+</div>
+</div>
+<span class="font-code-md text-code-md text-tertiary font-semibold">₦0 (No fabric fee)</span>
+</label>
+</div>
+</div>
+<!-- Sartorial Accents Checkboxes -->
+<div class="flex flex-col gap-space-xs mb-space-lg">
+<label class="font-label-md text-label-md text-on-surface">Custom Style Details & Add-ons</label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<label class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer">
+<input checked="" class="w-4 h-4 rounded text-primary" id="embroideryAddon" onchange="toggleAddon('embroidery', 15000, this.checked)" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Geometric Chest Embroidery (+₦15,000)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Intricate chain-stitch on collar & placket</span>
+</div>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer">
+<input class="w-4 h-4 rounded text-primary" id="monogramAddon" onchange="toggleAddon('monogram', 5000, this.checked)" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Personalized Monogram Initials (+₦5,000)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Subtle inner pocket or cuff embroidery</span>
+</div>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer">
+<input class="w-4 h-4 rounded text-primary" id="contrastButtonsAddon" onchange="toggleAddon('contrastButtons', 4000, this.checked)" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Mother-of-Pearl / Horn Buttons (+₦4,000)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sourced imported luxury button fasteners</span>
+</div>
+</label>
+<label class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low cursor-pointer">
+<input class="w-4 h-4 rounded text-primary" id="frenchCuffsAddon" onchange="toggleAddon('frenchCuffs', 6000, this.checked)" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Reinforced French Cuffs (+₦6,000)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Double-cuff construction for bespoke cufflinks</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Project Notes Textarea -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="orderNotes">Project Notes & Special Requests</label>
+<textarea class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none resize-none" id="orderNotes" placeholder="Include any specific fit requirements, event date deadlines (e.g. Traditional Wedding on 24th Nov), collar height preferences, or pant taper requests..." rows="3"></textarea>
+</div>
+</div>
+<!-- SECTION 3: Reference Photos & Measurements -->
+<div class="flex flex-col p-space-lg md:p-space-xl rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between pb-space-md mb-space-md bg-surface-container-low/50 -mx-space-lg -mt-space-lg md:-mx-space-xl md:-mt-space-xl px-space-lg md:px-space-xl pt-space-lg rounded-t-xl">
+<div class="flex items-center gap-space-sm">
+<span class="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-on-primary font-headline-md text-headline-md">3</span>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Reference Photos & Measurements</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Provide design visuals and specify your tailoring fit profile.</p>
+</div>
+</div>
+<span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant">STEP 03/03</span>
+</div>
+<!-- Drag and Drop Upload Box -->
+<div class="flex flex-col gap-space-xs mb-space-lg">
+<label class="font-label-md text-label-md text-on-surface">Upload Reference Inspiration / Swatches</label>
+<div class="flex flex-col items-center justify-center p-space-xl rounded-xl bg-surface-container-low text-center transition-colors hover:bg-surface-container cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-primary mb-space-sm">
+<span class="material-symbols-outlined text-[24px]">cloud_upload</span>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface">Drag & drop design samples, swatches or sketches</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">PNG, JPG, PDF up to 15MB each · Or click to browse device</p>
+<button class="mt-space-md px-4 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-bright transition-colors" type="button">
+                Browse Files
+              </button>
+</div>
+<!-- Uploaded sample chips list -->
+<div class="flex flex-wrap items-center gap-space-sm mt-space-sm">
+<div class="flex items-center gap-space-sm px-3 py-1.5 rounded-lg bg-surface-container text-on-surface shadow-xs">
+<img class="w-7 h-7 rounded object-cover" data-alt="Close up photography of navy blue wool fabric with gold geometric embroidered placket" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCC2gw7zzOzeGnyBi0IBuVh4vprvIhM1zGGi3ybyMP0nj2MuuMB2YvLnCyxo7fW5jaT8xPk_fXxE_6QJ-pL0wDSWb38191NuhD_5IPhioMm5RdxX9NBKKQN5CUAo8BCJdTHhZ2f-6NOFNeOF74oLWwM5jqcpHECk2P8nAuZHBE3ptTszrUtjBV55UosI8dS7v4fv0Af_4_DKAMoE7yx1hEGEwuH7bNiGlf52-6njUeRNRyC7y3pT2vR4w"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md leading-tight">senator_style_sample.jpg</span>
+<span class="font-code-md text-code-md text-on-surface-variant leading-none">2.4 MB · Ready</span>
+</div>
+<button class="text-on-surface-variant hover:text-error ml-1" title="Remove attachment" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="flex items-center gap-space-sm px-3 py-1.5 rounded-lg bg-surface-container text-on-surface shadow-xs">
+<img class="w-7 h-7 rounded object-cover" data-alt="High quality macro swatch of golden bronze embroidery thread detail on woven fabric" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC8c4KklPDYZtuqjuR-NmMuz0mEJVJBCHDniFa6_tMp5KAKUvSxG7ybx_2iUahK_vFD3J7VXErkhQMVi_2YaGIrUjfHfrZM4kBwqys1nhagojm72crpaqgsc57pVNp45RGD2uSTiFrCQwn2QKCPR7PEMQ_lxNDvzyTQj2qdchvl6MvZWG9U8a8LG2-Q4Hbhqn_NNuewka21xib0b_gJj6VVFXB1UlqFPvHPgawJV8ySEpMMJ0EAkCD9g"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md leading-tight">fabric_gold_trim.png</span>
+<span class="font-code-md text-code-md text-on-surface-variant leading-none">1.1 MB · Ready</span>
+</div>
+<button class="text-on-surface-variant hover:text-error ml-1" title="Remove attachment" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Measurement Profile Strategy -->
+<div class="flex flex-col gap-space-sm">
+<label class="font-label-md text-label-md text-on-surface">Body Measurements Profile</label>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm" id="measurementModeGroup">
+<label class="flex flex-col p-space-md rounded-lg bg-surface-container cursor-pointer transition-colors" id="measureMethodFitting">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">straighten</span>
+<input checked="" name="measureProfile" onchange="toggleMeasurementInput('fitting')" type="radio" value="studio-fitting"/>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Book VI Studio Fitting</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Our bespoke master tailor will take exact precision measurements at the studio.</span>
+</label>
+<label class="flex flex-col p-space-md rounded-lg bg-surface-container-low cursor-pointer transition-colors" id="measureMethodStandard">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="material-symbols-outlined text-secondary text-[20px]">checkroom</span>
+<input name="measureProfile" onchange="toggleMeasurementInput('standard')" type="radio" value="standard-size"/>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Standard Size Preset</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Select standard Nigerian / UK ready-to-wear sizing (e.g. 42R / Large).</span>
+</label>
+<label class="flex flex-col p-space-md rounded-lg bg-surface-container-low cursor-pointer transition-colors" id="measureMethodManual">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="material-symbols-outlined text-secondary text-[20px]">edit_note</span>
+<input name="measureProfile" onchange="toggleMeasurementInput('manual')" type="radio" value="manual-input"/>
+</div>
+<span class="font-label-md text-label-md text-on-surface">Enter Exact Inches</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Enter your chest, sleeve, neck, trouser length and thigh figures online.</span>
+</label>
+</div>
+<!-- Manual Measurement Quick Drawer (shown dynamically) -->
+<div class="hidden flex-col gap-space-sm p-space-md rounded-lg bg-surface-container-low mt-space-sm" id="manualMeasurementDrawer">
+<span class="font-label-md text-label-md text-on-surface">Garment Measurement Breakdown (Inches)</span>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm">
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Chest / Agbada Span</span>
+<input class="h-9 px-2 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md" placeholder="42 in" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Shoulder Width</span>
+<input class="h-9 px-2 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md" placeholder="19.5 in" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Sleeve Length</span>
+<input class="h-9 px-2 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md" placeholder="26 in" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Trouser Length</span>
+<input class="h-9 px-2 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md" placeholder="41 in" type="text"/>
+</div>
+</div>
+</div>
+<!-- Standard size preset picker (hidden by default) -->
+<div class="hidden flex-col gap-space-xs p-space-md rounded-lg bg-surface-container-low mt-space-sm" id="standardSizeDrawer">
+<span class="font-label-md text-label-md text-on-surface">Choose Size Profile:</span>
+<div class="flex flex-wrap gap-space-xs">
+<button class="px-3 py-1.5 rounded bg-surface-container text-on-surface font-label-md text-label-md" type="button">Medium (38–40R)</button>
+<button class="px-3 py-1.5 rounded bg-primary text-on-primary font-label-md text-label-md shadow-sm" type="button">Large (42–44R)</button>
+<button class="px-3 py-1.5 rounded bg-surface-container text-on-surface font-label-md text-label-md" type="button">XL (46–48R)</button>
+<button class="px-3 py-1.5 rounded bg-surface-container text-on-surface font-label-md text-label-md" type="button">XXL (50–52R)</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Mobile-only submit action placeholder -->
+<div class="lg:hidden flex flex-col gap-space-sm">
+<button class="w-full py-3.5 px-4 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-md text-headline-md shadow-md transition-colors flex items-center justify-center gap-space-sm" type="submit">
+<span>Submit Order Request & Generate Tracking Link</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Sticky Dynamic Price Estimator & Real-Time Bill of Materials (5 / 4 cols) -->
+<aside class="lg:col-span-5 xl:col-span-4 sticky top-20 flex flex-col gap-space-lg">
+<!-- Live Estimator Panel -->
+<div class="flex flex-col rounded-xl bg-surface-container-lowest shadow-md overflow-hidden">
+<!-- Estimator Header -->
+<div class="p-space-lg bg-primary text-on-primary flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-primary-container">Ordora Live Estimator</span>
+<h3 class="font-headline-lg text-headline-lg text-on-primary leading-tight">Order Summary</h3>
+</div>
+<span class="material-symbols-outlined text-[28px] text-tertiary-fixed">receipt_long</span>
+</div>
+<!-- Breakdown Ledger Table -->
+<div class="p-space-lg flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between py-1 text-on-surface">
+<span class="font-body-md text-body-md" id="summaryGarmentLabel">Senator Outfit Craftsmanship (×2)</span>
+<span class="font-code-md text-code-md tabular-nums font-semibold" id="summaryGarmentCost">₦120,000</span>
+</div>
+<div class="flex items-center justify-between py-1 text-on-surface-variant">
+<span class="font-body-sm text-body-sm" id="summaryFabricLabel">Italian Wool Sourcing (×2)</span>
+<span class="font-code-md text-code-md tabular-nums text-on-surface" id="summaryFabricCost">₦70,000</span>
+</div>
+<div class="flex items-center justify-between py-1 text-on-surface-variant" id="summaryEmbroideryRow">
+<span class="font-body-sm text-body-sm">Geometric Hand Embroidery</span>
+<span class="font-code-md text-code-md tabular-nums text-on-surface" id="summaryEmbroideryCost">₦15,000</span>
+</div>
+<div class="flex items-center justify-between py-1 text-on-surface-variant hidden" id="summaryMonogramRow">
+<span class="font-body-sm text-body-sm">Monogram Initials</span>
+<span class="font-code-md text-code-md tabular-nums text-on-surface">₦5,000</span>
+</div>
+<div class="flex items-center justify-between py-1 text-on-surface-variant hidden" id="summaryButtonsRow">
+<span class="font-body-sm text-body-sm">Mother-of-Pearl Buttons</span>
+<span class="font-code-md text-code-md tabular-nums text-on-surface">₦4,000</span>
+</div>
+<div class="flex items-center justify-between py-1 text-on-surface-variant hidden" id="summaryCuffsRow">
+<span class="font-body-sm text-body-sm">French Cuffs Reinforced</span>
+<span class="font-code-md text-code-md tabular-nums text-on-surface">₦6,000</span>
+</div>
+<div class="flex items-center justify-between py-1 text-on-surface-variant">
+<span class="font-body-sm text-body-sm" id="summaryDeliveryLabel">Courier Delivery (Lagos Island)</span>
+<span class="font-code-md text-code-md tabular-nums text-on-surface" id="summaryDeliveryCost">₦3,500</span>
+</div>
+</div>
+<div class="w-full h-px bg-surface-container-high my-1"></div>
+<!-- Subtotal & 50% Milestone Deposit Breakdown -->
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Estimated Total</span>
+<span class="font-headline-lg text-headline-lg text-on-surface tabular-nums" id="summaryTotalAmount">₦208,500</span>
+</div>
+<!-- 50% Deposit Split Tile (Stripe-inspired financial anchor) -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+                  50% Kickoff Deposit Required
+                </span>
+<span class="font-headline-md text-headline-md text-tertiary tabular-nums font-bold" id="summaryDepositAmount">₦104,250</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Remaining 50% balance (₦104,250) is payable upon final studio fitting inspection or delivery confirmation.
+              </p>
+</div>
+<!-- Timeline Card with animated progress gauge -->
+<div class="p-space-md rounded-lg bg-surface-container flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5">schedule</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Production Timeline</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Ready in <strong class="text-on-surface">5–7 working days</strong> following deposit payment and measurements confirmation.
+                </p>
+</div>
+</div>
+<!-- Desktop Submit Button -->
+<button class="w-full py-3.5 px-4 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-md text-headline-md shadow-md transition-all flex items-center justify-center gap-space-sm group" onclick="submitBespokeOrder()" type="button">
+<span>Submit Request & Track Order</span>
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+<!-- Reassurance copy -->
+<div class="flex items-center gap-space-xs text-on-surface-variant text-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-tertiary">security</span>
+<span class="font-label-sm text-label-sm">No card charge right now · Master tailor review first</span>
+</div>
+</div>
+</div>
+<!-- Atelier Concierge Quick Help Card -->
+<div class="p-space-lg rounded-xl bg-surface-container-low flex flex-col gap-space-sm shadow-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Need custom styling advice?</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container-highest text-primary font-code-md text-code-md">VI Studio Live</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Have a unique wedding party scheme or an urgent 72-hour turnaround request? Connect with Master Tailor Adeola directly on WhatsApp.
+          </p>
+<a class="inline-flex items-center justify-center gap-space-xs py-2 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm hover:bg-surface-bright transition-colors" href="https://wa.me/2348034567890" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-tertiary text-[18px]">chat</span>
+<span>Chat with Concierge (+234 803 456 7890)</span>
+</a>
+</div>
+</aside>
+</div>
+</section>
+<!-- Interactive Submission Success Drawer Modal (Hidden by default) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-margin bg-on-surface/40 backdrop-blur-xs hidden" id="orderSuccessModal">
+<div class="w-full max-w-lg rounded-xl bg-surface-container-lowest shadow-2xl p-space-xl flex flex-col gap-space-md animate-in fade-in zoom-in-95">
+<div class="w-14 h-14 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary mb-space-xs">
+<span class="material-symbols-outlined text-[32px]">check_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase tracking-wider">Request Submitted Successfully</span>
+<h3 class="font-headline-lg text-headline-lg text-on-surface mt-0.5">Order Ref #ADE-8942-LAGOS</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-xs">
+          We have generated your live Ordora fulfillment tracking channel. A copy with your itemized cost estimate has been dispatched to <strong class="text-on-surface" id="modalCustomerEmail">babatunde.adeleke@lagos.org</strong> and via WhatsApp.
+        </p>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-on-surface-variant font-body-sm">Estimated Total:</span>
+<span class="text-on-surface font-semibold font-code-md" id="modalTotalCost">₦208,500</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-on-surface-variant font-body-sm">50% Deposit Due:</span>
+<span class="text-tertiary font-bold font-code-md" id="modalDepositCost">₦104,250</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<span class="text-on-surface-variant font-body-sm">Production Window:</span>
+<span class="text-on-surface font-body-sm">5–7 Working Days</span>
+</div>
+</div>
+<div class="flex flex-col sm:flex-row items-center gap-space-sm pt-space-xs">
+<button class="w-full py-2.5 px-4 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md shadow-sm transition-colors text-center" onclick="closeSuccessModal()" type="button">
+          Open Live Tracker Channel →
+        </button>
+<button class="w-full sm:w-auto py-2.5 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors text-center" onclick="closeSuccessModal()" type="button">
+          Done
+        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- State & Dynamic Estimator Script -->
+<script>
+  // Dynamic Estimator State
+  const state = {
+    garmentType: 'Senator Outfit',
+    garmentBasePrice: 60000,
+    quantity: 2,
+    fabricType: 'italian-wool',
+    fabricPricePerGarment: 35000,
+    deliveryType: 'courier',
+    deliveryCost: 3500,
+    addons: {
+      embroidery: 15000,
+      monogram: 0,
+      contrastButtons: 0,
+      frenchCuffs: 0
+    }
+  };
+
+  function formatNGN(amount) {
+    return '₦' + amount.toLocaleString('en-NG');
+  }
+
+  function recalculateLedger() {
+    const garmentTotal = state.garmentBasePrice * state.quantity;
+    
+    // Some fabrics are per garment, aso-oke is fixed flat
+    let fabricTotal = 0;
+    if (state.fabricType === 'aso-oke') {
+      fabricTotal = 40000;
+    } else {
+      fabricTotal = state.fabricPricePerGarment * state.quantity;
+    }
+
+    const addonsTotal = state.addons.embroidery + state.addons.monogram + state.addons.contrastButtons + state.addons.frenchCuffs;
+    const subtotal = garmentTotal + fabricTotal + addonsTotal + state.deliveryCost;
+    const deposit = Math.round(subtotal * 0.5);
+
+    // Update Live UI Labels
+    const summaryGarmentLabel = document.getElementById('summaryGarmentLabel');
+    if (summaryGarmentLabel) summaryGarmentLabel.textContent = `${state.garmentType} Craftsmanship (×${state.quantity})`;
+    
+    const summaryGarmentCost = document.getElementById('summaryGarmentCost');
+    if (summaryGarmentCost) summaryGarmentCost.textContent = formatNGN(garmentTotal);
+
+    const summaryFabricCost = document.getElementById('summaryFabricCost');
+    if (summaryFabricCost) summaryFabricCost.textContent = formatNGN(fabricTotal);
+
+    const summaryDeliveryCost = document.getElementById('summaryDeliveryCost');
+    if (summaryDeliveryCost) summaryDeliveryCost.textContent = formatNGN(state.deliveryCost);
+
+    const summaryTotalAmount = document.getElementById('summaryTotalAmount');
+    if (summaryTotalAmount) summaryTotalAmount.textContent = formatNGN(subtotal);
+
+    const summaryDepositAmount = document.getElementById('summaryDepositAmount');
+    if (summaryDepositAmount) summaryDepositAmount.textContent = formatNGN(deposit);
+
+    const modalTotalCost = document.getElementById('modalTotalCost');
+    if (modalTotalCost) modalTotalCost.textContent = formatNGN(subtotal);
+
+    const modalDepositCost = document.getElementById('modalDepositCost');
+    if (modalDepositCost) modalDepositCost.textContent = formatNGN(deposit);
+  }
+
+  function selectGarment(btn, type, basePrice) {
+    state.garmentBasePrice = basePrice;
+    const mapName = {
+      senator: 'Senator Outfit',
+      agbada: 'Agbada 3-Piece',
+      kaftan: 'Traditional Kaftan',
+      suit: 'Corporate Suit',
+      accessories: 'Cap & Accessories'
+    };
+    state.garmentType = mapName[type] || 'Senator Outfit';
+
+    // Highlight styles
+    document.querySelectorAll('.garment-pill').forEach(el => {
+      el.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+      el.classList.add('bg-surface-container', 'text-on-surface');
+      const subtext = el.querySelector('.font-code-md');
+      if (subtext) {
+        subtext.classList.remove('opacity-90');
+        subtext.classList.add('text-on-surface-variant');
+      }
+    });
+
+    btn.classList.remove('bg-surface-container', 'text-on-surface');
+    btn.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+    const activeSubtext = btn.querySelector('.font-code-md');
+    if (activeSubtext) {
+      activeSubtext.classList.remove('text-on-surface-variant');
+      activeSubtext.classList.add('opacity-90');
+    }
+
+    recalculateLedger();
+  }
+
+  function changeQuantity(delta) {
+    const nextVal = state.quantity + delta;
+    if (nextVal >= 1 && nextVal <= 20) {
+      state.quantity = nextVal;
+      const qDisp = document.getElementById('quantityDisplay');
+      if (qDisp) qDisp.textContent = nextVal;
+      recalculateLedger();
+    }
+  }
+
+  function updateFabricChoice(fabricKey, costPerItem) {
+    state.fabricType = fabricKey;
+    state.fabricPricePerGarment = costPerItem;
+
+    const labelMap = {
+      'italian-wool': 'Italian Wool Sourcing',
+      'brocade': 'Guinea Brocade Sourcing',
+      'aso-oke': 'Aso-Oke Sourcing',
+      'client-fabric': 'Client Provided Fabric'
+    };
+
+    const summaryFabricLabel = document.getElementById('summaryFabricLabel');
+    if (summaryFabricLabel) {
+      summaryFabricLabel.textContent = fabricKey === 'aso-oke' || fabricKey === 'client-fabric'
+        ? `${labelMap[fabricKey]}`
+        : `${labelMap[fabricKey]} (×${state.quantity})`;
+    }
+
+    // Refresh option item card background highlights
+    document.querySelectorAll('.fabric-option').forEach(el => {
+      el.classList.remove('bg-surface-container');
+      el.classList.add('bg-surface-container-low');
+    });
+
+    const checkedRadio = document.querySelector(`input[name="fabricOption"][value="${fabricKey}"]`);
+    if (checkedRadio && checkedRadio.closest('.fabric-option')) {
+      checkedRadio.closest('.fabric-option').classList.remove('bg-surface-container-low');
+      checkedRadio.closest('.fabric-option').classList.add('bg-surface-container');
+    }
+
+    recalculateLedger();
+  }
+
+  function toggleAddon(addonKey, cost, isChecked) {
+    state.addons[addonKey] = isChecked ? cost : 0;
+    
+    // Toggle corresponding row in ledger
+    const rowMap = {
+      embroidery: 'summaryEmbroideryRow',
+      monogram: 'summaryMonogramRow',
+      contrastButtons: 'summaryButtonsRow',
+      frenchCuffs: 'summaryCuffsRow'
+    };
+    const rowEl = document.getElementById(rowMap[addonKey]);
+    if (rowEl) {
+      if (isChecked) {
+        rowEl.classList.remove('hidden');
+      } else {
+        rowEl.classList.add('hidden');
+      }
+    }
+
+    recalculateLedger();
+  }
+
+  function updateDeliveryOption(option) {
+    state.deliveryType = option;
+    const addressBox = document.getElementById('deliveryAddressWrapper');
+    const courierLabel = document.getElementById('courierOptionLabel');
+    const pickupLabel = document.getElementById('pickupOptionLabel');
+    const deliverySummaryLabel = document.getElementById('summaryDeliveryLabel');
+
+    if (option === 'courier') {
+      state.deliveryCost = 3500;
+      if (addressBox) addressBox.classList.remove('hidden');
+      if (courierLabel) {
+        courierLabel.classList.remove('bg-surface-container-low');
+        courierLabel.classList.add('bg-surface-container');
+      }
+      if (pickupLabel) {
+        pickupLabel.classList.remove('bg-surface-container');
+        pickupLabel.classList.add('bg-surface-container-low');
+      }
+      if (deliverySummaryLabel) deliverySummaryLabel.textContent = 'Courier Delivery (Lagos Island)';
+    } else {
+      state.deliveryCost = 0;
+      if (addressBox) addressBox.classList.add('hidden');
+      if (pickupLabel) {
+        pickupLabel.classList.remove('bg-surface-container-low');
+        pickupLabel.classList.add('bg-surface-container');
+      }
+      if (courierLabel) {
+        courierLabel.classList.remove('bg-surface-container');
+        courierLabel.classList.add('bg-surface-container-low');
+      }
+      if (deliverySummaryLabel) deliverySummaryLabel.textContent = 'Studio Pickup (Victoria Island)';
+    }
+
+    recalculateLedger();
+  }
+
+  function toggleMeasurementInput(mode) {
+    const manualBox = document.getElementById('manualMeasurementDrawer');
+    const standardBox = document.getElementById('standardSizeDrawer');
+    
+    const cardFitting = document.getElementById('measureMethodFitting');
+    const cardStandard = document.getElementById('measureMethodStandard');
+    const cardManual = document.getElementById('measureMethodManual');
+
+    [cardFitting, cardStandard, cardManual].forEach(c => {
+      if (c) {
+        c.classList.remove('bg-surface-container');
+        c.classList.add('bg-surface-container-low');
+      }
+    });
+
+    if (mode === 'fitting') {
+      if (manualBox) manualBox.classList.add('hidden');
+      if (standardBox) standardBox.classList.add('hidden');
+      if (cardFitting) {
+        cardFitting.classList.remove('bg-surface-container-low');
+        cardFitting.classList.add('bg-surface-container');
+      }
+    } else if (mode === 'standard') {
+      if (manualBox) manualBox.classList.add('hidden');
+      if (standardBox) standardBox.classList.remove('hidden');
+      if (cardStandard) {
+        cardStandard.classList.remove('bg-surface-container-low');
+        cardStandard.classList.add('bg-surface-container');
+      }
+    } else if (mode === 'manual') {
+      if (standardBox) standardBox.classList.add('hidden');
+      if (manualBox) manualBox.classList.remove('hidden');
+      if (cardManual) {
+        cardManual.classList.remove('bg-surface-container-low');
+        cardManual.classList.add('bg-surface-container');
+      }
+    }
+  }
+
+  function submitBespokeOrder() {
+    const emailField = document.getElementById('clientEmail');
+    if (emailField && emailField.value) {
+      const modalEmail = document.getElementById('modalCustomerEmail');
+      if (modalEmail) modalEmail.textContent = emailField.value;
+    }
+    const modal = document.getElementById('orderSuccessModal');
+    if (modal) modal.classList.remove('hidden');
+  }
+
+  function closeSuccessModal() {
+    const modal = document.getElementById('orderSuccessModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  // Initial calculation check on mount
+  recalculateLedger();
+</script></main><footer class="w-full bg-surface-container-lowest border-t border-outline-variant/30 py-space-xl"><div class="w-full max-w-[1440px] mx-auto px-margin md:px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-space-md"><div class="flex items-center gap-space-md"><span class="font-label-md text-label-md text-on-surface-variant">Ade Atelier & Bespoke · Lagos Atelier Studio</span><span class="text-outline-variant">•</span><span class="font-label-sm text-label-sm text-on-surface-variant">Merchant Node: ADE-LOS-0492</span></div><div class="flex items-center gap-space-lg text-on-surface-variant font-label-sm text-label-sm"><span class="inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-tertiary">verified_user</span>End-to-End Encrypted Customer Session</span><span>Ordora Cloud Infrastructure</span></div></div></footer></body></html>

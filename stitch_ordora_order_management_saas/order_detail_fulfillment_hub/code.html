@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-tertiary-fixed":"#002113","secondary-fixed":"#dae2fd","surface-variant":"#d3e4fe","surface-bright":"#f8f9ff","tertiary-fixed-dim":"#4edea3","on-secondary-fixed":"#131b2e","primary-container":"#4f46e5","on-background":"#0b1c30","surface-container-lowest":"#ffffff","on-secondary-fixed-variant":"#3f465c","secondary-container":"#dae2fd","surface-container-high":"#dce9ff","inverse-surface":"#213145","on-secondary-container":"#5c647a","outline":"#777587","outline-variant":"#c7c4d8","primary-fixed-dim":"#c3c0ff","surface-dim":"#cbdbf5","on-primary":"#ffffff","on-primary-fixed":"#0f0069","on-surface-variant":"#464555","on-tertiary":"#ffffff","inverse-primary":"#c3c0ff","error":"#ba1a1a","surface-container-highest":"#d3e4fe","primary-fixed":"#e2dfff","surface-container-low":"#eff4ff","surface":"#f8f9ff","error-container":"#ffdad6","on-tertiary-fixed-variant":"#005236","secondary-fixed-dim":"#bec6e0","tertiary":"#005338","background":"#f8f9ff","tertiary-fixed":"#6ffbbe","primary":"#3525cd","tertiary-container":"#006e4b","on-primary-fixed-variant":"#3323cc","on-primary-container":"#dad7ff","on-error-container":"#93000a","on-surface":"#0b1c30","secondary":"#565e74","on-tertiary-container":"#67f4b7","on-secondary":"#ffffff","surface-tint":"#4d44e3","on-error":"#ffffff","surface-container":"#e5eeff","inverse-on-surface":"#eaf1ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"gutter":"1rem","space-md":"0.75rem","gutter-desktop":"1.5rem","margin":"1rem","margin-desktop":"2rem","space-sm":"0.5rem","space-xl":"2rem","space-lg":"1.25rem","space-xs":"0.25rem"},fontFamily:{"code-md":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"label-md":["Inter"],"display-lg":["Inter"],"body-md":["Inter"],"headline-lg":["Inter"],"headline-lg-mobile":["Inter"],"body-sm":["Inter"],"body-lg":["Inter"]},fontSize:{"code-md":["12px",{"lineHeight":"16px","letterSpacing":"-0.01em","fontWeight":"500"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-md":["18px",{"lineHeight":"24px","letterSpacing":"-0.015em","fontWeight":"600"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"600"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.025em","fontWeight":"700"}],"body-md":["13px",{"lineHeight":"18px","letterSpacing":"-0.005em","fontWeight":"400"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-lg-mobile":["20px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"400"}],"body-lg":["15px",{"lineHeight":"22px","letterSpacing":"-0.01em","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-16 px-space-md border-b border-outline-variant/30 flex items-center justify-between"><div class="flex items-center gap-space-sm"><img alt="Ordora Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VQgCiovf-L6q6y6tlgYb6LUrgEfY8OKWAhSqTRjh_v2UekjXlL3TyCCALRJeYVhYTfJW1rlvFWJyaebaQ2Sv8VBLKNt0bAMvHUtA6fDy0SINIfXaYvPlPOR4r3FrQvGy-Bz24dZx2WKPBElPLJphlyRNoqwwkB4geSHaSpucL9RBPYgVApfqJry3gS22hSx7WwDeXS5mK1QFgpF7xzFLSP2I2Oq_Blw338D4eDSwWL4685370CjCErmFU"/><span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Ordora</span></div><span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-medium">v2.4</span></div><div class="p-space-sm border-b border-outline-variant/20"><button class="w-full flex items-center justify-between p-space-sm rounded bg-surface-container-low hover:bg-surface-container transition-colors text-left"><div class="flex flex-col min-w-0 pr-space-xs"><div class="flex items-center gap-space-xs"><span class="font-label-md text-label-md text-on-surface font-medium truncate">Ade Atelier & Bespoke</span></div><span class="font-label-sm text-label-sm text-primary font-semibold uppercase tracking-wider">Pro Tier</span></div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">unfold_more</span></button></div><div class="px-space-md pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Operations</span></div><nav class="flex flex-col gap-0.5 px-space-sm" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Dashboard</span></div></a><a aria-current="page" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors bg-primary-container text-on-primary font-semibold shadow-sm" data-path="orders" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">receipt_long</span><span>Orders</span></div><span class="font-code-md text-code-md px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed font-semibold">124</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="customers" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">group</span><span>Customers</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="payments-ledger" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">account_balance_wallet</span><span>Payments & Ledger</span></div></a><div class="px-space-sm pt-space-md pb-space-xs"><span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Channels & Tools</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="public-storefront" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">storefront</span><span>Public Storefront</span></div><span class="material-symbols-outlined text-[16px] text-outline">open_in_new</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="reports-analytics" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">query_stats</span><span>Reports & Analytics</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="settings" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">settings</span><span>Settings</span></div></a></nav></div><div class="p-space-sm border-t border-outline-variant/30 flex flex-col gap-space-xs bg-surface-container-lowest"><div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30 flex flex-col gap-space-xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Intake Link</span><button class="flex items-center gap-0.5 text-primary hover:text-on-primary-fixed-variant text-[11px] font-medium transition-colors"><span class="material-symbols-outlined text-[14px]">content_copy</span><span>Copy</span></button></div><div class="font-code-md text-code-md text-on-surface font-medium truncate">ordora.com/order/ade-atelier</div></div><div class="pt-space-xs px-space-xs flex items-center justify-between"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface-variant">Postgres Sync Active</span></div><a class="font-label-sm text-label-sm text-primary hover:underline font-medium" data-path="portal-view" href="#">Portal View</a></div></div></aside><div class="pl-64 flex flex-col min-h-screen"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md flex-1 max-w-lg"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-space-sm text-on-surface-variant text-[18px]">search</span><input class="w-full h-9 pl-9 pr-12 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:bg-surface-container-lowest transition-all" placeholder="Search orders, customers, receipts ⌘K" type="text"/><span class="font-code-md text-code-md absolute right-space-sm text-outline border border-outline-variant/40 rounded px-1 py-0.5 bg-surface-container-lowest">⌘K</span></div></div><div class="flex items-center gap-space-md"><button class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span><span>New Order</span></button><div class="h-5 w-px bg-outline-variant/40"></div><button class="relative p-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-error text-on-error font-code-md text-[10px] flex items-center justify-center font-bold">3</span></button><div class="flex items-center gap-space-sm pl-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant/40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5IEtS4jVWJaEjtKwRz3fpVgtmwEUmvac-keeUZTNm0JN3DQzqL1T4E2Ro1FJL1rmvvBk_7HXcPnGVHx-bYZohfJdLdsxsWuc4BRE7HKvTmcAiWiLDvuPPizV24Cz8JckEzV07XsTL6t9U_4Xqns_gakS0zQVYtXiAlu-b8A0Y7YtCXuTa27kzcsdavJxWqCSd5yKTIdG4FoEZLbzvYHoFeT1hcBbPUI8w_Z81ixqbq8RVAvHVMCpHDQ"/><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">Michael Adebayo</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-tight">Business Owner</span></div></div></div></header><main class="w-full pt-16 flex-1 bg-surface"><div class="flex flex-col w-full">
+<div class="w-full max-w-[1440px] mx-auto px-margin md:px-margin-desktop py-space-lg flex flex-col gap-space-lg">
+<!-- Section 1: Breadcrumb, Title & Global Quick-Actions -->
+<div class="flex flex-col gap-space-md">
+<!-- Breadcrumb Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm text-outline">
+<div class="flex items-center gap-space-xs font-label-md text-label-md">
+<a class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+<span>Orders</span>
+</a>
+<span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+<span class="font-code-md text-code-md px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface font-semibold">ORD-2026-00128</span>
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-tertiary-container font-semibold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span> Production Locked
+          </span>
+</div>
+<!-- Public Token Copy Bar -->
+<div class="flex items-center gap-space-xs bg-surface-container-lowest px-space-sm py-1 rounded shadow-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Live Public Link:</span>
+<code class="font-code-md text-code-md text-primary font-medium">ordora.com/o/tok_8x29k9a1z</code>
+<button class="p-1 hover:bg-surface-container-low rounded text-on-surface-variant hover:text-primary transition-colors" id="copyTokenBtn" onclick="copyTokenLink()" title="Copy Client Link">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+<span class="hidden font-label-sm text-label-sm text-tertiary font-bold" id="copiedToast">Copied!</span>
+</div>
+</div>
+<!-- Main Order Header Strip -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-space-lg">
+<div class="flex flex-col gap-space-xs">
+<div class="flex flex-wrap items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">2 Senator Outfits + Embroidered Agbada</h1>
+<span class="px-2.5 py-0.5 rounded-full bg-tertiary-fixed/30 text-on-tertiary-fixed-variant font-label-md text-label-md font-bold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> Ready for Dispatch
+            </span>
+</div>
+<div class="flex flex-wrap items-center gap-y-1 gap-x-space-md text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span class="font-medium text-on-surface">John Okafor</span>
+</div>
+<span class="text-outline">/</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
+<span>Created Oct 18, 2026</span>
+</div>
+<span class="text-outline">/</span>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">
+<span class="material-symbols-outlined text-[15px]">event_upcoming</span>
+<span>Target Delivery: <strong>Oct 26, 2026</strong> (In 2 days)</span>
+</div>
+</div>
+</div>
+<!-- Global Fast Actions -->
+<div class="flex flex-wrap items-center gap-space-xs self-start xl:self-center">
+<button class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">print</span>
+<span>Print Work Order</span>
+</button>
+<button class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">mail</span>
+<span>Send Email Update</span>
+</button>
+<button class="h-9 px-space-sm rounded bg-secondary-container hover:bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors" onclick="document.getElementById('recordPaymentDrawer').classList.remove('hidden')">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+<span>Record Payment (+)</span>
+</button>
+<button class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-all shadow-sm" id="primaryStatusAdvanceBtn" onclick="advanceStatusAction()">
+<span class="material-symbols-outlined text-[18px]">local_shipping</span>
+<span>READY → OUT_FOR_DELIVERY</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Section 2: Lifecycle State Stepper (Fulfillment Pipeline) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Fulfillment Lifecycle</span>
+<span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container-high text-primary font-bold">Stage 4 / 7</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+<span>Last transitioned 4 hours ago by Quality Audit Lead</span>
+</div>
+</div>
+<!-- Stepper Visualizer -->
+<div class="relative w-full overflow-x-auto pb-space-xs">
+<div class="min-w-[780px] grid grid-cols-7 gap-2">
+<!-- Step 1: NEW -->
+<div class="flex flex-col gap-2 relative">
+<div class="h-2 rounded-full bg-tertiary-container w-full"></div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-tertiary-container text-on-tertiary flex items-center justify-center font-code-md text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px]">done</span>
+</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">1. NEW</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline pl-6.5">Oct 18, 11:20</span>
+</div>
+<!-- Step 2: CONFIRMED -->
+<div class="flex flex-col gap-2 relative">
+<div class="h-2 rounded-full bg-tertiary-container w-full"></div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-tertiary-container text-on-tertiary flex items-center justify-center font-code-md text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px]">done</span>
+</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">2. CONFIRMED</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline pl-6.5">Oct 18, 14:05</span>
+</div>
+<!-- Step 3: IN_PROGRESS -->
+<div class="flex flex-col gap-2 relative">
+<div class="h-2 rounded-full bg-tertiary-container w-full"></div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-tertiary-container text-on-tertiary flex items-center justify-center font-code-md text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px]">done</span>
+</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">3. IN PRODUCTION</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline pl-6.5">Oct 19, 09:00</span>
+</div>
+<!-- Step 4: READY (Active) -->
+<div class="flex flex-col gap-2 relative">
+<div class="h-2 rounded-full bg-primary-container w-full relative overflow-hidden">
+<div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-code-md text-[10px] font-bold ring-4 ring-primary-fixed/50">
+                4
+              </span>
+<span class="font-label-md text-label-md font-bold text-primary">4. READY</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-medium pl-6.5">Current Stage</span>
+</div>
+<!-- Step 5: OUT_FOR_DELIVERY -->
+<div class="flex flex-col gap-2 opacity-60">
+<div class="h-2 rounded-full bg-surface-container w-full"></div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-code-md text-[10px]">
+                5
+              </span>
+<span class="font-label-md text-label-md font-medium text-on-surface-variant">5. DISPATCHED</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline pl-6.5">Pending</span>
+</div>
+<!-- Step 6: DELIVERED -->
+<div class="flex flex-col gap-2 opacity-40">
+<div class="h-2 rounded-full bg-surface-container w-full"></div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-code-md text-[10px]">
+                6
+              </span>
+<span class="font-label-md text-label-md font-medium text-on-surface-variant">6. DELIVERED</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline pl-6.5">--</span>
+</div>
+<!-- Step 7: COMPLETED -->
+<div class="flex flex-col gap-2 opacity-40">
+<div class="h-2 rounded-full bg-surface-container w-full"></div>
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-code-md text-[10px]">
+                7
+              </span>
+<span class="font-label-md text-label-md font-medium text-on-surface-variant">7. COMPLETED</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline pl-6.5">Settlement pending</span>
+</div>
+</div>
+</div>
+<!-- Quick Stepper Action Strip with HTMX hooks -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm pt-space-sm bg-surface-container-low p-space-sm rounded">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Next Operational Steps:</span>
+<button class="px-space-sm py-1.5 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold hover:bg-primary transition-all flex items-center gap-1" hx-post="/orders/ORD-2026-00128/status" hx-vals='{"target": "OUT_FOR_DELIVERY"}'>
+<span class="material-symbols-outlined text-[16px]">local_shipping</span>
+<span>Mark Out for Delivery</span>
+</button>
+<button class="px-space-sm py-1.5 rounded bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold hover:bg-surface-container transition-all flex items-center gap-1" hx-post="/orders/ORD-2026-00128/status" hx-vals='{"target": "DELIVERED"}'>
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Mark Delivered / Picked Up</span>
+</button>
+</div>
+<button class="px-space-sm py-1.5 rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-medium transition-colors flex items-center gap-1" onclick="document.getElementById('cancelModal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-[16px]">cancel</span>
+<span>Cancel Order</span>
+</button>
+</div>
+</div>
+<!-- Section 3: Two-Column Execution Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT COLUMN: 8 of 12 cols (approx ~66%) -->
+<div class="lg:col-span-8 flex flex-col gap-space-lg">
+<!-- Card 1: Order Items & Custom Atelier Specs -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">apparel</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Line Items & Atelier Specifications</h2>
+</div>
+<span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">3 Custom Garments</span>
+</div>
+<!-- Items Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low font-label-sm text-label-sm text-outline uppercase tracking-wider">
+<th class="py-2.5 px-space-sm font-semibold rounded-l">Garment Specification</th>
+<th class="py-2.5 px-space-sm font-semibold text-center w-16">Qty</th>
+<th class="py-2.5 px-space-sm font-semibold text-right w-28">Unit (NGN)</th>
+<th class="py-2.5 px-space-sm font-semibold text-right rounded-r w-32">Total (NGN)</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface font-body-md text-body-md">
+<!-- Item 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-sm">
+<div class="flex items-start gap-space-sm">
+<img class="w-14 h-16 rounded object-cover flex-shrink-0 bg-surface-container" data-alt="Close-up photograph of a bespoke midnight blue senator garment with meticulous geometric metallic gold embroidery along the chest placket, draped smoothly on a wooden atelier tailor mannequin under clean studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPQXWpkfF1wOLWgeKsf7zDB6aMqQPmHBVxv9zoSM2E1TRmnt2rP1sJuzN65PMdLaVB2i1KlelutRqOrOSjTiuk3G4KIBpxLY-w_wkIEO3swFeK5PSYDqkIjXsUB0I-K2pToQlJJYgoPddwvdL8d3VjFPKdKvJXm7RhxAZjgkJhV_e8q4UH7Q9OAoF3abdbj5_cwNN-9AsXZODqC4WvPPN2EDGdjRrNm9o5smKfNDXDXXkr1hAvm0T91w"/>
+<div class="flex flex-col gap-1 min-w-0">
+<span class="font-label-md text-label-md font-bold text-on-surface">Midnight Blue Senator Suit with Gold Chest Embroidery</span>
+<div class="flex flex-wrap gap-1">
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Italian Wool Cashmere</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Chest: 42"</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Length: 38"</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Slim Fit</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-center font-code-md text-code-md font-semibold">1</td>
+<td class="py-space-md px-space-sm text-right font-code-md text-code-md">₦85,000</td>
+<td class="py-space-md px-space-sm text-right font-code-md text-code-md font-bold">₦85,000</td>
+</tr>
+<!-- Item 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-sm">
+<div class="flex items-start gap-space-sm">
+<img class="w-14 h-16 rounded object-cover flex-shrink-0 bg-surface-container" data-alt="High quality ivory silk-cotton blend fabric textured suit with sharp hidden button placket and minimal contrast buttons, displayed on an ivory tailoring display in an African luxury fashion atelier." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiz9QVYKJzfNX6qgCWRxeqdyVrFsjkLqcYk0faWM8cpyo_2NVYzkWtqLQsyGruAxxCLPEhDX5Bwm7PP5F_v09y4fsEi0zLRjrNXwRXA3IsY-t_6Qp9fhA9NxpfQLTy4xffXXSNfDAh6bmvqNOa_EgTTIW90pUsW8mAV5tljk0K67dycLuuGtW8tg2mVc5XH85aeq-wy6PNAxaxRTDFdXMSKl8qZ1aIrZWo4t07CT7GPraYxtDvIRwzAA"/>
+<div class="flex flex-col gap-1 min-w-0">
+<span class="font-label-md text-label-md font-bold text-on-surface">Ivory Silk-Cotton Senator Suit</span>
+<div class="flex flex-wrap gap-1">
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Hidden Placket</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Contrast Cuff Buttons</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Trouser Waist: 34"</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-center font-code-md text-code-md font-semibold">1</td>
+<td class="py-space-md px-space-sm text-right font-code-md text-code-md">₦65,000</td>
+<td class="py-space-md px-space-sm text-right font-code-md text-code-md font-bold">₦65,000</td>
+</tr>
+<!-- Item 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-sm">
+<div class="flex items-start gap-space-sm">
+<img class="w-14 h-16 rounded object-cover flex-shrink-0 bg-surface-container" data-alt="Elaborate grand royal Agbada flowing outer robe with hand-stitched traditional geometric relief embroidery patterns on heavy premium damask cotton in soft royal navy tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5mHLFUHpSN-dPIgzOP5AHgDhs6uoHTBwltD0chWvt4jC2VhqKeOZnSR6n8MxAwW3lgRUO700OW8PBrqvsOzDOC-8WezPSJ9A9uM-EMTtG4ibAt8TfmJ0j4TwY32ZaixW3oDbvGoV3UffKgwjjRYDtnGEDzaIiIK7ATos-5nMYCUGH3q6Qj0N-hixDRH76GGwbf6oMzdskyiODAw6IF9KJC2nlRnuwf1avVgHPyLQDMqNx137I7wutsw"/>
+<div class="flex flex-col gap-1 min-w-0">
+<span class="font-label-md text-label-md font-bold text-on-surface">Grand Regal Agbada Outer Robe (Geometric Hand-stitch)</span>
+<div class="flex flex-wrap gap-1">
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Traditional Cut</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Reinforced Neckband</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant">Double Fold Hem</span>
+</div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-sm text-center font-code-md text-code-md font-semibold">1</td>
+<td class="py-space-md px-space-sm text-right font-code-md text-code-md">₦30,000</td>
+<td class="py-space-md px-space-sm text-right font-code-md text-code-md font-bold">₦30,000</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Financial Calculation Breakdown -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end pt-space-sm bg-surface-container-low p-space-md rounded-lg gap-space-md">
+<div class="flex flex-col gap-1 text-on-surface-variant font-body-sm text-body-sm">
+<span class="font-semibold text-on-surface">Fabric Stock Sourcing Note:</span>
+<span>• Navy Aso-Oke trim verified from Lagos Island warehouse</span>
+<span>• High-twist thread reinforced for shoulder seams</span>
+</div>
+<div class="w-full sm:w-64 flex flex-col gap-1.5 font-body-md text-body-md text-right">
+<div class="flex justify-between text-on-surface-variant font-label-md text-label-md">
+<span>Subtotal:</span>
+<span class="font-code-md font-semibold text-on-surface">₦180,000</span>
+</div>
+<div class="flex justify-between text-on-surface-variant font-label-md text-label-md">
+<span>Discount Applied:</span>
+<span class="font-code-md text-outline">₦0</span>
+</div>
+<div class="flex justify-between text-on-surface-variant font-label-md text-label-md">
+<span>VAT (7.5%):</span>
+<span class="font-code-md text-on-surface">₦13,500</span>
+</div>
+<div class="flex justify-between text-on-surface font-headline-md text-headline-md font-bold pt-1 border-t-0 bg-surface-container-lowest px-2 py-1 rounded">
+<span>Total Due:</span>
+<span class="font-code-md text-primary">₦193,500</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: Multi-Installment Payment Ledger & Receipts (ACID Transaction History) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">account_balance_wallet</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Payment Ledger & Receipts</h2>
+</div>
+<button class="px-space-sm py-1.5 rounded bg-primary-container text-on-primary hover:bg-primary font-label-md text-label-md font-semibold flex items-center gap-1 transition-colors" onclick="document.getElementById('recordPaymentDrawer').classList.remove('hidden')">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Record Installment Payment</span>
+</button>
+</div>
+<!-- Balance Tri-Split Strip -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+<div class="p-space-md rounded bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-outline font-semibold uppercase">Total Invoiced</span>
+<span class="font-code-md text-headline-md font-bold text-on-surface">₦193,500</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Includes VAT</span>
+</div>
+<div class="p-space-md rounded bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase">Total Settled</span>
+<span class="font-code-md text-headline-md font-bold text-tertiary">₦100,000</span>
+<span class="font-label-sm text-label-sm text-tertiary-container font-medium">51.68% collected</span>
+</div>
+<div class="p-space-md rounded bg-error-container/30 flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-error-container font-semibold uppercase">Outstanding Balance</span>
+<span class="px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-code-md text-[10px] font-bold">PARTIALLY_PAID</span>
+</div>
+<span class="font-code-md text-headline-md font-bold text-error">₦93,500</span>
+<span class="font-label-sm text-label-sm text-on-error-container">Due before handover</span>
+</div>
+</div>
+<!-- Transaction Ledger Items -->
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm font-semibold text-outline uppercase tracking-wider">Verified Transaction Entries</span>
+<!-- Entry 1 -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm hover:bg-surface-container transition-colors">
+<div class="flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center font-bold flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md font-bold text-on-surface">₦50,000.00</span>
+<span class="font-code-md text-code-md px-1.5 py-0.2 rounded bg-tertiary-container text-on-tertiary font-bold">Direct Bank Transfer</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ref: <code class="font-code-md">GTB-88392019</code> • Verified by Michael Adebayo</span>
+<span class="font-label-sm text-label-sm text-outline">Oct 18, 2026 at 11:42 AM</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs self-end sm:self-center">
+<div class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md">
+<span class="material-symbols-outlined text-[16px] text-primary">picture_as_pdf</span>
+<span>transfer_receipt_50k.pdf</span>
+</div>
+<button class="p-1.5 rounded hover:bg-surface-container-high text-primary transition-colors" title="Download">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+<!-- Entry 2 -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm hover:bg-surface-container transition-colors">
+<div class="flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">point_of_sale</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-md text-label-md font-bold text-on-surface">₦50,000.00</span>
+<span class="font-code-md text-code-md px-1.5 py-0.2 rounded bg-secondary-container text-on-secondary-fixed font-bold">Zenith POS Terminal</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Terminal ID: <code class="font-code-md">POS-441</code> • Verified by Sarah (Shop Lead)</span>
+<span class="font-label-sm text-label-sm text-outline">Oct 22, 2026 at 03:45 PM</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs self-end sm:self-center">
+<div class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md">
+<span class="material-symbols-outlined text-[16px] text-tertiary">image</span>
+<span>pos_slip_02.png</span>
+</div>
+<button class="p-1.5 rounded hover:bg-surface-container-high text-primary transition-colors" title="Download">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Attachments & Reference Swatches -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">folder_open</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Attachments & Atelier Swatches</h2>
+</div>
+<button class="font-label-md text-label-md text-primary hover:underline font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">upload_file</span>
+<span>Add File</span>
+</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+<!-- File 1 -->
+<div class="p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-2">
+<div class="h-28 rounded bg-surface-container-high flex flex-col items-center justify-center text-outline relative overflow-hidden">
+<span class="material-symbols-outlined text-[36px] text-primary">description</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold mt-1">PDF File • 384 KB</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-bold text-on-surface truncate">measurements_sheet.pdf</span>
+<span class="font-label-sm text-label-sm text-outline">Uploaded Oct 18</span>
+</div>
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- File 2 -->
+<div class="p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-2">
+<div class="h-28 rounded overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="Macro close-up high thread count midnight blue wool fabric swatch highlighting the texture and twill weave pattern for bespoke atelier tailoring." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIo6u7pyMK1_Kc95ZrbQTyTeIFdEpgfb-UvY0upRwRkjfsztmVN8eNervTZP270sv7zpjTfDAE-ebWC0CsbNEXWHGH3Ho91jFc6L0RoBTmX9_2cNTF5JG17ogqEn_jaN6EoU7EGXFlNjzUyJF6vuWKJvtv_SvH298cOsg0FOyvivXyByEb9QUEQLdtyE5m_Vs_0k7u54R2Degp4SJaktM8uCykRW_I-kmwDiTFrXCvGQc0sKKK1Ow3Xw"/>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-bold text-on-surface truncate">fabric_sample_blue.jpg</span>
+<span class="font-label-sm text-label-sm text-outline">Swatched Oct 19</span>
+</div>
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- File 3 -->
+<div class="p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-2">
+<div class="h-28 rounded overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="Close-up vector design reference render of traditional geometric gold thread embroidery motif intended for chest placket tailoring on Nigerian traditional men attire." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQV2DeRoVRnphxhODk3lgGLAT3F-y1_NAGZVi4rLMolCWTcFK1lDExoZKqjn2z11GFQCULRceEbI5u8NR9-LkqEyr3dUms_tRXpUowy53wyHvVl509HSyhUIe5Vw4nirXVYxzeXpEjW_eNsbOnDbQv_QStGd4vbRagWuGSK9hEvjdhL7vmFzsVKWnoixn5OqqIoRyM9eKOIN1-SvvXqpA_kO3SbCUGMK8LA1_RwBeHGH4H_SMBlNw6tw"/>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md font-bold text-on-surface truncate">embroidery_ref.png</span>
+<span class="font-label-sm text-label-sm text-outline">Approved by client</span>
+</div>
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 4: Operational Audit Trail (History of actions) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">history</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Operational Audit Trail</h2>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Postgres append-only log</span>
+</div>
+<div class="relative pl-6 flex flex-col gap-space-md before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container-high">
+<!-- Audit 1 -->
+<div class="relative flex flex-col gap-0.5">
+<span class="absolute -left-[27px] top-1 w-2.5 h-2.5 rounded-full bg-primary-container ring-4 ring-surface-container-lowest"></span>
+<div class="flex flex-wrap items-center gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Sarah Jenkins updated status to READY</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.2 rounded bg-tertiary-container text-on-tertiary">QA Passed</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Final pressing completed, measurements checked against sheet #421.</span>
+<span class="font-label-sm text-label-sm text-outline">Oct 24, 2026 • 10:15 AM</span>
+</div>
+<!-- Audit 2 -->
+<div class="relative flex flex-col gap-0.5">
+<span class="absolute -left-[27px] top-1 w-2.5 h-2.5 rounded-full bg-tertiary ring-4 ring-surface-container-lowest"></span>
+<div class="flex flex-wrap items-center gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Payment of ₦50,000 recorded via POS</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.2 rounded bg-secondary-container text-on-secondary-fixed">POS-441</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Second installment acknowledged at studio cashier desk.</span>
+<span class="font-label-sm text-label-sm text-outline">Oct 22, 2026 • 03:45 PM</span>
+</div>
+<!-- Audit 3 -->
+<div class="relative flex flex-col gap-0.5">
+<span class="absolute -left-[27px] top-1 w-2.5 h-2.5 rounded-full bg-secondary ring-4 ring-surface-container-lowest"></span>
+<div class="flex flex-wrap items-center gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Status moved CONFIRMED → IN_PROGRESS</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Pattern cutting initiated by Lead Cutter Tunde.</span>
+<span class="font-label-sm text-label-sm text-outline">Oct 19, 2026 • 09:00 AM</span>
+</div>
+<!-- Audit 4 -->
+<div class="relative flex flex-col gap-0.5">
+<span class="absolute -left-[27px] top-1 w-2.5 h-2.5 rounded-full bg-outline ring-4 ring-surface-container-lowest"></span>
+<div class="flex flex-wrap items-center gap-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Order created by Michael Adebayo</span>
+<span class="font-code-md text-[11px] px-1.5 py-0.2 rounded bg-surface-container text-on-surface">Deposit ₦50k</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Initial intake via bespoke concierge catalog.</span>
+<span class="font-label-sm text-label-sm text-outline">Oct 18, 2026 • 11:20 AM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: 4 of 12 cols (approx ~34%) -->
+<div class="lg:col-span-4 flex flex-col gap-space-lg">
+<!-- Card: Customer Profile Context -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Client Details</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold">VIP Client</span>
+</div>
+<div class="flex items-center gap-space-sm pb-space-sm">
+<div class="w-12 h-12 rounded-full bg-primary text-on-primary font-headline-md text-headline-md flex items-center justify-center font-bold">
+              JO
+            </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-md text-headline-md font-bold text-on-surface truncate">John Okafor</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">4 previous completed orders</span>
+</div>
+</div>
+<!-- Contact Details -->
+<div class="flex flex-col gap-space-xs text-body-sm font-body-sm">
+<div class="flex items-center justify-between p-space-xs rounded bg-surface-container-low">
+<div class="flex items-center gap-2 text-on-surface-variant truncate">
+<span class="material-symbols-outlined text-[16px] text-outline">mail</span>
+<span class="truncate">john.okafor@gmail.com</span>
+</div>
+<button class="p-1 hover:text-primary text-on-surface-variant transition-colors" title="Send Email">
+<span class="material-symbols-outlined text-[16px]">send</span>
+</button>
+</div>
+<div class="flex items-center justify-between p-space-xs rounded bg-surface-container-low">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-outline">call</span>
+<span class="font-code-md">+234 803 555 0192</span>
+</div>
+<div class="flex items-center gap-1">
+<a class="px-2 py-0.5 rounded bg-tertiary-container text-on-tertiary font-label-sm text-label-sm font-bold flex items-center gap-1" href="https://wa.me/2348035550192" target="_blank">
+<span>WhatsApp</span>
+</a>
+</div>
+</div>
+<div class="flex flex-col gap-1 p-space-sm rounded bg-surface-container-low">
+<div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[16px] text-primary">local_shipping</span>
+<span>Delivery Address</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface-variant">14 Admiralty Way, Lekki Phase 1, Lagos State, Nigeria</span>
+</div>
+</div>
+<!-- Internal Atelier Notes -->
+<div class="p-space-sm rounded-lg bg-surface-container-high/60 flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-bold uppercase text-on-surface tracking-wider">Internal Notes</span>
+<span class="material-symbols-outlined text-[16px] text-outline">lock</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              "Prefers snug collar fit. Always requires tracking updates via email and WhatsApp. Attending wedding on Oct 28. Deliver strictly before noon on Oct 26."
+            </p>
+</div>
+</div>
+<!-- Card: Zero-Login Public Client Portal Preview -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">preview</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Client Portal View</span>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">Zero-login</span>
+</div>
+<!-- Micro portal render -->
+<div class="rounded-lg bg-surface-container-low p-space-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between border-b-0 pb-1">
+<div class="flex items-center gap-1.5">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="font-label-sm text-label-sm font-bold text-on-surface">Ade Atelier Portal</span>
+</div>
+<span class="font-code-md text-[10px] text-outline">ORD-2026-00128</span>
+</div>
+<!-- Visual Bar -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-2 rounded">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-tertiary">Garments Ready</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Scheduled for rider pickup</span>
+</div>
+<div class="w-12 h-12 bg-white p-1 rounded shadow-sm flex items-center justify-center">
+<!-- Visual placeholder for dynamic QR code -->
+<svg class="w-10 h-10 text-on-surface" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<rect height="6" width="6" x="2" y="2"></rect>
+<rect height="6" width="6" x="16" y="2"></rect>
+<rect height="6" width="6" x="2" y="16"></rect>
+<circle cx="12" cy="12" r="2"></circle>
+<path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
+</svg>
+</div>
+</div>
+<button class="w-full h-8 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center justify-center gap-1 transition-colors" onclick="window.open('#portal-preview','_blank')">
+<span>Preview Customer Portal</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+</div>
+<!-- Card: Logistics Courier & Dispatch Assignment -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[20px]">two_wheeler</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Courier & Dispatch</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-bold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span> Assigned
+            </span>
+</div>
+<div class="flex flex-col gap-space-xs text-body-sm font-body-sm">
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-label-md font-bold text-on-surface">Gokada Express Logistics</span>
+<span class="font-code-md text-code-md px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">GKD-99410</span>
+</div>
+<span class="text-on-surface-variant">Rider: <strong>Emmanuel Kalu</strong></span>
+<div class="flex items-center justify-between pt-1">
+<span class="font-code-md text-code-md text-outline">+234 809 111 2233</span>
+<a class="p-1 rounded hover:bg-surface-container text-primary" href="tel:+2348091112233">
+<span class="material-symbols-outlined text-[16px]">phone</span>
+</a>
+</div>
+</div>
+<div class="p-space-sm rounded bg-surface-container-low flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Dispatch Window</span>
+<span class="font-body-md text-body-md font-semibold text-on-surface">Oct 25, 2:00 PM - 5:00 PM</span>
+</div>
+<button class="px-space-xs py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-medium">
+                Reschedule
+              </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Slide Drawer: Record Installment Payment Modal/Drawer -->
+<div class="hidden fixed inset-0 z-50 overflow-hidden" id="recordPaymentDrawer">
+<div class="absolute inset-0 bg-inverse-surface/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('recordPaymentDrawer').classList.add('hidden')"></div>
+<div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+<div class="w-screen max-w-md bg-surface-container-lowest shadow-2xl flex flex-col">
+<!-- Header -->
+<div class="p-space-md border-b-0 bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">payments</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Record Installment Payment</span>
+</div>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant" onclick="document.getElementById('recordPaymentDrawer').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Form Body -->
+<form class="p-space-lg flex-1 overflow-y-auto flex flex-col gap-space-md" id="paymentForm" onsubmit="handlePaymentSubmit(event)">
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1">
+<div class="flex justify-between font-label-md text-label-md">
+<span class="text-on-surface-variant">Order Total:</span>
+<span class="font-code-md text-on-surface font-semibold">₦193,500</span>
+</div>
+<div class="flex justify-between font-label-md text-label-md">
+<span class="text-on-surface-variant">Already Settled:</span>
+<span class="font-code-md text-tertiary font-semibold">₦100,000</span>
+</div>
+<div class="flex justify-between font-label-md text-label-md pt-1">
+<span class="font-bold text-on-surface">Outstanding Due:</span>
+<span class="font-code-md font-bold text-error">₦93,500</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface">Payment Amount (NGN)</label>
+<input class="h-9 px-space-sm rounded bg-surface-container-lowest border-0 ring-1 ring-outline-variant focus:ring-2 focus:ring-primary-container font-code-md text-code-md text-on-surface" name="amount" required="" type="number" value="93500"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface">Payment Channel / Instrument</label>
+<select class="h-9 px-space-sm rounded bg-surface-container-lowest border-0 ring-1 ring-outline-variant focus:ring-2 focus:ring-primary-container font-body-sm text-body-sm text-on-surface" name="channel">
+<option value="bank_transfer">Direct Bank Transfer (NIP / Wire)</option>
+<option value="pos_terminal">Studio POS Terminal</option>
+<option value="cash">Direct Cash Handover</option>
+<option value="online_paystack">Customer Card Link (Paystack/Flutterwave)</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface">Transaction Reference / POS Slip #</label>
+<input class="h-9 px-space-sm rounded bg-surface-container-lowest border-0 ring-1 ring-outline-variant focus:ring-2 focus:ring-primary-container font-code-md text-code-md text-on-surface" placeholder="e.g. GTB-99812401 or POS-8472" required="" type="text"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface">Staff Verifier</label>
+<input class="h-9 px-space-sm rounded bg-surface-container-low border-0 font-body-sm text-body-sm text-on-surface-variant cursor-not-allowed" readonly="" type="text" value="Michael Adebayo (Current User)"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md font-semibold text-on-surface">Attach Payment Slip / Proof</label>
+<div class="h-20 rounded border-0 bg-surface-container-low flex flex-col items-center justify-center text-outline cursor-pointer hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[24px]">cloud_upload</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Click to upload screenshot or PDF receipt</span>
+</div>
+</div>
+<div class="mt-auto pt-space-md flex items-center justify-end gap-space-sm">
+<button class="px-space-md h-9 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold" onclick="document.getElementById('recordPaymentDrawer').classList.add('hidden')" type="button">
+              Cancel
+            </button>
+<button class="px-space-md h-9 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold" type="submit">
+              Post Installment Entry
+            </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<!-- Modal: Cancel Order Confirmation Dialog -->
+<div class="hidden fixed inset-0 z-50 overflow-y-auto" id="cancelModal">
+<div class="min-h-screen px-4 text-center flex items-center justify-center">
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('cancelModal').classList.add('hidden')"></div>
+<div class="inline-block w-full max-w-md p-space-lg my-8 text-left align-middle bg-surface-container-lowest rounded-xl shadow-xl transform transition-all relative">
+<div class="flex items-center gap-space-sm text-error mb-space-sm">
+<span class="material-symbols-outlined text-[28px]">warning</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Cancel Order ORD-2026-00128?</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+          This order has garments already crafted and in <strong>READY</strong> status. Canceling will halt dispatch, notify John Okafor, and calculate refund balances from the ₦100,000 collected.
+        </p>
+<div class="flex justify-end gap-space-sm">
+<button class="px-space-md h-9 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold" onclick="document.getElementById('cancelModal').classList.add('hidden')">
+            Dismiss
+          </button>
+<button class="px-space-md h-9 rounded bg-error text-on-error hover:bg-error-container hover:text-on-error-container font-label-md text-label-md font-semibold" onclick="alert('Order cancellation triggered. Notification dispatched to customer.'); document.getElementById('cancelModal').classList.add('hidden')">
+            Confirm Cancelation
+          </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+    function copyTokenLink() {
+      navigator.clipboard.writeText("https://ordora.com/o/tok_8x29k9a1z");
+      const toast = document.getElementById("copiedToast");
+      toast.classList.remove("hidden");
+      setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 2500);
+    }
+
+    function advanceStatusAction() {
+      const btn = document.getElementById("primaryStatusAdvanceBtn");
+      btn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span> Dispatching...`;
+      setTimeout(() => {
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">done</span> Dispatched to Gokada`;
+        btn.classList.remove("bg-primary-container", "hover:bg-primary");
+        btn.classList.add("bg-tertiary-container", "text-on-tertiary");
+      }, 1000);
+    }
+
+    function handlePaymentSubmit(e) {
+      e.preventDefault();
+      document.getElementById('recordPaymentDrawer').classList.add('hidden');
+      alert("Payment of ₦93,500 successfully posted to ledger! ACID lock verified.");
+    }
+  </script>
+</div></main></div></body></html>

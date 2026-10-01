@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
+	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/domain/payment"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
@@ -17,9 +18,10 @@ import (
 
 // PaymentHandler serves payment endpoints.
 type PaymentHandler struct {
-	Service  *app.PaymentService
-	Orders   *app.OrderService
-	Renderer *render.Renderer
+	Service     *app.PaymentService
+	Orders      *app.OrderService
+	Attachments *app.AttachmentService
+	Renderer    *render.Renderer
 }
 
 // Record handles POST /orders/{id}/payments.
@@ -77,6 +79,45 @@ func (h *PaymentHandler) Record(w http.ResponseWriter, r *http.Request) {
 	h.renderPaymentsFragment(w, r, scope, orderID, "")
 }
 
+// Reverse handles POST /payments/{id}/reverse.
+func (h *PaymentHandler) Reverse(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	paymentID, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+
+	// Load the payment to find its order before reversing.
+	p, err := h.Service.GetPayment(r.Context(), scope, paymentID)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	reason := formValue(r, "reason")
+	if reason == "" {
+		reason = "No reason provided"
+	}
+
+	_, err = h.Service.ReversePayment(r.Context(), scope, app.ReverseInput{
+		PaymentID: paymentID,
+		Reason:    reason,
+	})
+	if err != nil {
+		h.renderError(w, r, scope, p.OrderID, humanizePaymentError(err))
+		return
+	}
+
+	h.renderPaymentsFragment(w, r, scope, p.OrderID, "")
+}
+
 // renderError re-renders the payments fragment with an error banner.
 func (h *PaymentHandler) renderError(w http.ResponseWriter, r *http.Request, scope tenant.TenantScope, orderID uuid.UUID, msg string) {
 	h.renderPaymentsFragment(w, r, scope, orderID, msg)
@@ -100,13 +141,24 @@ func (h *PaymentHandler) renderPaymentsFragment(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// Load attachments for each payment.
+	byPayment := make(map[uuid.UUID][]*attachment.Attachment, len(list))
+	for _, p := range list {
+		atts, err := h.Attachments.List(r.Context(), scope, attachment.EntityPayment, p.ID)
+		if err != nil {
+			continue
+		}
+		byPayment[p.ID] = atts
+	}
+
 	data := paymentsFragment{
-		Order:     o,
-		Payments:  list,
-		Balance:   o.Balance().Amount(),
-		PayStatus: payment.DeriveStatus(o.Total, o.Paid),
-		CSRFToken: middleware.CSRFTokenFrom(r.Context()),
-		Error:     errMsg,
+		Order:                o,
+		Payments:             list,
+		Balance:              o.Balance().Amount(),
+		PayStatus:            payment.DeriveStatus(o.Total, o.Paid),
+		CSRFToken:            middleware.CSRFTokenFrom(r.Context()),
+		Error:                errMsg,
+		AttachmentsByPayment: byPayment,
 	}
 	h.Renderer.Fragment(w, r, http.StatusOK, "orders/_payments.html", data)
 }
@@ -125,6 +177,12 @@ func humanizePaymentError(err error) string {
 		return "Payment date cannot be in the future."
 	case errors.Is(err, order.ErrNotFound):
 		return "Order not found."
+	case errors.Is(err, app.ErrCannotReverseReversal):
+		return "Cannot reverse a reversal."
+	case errors.Is(err, app.ErrPaymentAlreadyReversed):
+		return "This payment is already reversed."
+	case errors.Is(err, app.ErrReasonRequired):
+		return "Please provide a reason for the reversal."
 	default:
 		return "Could not record payment: " + err.Error()
 	}

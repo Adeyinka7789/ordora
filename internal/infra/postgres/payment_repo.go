@@ -140,6 +140,35 @@ func (r *PaymentRepo) SumActiveForOrder(ctx context.Context, scope tenant.Tenant
 	return money.New(minor, currency)
 }
 
+// GetByIDTx loads a payment inside an existing transaction.
+func (r *PaymentRepo) GetByIDTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*payment.Payment, error) {
+	const q = `
+		SELECT id, organization_id, order_id, amount_minor, currency, method,
+		       COALESCE(reference,''), paid_at, COALESCE(notes,''),
+		       reverses, reversed_by, created_by, created_at
+		FROM payments
+		WHERE id = $1
+	`
+	return scanPayment(tx.QueryRow(ctx, q, id))
+}
+
+// MarkReversedTx sets the reversed_by field on a payment. Used when a
+// reversal is inserted; the original gains a pointer to the reversal row.
+//
+// This is the ONLY mutation allowed on a payment row.
+func (r *PaymentRepo) MarkReversedTx(ctx context.Context, tx pgx.Tx, originalID, reversalID uuid.UUID) error {
+	const q = `UPDATE payments SET reversed_by = $2 WHERE id = $1 AND reversed_by IS NULL`
+	ct, err := tx.Exec(ctx, q, originalID, reversalID)
+	if err != nil {
+		return fmt.Errorf("payment_repo: mark reversed: %w", Classify(err))
+	}
+	if ct.RowsAffected() == 0 {
+		// Either the payment doesn't exist, or it's already reversed.
+		return payment.ErrNotFound
+	}
+	return nil
+}
+
 // -----------------------------------------------------------------------------
 // Scanner
 // -----------------------------------------------------------------------------
