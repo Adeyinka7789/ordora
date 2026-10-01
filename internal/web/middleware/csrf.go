@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"net/http"
+	"strings"
 )
 
 // CSRFConfig configures the CSRF middleware.
@@ -42,15 +43,14 @@ func CSRF(cfg CSRFConfig) func(http.Handler) http.Handler {
 			}
 
 			// Enforce on unsafe methods.
+			// Enforce on unsafe methods.
 			switch r.Method {
 			case http.MethodGet, http.MethodHead, http.MethodOptions:
 				// safe — fall through
 			default:
 				submitted := r.Header.Get(cfg.HeaderName)
 				if submitted == "" {
-					// Try form (ParseForm is idempotent).
-					_ = r.ParseForm()
-					submitted = r.PostFormValue(cfg.FieldName)
+					submitted = extractFormToken(r, cfg.FieldName)
 				}
 				if subtle.ConstantTimeCompare([]byte(submitted), []byte(token)) != 1 {
 					http.Error(w, "invalid CSRF token", http.StatusForbidden)
@@ -86,4 +86,32 @@ func newCSRFToken() string {
 		panic("csrf: crypto/rand failed: " + err.Error())
 	}
 	return base64.RawURLEncoding.EncodeToString(b)
+}
+
+// extractFormToken reads the CSRF token from a form body, handling both
+// urlencoded and multipart content types.
+//
+// Why this is non-trivial:
+//
+//   - r.ParseForm() only handles application/x-www-form-urlencoded. It
+//     silently ignores multipart bodies, leaving PostForm empty.
+//   - r.ParseMultipartForm() handles multipart but does NOT populate
+//     r.PostForm for urlencoded requests, so it's not a complete replacement.
+//   - r.FormValue("_csrf") checks query, urlencoded POST body, and multipart
+//     form body all at once — but it depends on the appropriate Parse* call
+//     having run first.
+//
+// The correct sequence: call both parsers (they're idempotent and safe to
+// call on the wrong content type), then use r.FormValue.
+//
+// We cap the multipart memory usage at 32 MiB (matches net/http's default;
+// our upload handler applies its own tighter limit of 10 MiB+margin).
+func extractFormToken(r *http.Request, fieldName string) string {
+	ct := r.Header.Get("Content-Type")
+	if strings.HasPrefix(ct, "multipart/form-data") {
+		_ = r.ParseMultipartForm(32 << 20)
+	} else {
+		_ = r.ParseForm()
+	}
+	return r.FormValue(fieldName)
 }

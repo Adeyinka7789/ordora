@@ -1,18 +1,87 @@
 {{ define "dashboard/index.html" }}
 <section class="dashboard">
-  <h1>Welcome, {{ .UserName }}.</h1>
-  <p class="lede">
-    You're signed in as <strong>{{ .UserEmail }}</strong>
-    with role <strong>{{ .OrgRole }}</strong>.
-  </p>
-
-  <form method="post" action="/logout" class="inline-form">
-    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-    <button type="submit" class="btn-secondary">Sign out</button>
-  </form>
-
-  <div class="notice">
-    <p>Your dashboard is empty. In the next milestone you'll see orders, customers, and payments here.</p>
+  <div class="page-header">
+    <div>
+      <h1>Good day, {{ .UserName }}.</h1>
+      <p class="muted">Signed in as <strong>{{ .UserEmail }}</strong> · Role <strong>{{ .OrgRole }}</strong></p>
+    </div>
+    <form method="post" action="/logout" class="inline-form">
+      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+      <button type="submit" class="btn-secondary">Sign out</button>
+    </form>
   </div>
+
+  {{ if .FlashNotice }}<div class="flash flash-notice">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="flash flash-error">{{ .FlashError }}</div>{{ end }}
+
+  {{ if .Stats }}
+    <div class="stat-grid">
+      <a href="/orders" class="stat-card">
+        <div class="stat-label">Total orders</div>
+        <div class="stat-value">{{ .Stats.TotalOrders }}</div>
+      </a>
+
+      <a href="/orders?status=IN_PROGRESS" class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">{{ .Stats.PendingOrders }}</div>
+      </a>
+
+      <a href="/orders" class="stat-card">
+        <div class="stat-label">Due today</div>
+        <div class="stat-value">{{ .Stats.DueToday }}</div>
+      </a>
+
+      <a href="/orders" class="stat-card {{ if gt .Stats.Overdue 0 }}stat-warn{{ end }}">
+        <div class="stat-label">Overdue</div>
+        <div class="stat-value">{{ .Stats.Overdue }}</div>
+      </a>
+
+      <div class="stat-card stat-wide">
+        <div class="stat-label">Outstanding</div>
+        <div class="stat-value">{{ currency .Stats.OutstandingMinor .Stats.Currency }}</div>
+      </div>
+    </div>
+
+    <section class="card">
+      <h2>Recent orders</h2>
+      {{ if .Stats.RecentOrders }}
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Title</th>
+              <th class="num">Total</th>
+              <th>Status</th>
+              <th>Due</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Stats.RecentOrders }}
+              <tr>
+                <td><a href="/orders/{{ .ID }}">{{ .Number }}</a></td>
+                <td>{{ .CustomerName }}</td>
+                <td>{{ .Title }}</td>
+                <td class="num">{{ currency .TotalMinor $.Stats.Currency }}</td>
+                <td><span class="status-pill status-{{ .Status }}">{{ .Status.Label }}</span></td>
+                <td>
+                  {{ if .ExpectedDate }}{{ .ExpectedDate.Format "Jan 2" }}{{ else }}<span class="muted">—</span>{{ end }}
+                </td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      {{ else }}
+        <div class="empty-state">
+          <p>No orders yet.</p>
+          <p><a href="/orders/new" class="btn-primary">Create your first order</a></p>
+        </div>
+      {{ end }}
+    </section>
+  {{ else }}
+    <div class="notice">
+      <p>You don't have an active organization yet.</p>
+    </div>
+  {{ end }}
 </section>
 {{ end }}

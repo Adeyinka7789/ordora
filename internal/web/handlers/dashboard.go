@@ -3,22 +3,26 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
 // DashboardHandler serves the post-login landing page.
 type DashboardHandler struct {
+	Service  *app.DashboardService
 	Renderer *render.Renderer
 }
 
 type dashboardPage struct {
-	Title     string
-	UserName  string
-	UserEmail string
-	OrgName   string
-	OrgRole   string
-	CSRFToken string
+	Title       string
+	CSRFToken   string
+	UserName    string
+	UserEmail   string
+	OrgRole     string
+	Stats       *app.DashboardStats
+	FlashNotice string
+	FlashError  string
 }
 
 func (h *DashboardHandler) Index(w http.ResponseWriter, r *http.Request) {
@@ -27,12 +31,28 @@ func (h *DashboardHandler) Index(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	data := dashboardPage{
+
+	scope := s.Scope
+	page := dashboardPage{
 		Title:     "Dashboard",
+		CSRFToken: csrfFromCtx(r),
 		UserName:  s.User.Name,
 		UserEmail: s.User.Email.String(),
-		OrgRole:   string(s.Scope.Role),
-		CSRFToken: middleware.CSRFTokenFrom(r.Context()),
+		OrgRole:   string(scope.Role),
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "dashboard/index.html", data)
+
+	if !scope.IsZero() {
+		if stats, err := h.Service.Load(r.Context(), scope, "NGN"); err == nil {
+			page.Stats = stats
+		}
+	}
+
+	if v := queryValue(r, "notice"); v != "" {
+		page.FlashNotice = v
+	}
+	if v := queryValue(r, "error"); v != "" {
+		page.FlashError = v
+	}
+
+	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "dashboard/index.html", page)
 }

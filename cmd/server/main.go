@@ -76,7 +76,9 @@ func run() error {
 		Renderer: renderer,
 		Cfg:      cfg,
 	}
+	dashService := app.NewDashboardService(db)
 	dashH := &handlers.DashboardHandler{
+		Service:  dashService,
 		Renderer: renderer,
 	}
 
