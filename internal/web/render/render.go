@@ -84,6 +84,31 @@ func (r *Renderer) PageWithShell(w http.ResponseWriter, status int, layout, frag
 	}
 }
 
+// PagePublic renders a full page with a public (non-authenticated) layout.
+// No sidebar, no topbar, no shell.
+func (r *Renderer) PagePublic(w http.ResponseWriter, status int, layout, fragment string, data any) {
+	if layout == "" {
+		layout = "layouts/public.html"
+	}
+	var buf bytes.Buffer
+	if err := r.tmpl.ExecuteTemplate(&buf, fragment, data); err != nil {
+		r.serverError(w, err, fragment)
+		return
+	}
+	view := struct {
+		Data    any
+		Content template.HTML
+	}{
+		Data:    data,
+		Content: template.HTML(buf.String()), //nolint:gosec
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	if err := r.tmpl.ExecuteTemplate(w, layout, view); err != nil {
+		slog.Error("render: public layout exec", "layout", layout, "err", err)
+	}
+}
+
 // Fragment renders just the fragment for HTMX requests, or a full page otherwise.
 func (r *Renderer) Fragment(w http.ResponseWriter, req *http.Request, status int, fragment string, data any) {
 	if req.Header.Get("HX-Request") == "true" {

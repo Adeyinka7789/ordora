@@ -167,5 +167,30 @@ func templateFuncs() template.FuncMap {
 			return m
 		},
 		"add1": func(i int) int { return i + 1 },
+
+		"fieldOr": func(data any, field, fallback string) string {
+			if data == nil {
+				return fallback
+			}
+			rv := reflect.ValueOf(data)
+			if rv.Kind() == reflect.Ptr {
+				if rv.IsNil() {
+					return fallback
+				}
+				rv = rv.Elem()
+			}
+			if rv.Kind() != reflect.Struct {
+				return fallback
+			}
+			f := rv.FieldByName(field)
+			if !f.IsValid() || f.Kind() != reflect.String {
+				return fallback
+			}
+			s := f.String()
+			if s == "" {
+				return fallback
+			}
+			return s
+		},
 	}
 }

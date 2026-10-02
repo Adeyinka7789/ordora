@@ -1,0 +1,136 @@
+{{ define "layouts/public.html" }}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ with .Data }}{{ if .Title }}{{ .Title }} — Ordora{{ else }}Ordora{{ end }}{{ else }}Ordora{{ end }}</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-highest": "#d3e4fe",
+            "secondary": "#565e74",
+            "surface-container": "#e5eeff",
+            "on-error-container": "#93000a",
+            "on-primary-fixed-variant": "#3323cc",
+            "surface-container-high": "#dce9ff",
+            "error": "#ba1a1a",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "background": "#f8f9ff",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#464555",
+            "primary": "#3525cd",
+            "on-primary": "#ffffff",
+            "primary-container": "#4f46e5",
+            "primary-fixed": "#e2dfff",
+            "on-primary-fixed": "#0f0069",
+            "tertiary": "#005338",
+            "tertiary-container": "#006e4b",
+            "tertiary-fixed": "#6ffbbe",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "outline": "#777587",
+            "outline-variant": "#c7c4d8",
+            "surface": "#f8f9ff",
+            "surface-bright": "#f8f9ff",
+            "inverse-surface": "#213145",
+            "inverse-on-surface": "#eaf1ff"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1.25rem",
+            "space-xl": "2rem",
+            "margin": "1rem",
+            "margin-desktop": "2rem"
+          },
+          fontFamily: {
+            "body-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-md": ["Inter"],
+            "headline-lg": ["Inter"],
+            "display-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "code-md": ["Inter"]
+          },
+          fontSize: {
+            "display-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.025em", fontWeight: "700" }],
+            "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "headline-md": ["18px", { lineHeight: "24px", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "body-lg": ["15px", { lineHeight: "22px", letterSpacing: "-0.01em", fontWeight: "400" }],
+            "body-md": ["13px", { lineHeight: "18px", letterSpacing: "-0.005em", fontWeight: "400" }],
+            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            "label-md": ["12px", { lineHeight: "16px", fontWeight: "600" }],
+            "label-sm": ["11px", { lineHeight: "14px", fontWeight: "500" }],
+            "code-md": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased">
+
+  <!-- Public header -->
+  <header class="w-full bg-surface-container-lowest border-b border-outline-variant/30">
+    <div class="h-16 w-full max-w-[1440px] mx-auto px-margin md:px-margin-desktop flex items-center justify-between gap-space-md">
+      <a href="/" class="flex items-center gap-space-sm">
+        <img alt="Ordora" src="/static/logo.svg" class="h-8 w-8">
+        <div class="flex flex-col leading-none">
+          <span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">{{ fieldOr .Data "OrgName" "Ordora" }}</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Customer Portal · Powered by Ordora</span>
+        </div>
+      </a>
+      <div class="flex items-center gap-space-sm">
+        <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+          <span class="material-symbols-outlined text-[12px] text-tertiary">lock</span>
+          <span>Secure link</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="w-full">
+    {{ .Content }}
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full bg-surface-container-lowest border-t border-outline-variant/30 py-space-lg mt-space-xl">
+    <div class="w-full max-w-[1440px] mx-auto px-margin md:px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-space-sm">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">{{ fieldOr .Data "OrgName" "Ordora" }}</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px] text-tertiary">verified_user</span>
+        <span>End-to-end encrypted session</span>
+      </span>
+    </div>
+  </footer>
+
+</body>
+</html>
+{{ end }}

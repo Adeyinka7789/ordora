@@ -1,0 +1,35 @@
+{{ define "portal/success.html" }}
+<div class="w-full max-w-lg mx-auto px-margin py-space-xl flex flex-col items-center text-center gap-space-md">
+
+  <div class="w-16 h-16 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+    <span class="material-symbols-outlined text-[32px]">check_circle</span>
+  </div>
+
+  <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Request received</h1>
+
+  <p class="font-body-lg text-body-lg text-on-surface-variant">
+    Thanks, {{ .CustomerName }}. {{ .OrgName }} has been notified and will be in touch shortly.
+  </p>
+
+  <div class="w-full p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-2 text-left">
+    <div class="flex justify-between">
+      <span class="font-label-md text-label-md text-on-surface-variant">Reference</span>
+      <span class="font-code-md text-code-md font-bold text-primary">{{ .OrderNumber }}</span>
+    </div>
+    <div class="flex justify-between">
+      <span class="font-label-md text-label-md text-on-surface-variant">Status</span>
+      <span class="font-label-md text-label-md font-semibold text-on-surface">Pending review</span>
+    </div>
+    {{ if .OrgPhone }}
+      <div class="flex justify-between">
+        <span class="font-label-md text-label-md text-on-surface-variant">Contact</span>
+        <span class="font-code-md text-code-md text-on-surface">{{ .OrgPhone }}</span>
+      </div>
+    {{ end }}
+  </div>
+
+  <p class="font-label-sm text-label-sm text-on-surface-variant">
+    Keep this reference handy. You can check back with {{ .OrgName }} anytime.
+  </p>
+</div>
+{{ end }}

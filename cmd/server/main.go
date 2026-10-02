@@ -160,6 +160,22 @@ func run() error {
 
 	stubH := &handlers.StubHandler{Renderer: renderer}
 
+	// ---- Public portal ----
+	portalRepo := postgres.NewPortalRepo(db)
+	portalService := app.NewPortalService(app.PortalServiceDeps{
+		Repo: portalRepo,
+	})
+	publicOrderRepo := postgres.NewPublicOrderRepo(db, id.Generator{})
+	publicOrderService := app.NewPublicOrderService(app.PublicOrderServiceDeps{
+		DB:  publicOrderRepo,
+		IDs: id.Generator{},
+	})
+	portalH := &handlers.PortalHandler{
+		Portal:   portalService,
+		Public:   publicOrderService,
+		Renderer: renderer,
+	}
+
 	// ---- Router ----
 	mux := http.NewServeMux()
 
@@ -176,6 +192,27 @@ func run() error {
 		}
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	})
+
+	// ---- Public routes (no auth required) ----
+	portalMux := http.NewServeMux()
+	portalMux.HandleFunc("GET /o/{token}", portalH.Show)
+	portalMux.HandleFunc("GET /order/{slug}", portalH.IntakeForm)
+	portalMux.HandleFunc("POST /order/{slug}", portalH.IntakeSubmit)
+
+	// Wire portal routes into the main mux, with rate limiting on POST only.
+	// (GET routes are cheap; the POST is what needs protection.)
+	mux.Handle("GET /o/{token}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(portalMux))
+	mux.Handle("GET /order/{slug}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(portalMux))
+	mux.Handle("POST /order/{slug}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 5, Window: time.Minute,
+		Message: "Too many submission attempts. Please wait a minute.",
+	})(portalMux))
 
 	// Health
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {

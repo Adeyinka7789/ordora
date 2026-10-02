@@ -1,0 +1,79 @@
+{{ define "portal/intake.html" }}
+<div class="w-full max-w-3xl mx-auto px-margin md:px-margin-desktop py-space-lg md:py-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col gap-space-sm">
+    <span class="font-label-md text-label-md uppercase tracking-wider text-primary font-semibold">Place an Order</span>
+    <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Order from {{ .OrgName }}</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">Tell us what you need. Your request will be reviewed by the business before it's confirmed.</p>
+  </div>
+
+  {{ if .Error }}<div class="p-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  <form method="post" action="/order/{{ .Slug }}" class="flex flex-col gap-space-lg">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <!-- Your details -->
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+        <span class="material-symbols-outlined text-primary text-[20px]">person</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Your Details</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Full name *</span>
+          <input type="text" name="customer_name" value="{{ .Form.CustomerName }}" required maxlength="200"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Email *</span>
+          <input type="email" name="customer_email" value="{{ .Form.CustomerEmail }}" required maxlength="254"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+      </div>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Phone / WhatsApp</span>
+        <input type="tel" name="customer_phone" value="{{ .Form.CustomerPhone }}" maxlength="40"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </label>
+    </div>
+
+    <!-- What you need -->
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+        <span class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Your Order</h2>
+      </div>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">What would you like? *</span>
+        <textarea name="description" rows="5" required maxlength="2000" placeholder="Be as specific as you can. Include quantities, materials, colors, sizes, and any references."
+                  class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Form.Description }}</textarea>
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Preferred completion date</span>
+        <input type="date" name="expected_completion" value="{{ .Form.ExpectedCompletion }}"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Budget / estimate (optional)</span>
+        <input type="text" name="budget" value="{{ .Form.Budget }}" placeholder="e.g. 50000"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">If you have a rough budget in mind, tell us. The business will send a final quote.</span>
+      </label>
+    </div>
+
+    <div class="flex items-center justify-between gap-space-sm">
+      <a href="/" class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">Cancel</a>
+      <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">send</span>
+        <span>Submit Request</span>
+      </button>
+    </div>
+  </form>
+</div>
+{{ end }}
