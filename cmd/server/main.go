@@ -77,6 +77,7 @@ func run() error {
 	_ = mailer // used by services
 
 	// ---- Auth service ----
+	authMailer := email.NewAuthMailer(mailer, emailRenderer)
 	authService := auth.NewService(auth.Deps{
 		DB:       db,
 		Users:    postgres.NewUserRepo(db),
@@ -85,7 +86,7 @@ func run() error {
 		Sessions: postgres.NewSessionRepo(db),
 		Tokens:   postgres.NewAuthTokenRepo(db),
 		IDs:      id.Generator{},
-		Mailer:   auth.LogMailer{},
+		Mailer:   authMailer,
 	})
 
 	// ---- Templates ----
@@ -111,6 +112,7 @@ func run() error {
 	customerH := handlers.NewCustomerHandler(custRepo, renderer)
 
 	// ---- Services ----
+	outboxRepo := postgres.NewOutboxRepo(db)
 	auditRepo := postgres.NewAuditRepo(db)
 	orderRepo := postgres.NewOrderRepo(db)
 	// ---- Attachments ----
@@ -134,6 +136,7 @@ func run() error {
 		OrderRead: orderRepo,
 		Numbers:   numberRepo,
 		Audit:     auditRepo,
+		Outbox:    outboxRepo,
 		IDs:       id.Generator{},
 	})
 
@@ -144,6 +147,7 @@ func run() error {
 		PaymentRead: paymentRepo,
 		Orders:      orderRepo,
 		Audit:       auditRepo,
+		Outbox:      outboxRepo,
 		IDs:         id.Generator{},
 	})
 	paymentH := &handlers.PaymentHandler{
@@ -192,8 +196,9 @@ func run() error {
 	})
 	publicOrderRepo := postgres.NewPublicOrderRepo(db, id.Generator{})
 	publicOrderService := app.NewPublicOrderService(app.PublicOrderServiceDeps{
-		DB:  publicOrderRepo,
-		IDs: id.Generator{},
+		DB:     publicOrderRepo,
+		Outbox: outboxRepo,
+		IDs:    id.Generator{},
 	})
 	portalH := &handlers.PortalHandler{
 		Portal:   portalService,

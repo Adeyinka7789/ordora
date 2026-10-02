@@ -28,7 +28,7 @@ func (r *PublicOrderRepo) LookupOrgBySlug(ctx context.Context, slug string) (*ap
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `SELECT * FROM lookup_public_org($1)`
 		var o app.PublicOrg
-		if err := tx.QueryRow(ctx, q, slug).Scan(&o.ID, &o.Name, &o.Currency); err != nil {
+		if err := tx.QueryRow(ctx, q, slug).Scan(&o.ID, &o.Name, &o.Currency, &o.Email, &o.Slug); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return app.ErrPublicOrgNotFound
 			}

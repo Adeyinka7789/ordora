@@ -85,6 +85,7 @@ type Service struct {
 	ids      IDGen
 	mailer   Mailer
 	now      Clock
+	outbox   OutboxWriter
 }
 
 // Deps bundles the service dependencies.
@@ -95,9 +96,15 @@ type Deps struct {
 	Members  MemberStore
 	Sessions SessionStore
 	Tokens   AuthTokenStore
-	IDs      IDGen
 	Mailer   Mailer
+	Outbox   OutboxWriter
+	IDs      IDGen
 	Now      Clock
+}
+
+// OutboxWriter writes domain events to the transactional outbox.
+type OutboxWriter interface {
+	Enqueue(ctx context.Context, orgID uuid.UUID, eventName string, payload any) error
 }
 
 func NewService(d Deps) *Service {
@@ -114,6 +121,7 @@ func NewService(d Deps) *Service {
 		ids:      d.IDs,
 		mailer:   d.Mailer,
 		now:      d.Now,
+		outbox:   d.Outbox,
 	}
 }
 

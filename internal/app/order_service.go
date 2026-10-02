@@ -61,6 +61,12 @@ type AuditWriter interface {
 	RecordTx(ctx context.Context, tx pgx.Tx, entry audit.Entry) error
 }
 
+// OutboxWriter writes domain events to the transactional outbox.
+type OutboxWriter interface {
+	EnqueueTx(ctx context.Context, tx pgx.Tx, orgID uuid.UUID, eventName string, payload any) error
+	Enqueue(ctx context.Context, orgID uuid.UUID, eventName string, payload any) error
+}
+
 // OrderService orchestrates order-related workflows.
 type OrderService struct {
 	db        TxRunner
@@ -69,6 +75,7 @@ type OrderService struct {
 	orderRead OrderReader
 	numbers   NumberAllocator
 	audit     AuditWriter
+	outbox    OutboxWriter
 	ids       IDGen
 	now       func() time.Time
 }
@@ -81,6 +88,7 @@ type OrderServiceDeps struct {
 	OrderRead OrderReader
 	Numbers   NumberAllocator
 	Audit     AuditWriter
+	Outbox    OutboxWriter
 	IDs       IDGen
 	Now       func() time.Time
 }
@@ -96,6 +104,7 @@ func NewOrderService(d OrderServiceDeps) *OrderService {
 		orderRead: d.OrderRead,
 		numbers:   d.Numbers,
 		audit:     d.Audit,
+		outbox:    d.Outbox,
 		ids:       d.IDs,
 		now:       d.Now,
 	}
@@ -105,10 +114,6 @@ func NewOrderService(d OrderServiceDeps) *OrderService {
 // Input / output
 // -----------------------------------------------------------------------------
 
-// CreateOrderInput is the request shape for creating an order.
-//
-// Currency is supplied by the caller — the handler sets it from the tenant's
-// session/org. We do not load the org here to avoid an extra round-trip.
 type CreateOrderInput struct {
 	CustomerID         uuid.UUID
 	Title              string
@@ -120,10 +125,9 @@ type CreateOrderInput struct {
 	TaxMinor           int64
 }
 
-// CreateOrderItemInput is one line item of the request.
 type CreateOrderItemInput struct {
 	Description    string
-	QuantityScaled int64 // e.g. 2.000 = 2000
+	QuantityScaled int64
 	UnitPriceMinor int64
 }
 
@@ -142,21 +146,6 @@ var (
 // CreateOrder
 // -----------------------------------------------------------------------------
 
-// CreateOrder creates a new order and returns it. All of the following happen
-// inside one transaction:
-//
-//  1. Load the customer, verifying it belongs to the caller's org.
-//  2. Allocate the next order number for (org, year).
-//  3. Build and validate the Order aggregate.
-//  4. Insert order + items.
-//  5. Write an audit entry.
-//
-// If any step fails, nothing is committed.
-type CreateOrderResult struct {
-	Order       *order.Order
-	PublicToken string
-}
-
 func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope, in CreateOrderInput) (*order.Order, error) {
 	if err := s.validateCreateInput(in); err != nil {
 		return nil, err
@@ -173,7 +162,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 		}
 
 		now := s.now()
-		year := now.Year() // TODO: use org timezone once loaded
+		year := now.Year()
 		number, err := s.numbers.AllocateTx(ctx, tx, scope.OrgID, year)
 		if err != nil {
 			return err
@@ -184,28 +173,23 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 			number, in.Title, in.Description, in.Currency,
 			scope.UserID, now,
 		)
+		if err != nil {
+			return err
+		}
+
+		// Auto-generate a public tracking token.
 		_, tokenHash, err := GeneratePublicToken()
 		if err != nil {
 			return err
 		}
 		o.PublicTokenHash = tokenHash
 
-		if err != nil {
-			return err
-		}
-
 		for i, itemIn := range in.Items {
 			unit, err := money.New(itemIn.UnitPriceMinor, o.Currency)
 			if err != nil {
 				return fmt.Errorf("item %d: %w", i, err)
 			}
-			item, err := order.NewItem(
-				s.ids.New(),
-				itemIn.Description,
-				itemIn.QuantityScaled,
-				unit,
-				i,
-			)
+			item, err := order.NewItem(s.ids.New(), itemIn.Description, itemIn.QuantityScaled, unit, i)
 			if err != nil {
 				return fmt.Errorf("item %d: %w", i, err)
 			}
@@ -226,11 +210,9 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 				return err
 			}
 		}
-
 		if in.ExpectedCompletion != nil {
 			o.SetExpectedCompletion(in.ExpectedCompletion)
 		}
-
 		if err := o.Validate(); err != nil {
 			return err
 		}
@@ -246,10 +228,24 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 				Action:         "order.created",
 				EntityType:     "ORDER",
 				EntityID:       o.ID,
-				After: mustJSON(map[string]any{
-					"number":      o.Number,
-					"total_minor": o.Total.Amount(),
-				}),
+				After:          mustJSON(map[string]any{"number": o.Number, "total_minor": o.Total.Amount()}),
+			}); err != nil {
+				return err
+			}
+		}
+
+		if s.outbox != nil && cust.Email != "" {
+			if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "order.created", map[string]any{
+				"OrderID":       o.ID.String(),
+				"OrderNumber":   o.Number,
+				"Title":         o.Title,
+				"TotalMinor":    o.Total.Amount(),
+				"Currency":      o.Currency,
+				"CustomerID":    o.CustomerID.String(),
+				"CustomerName":  cust.Name,
+				"CustomerEmail": cust.Email,
+				"PortalURL":     "",
+				"ExpectedDate":  o.ExpectedCompletion,
 			}); err != nil {
 				return err
 			}
@@ -270,47 +266,9 @@ func (s *OrderService) GetOrder(ctx context.Context, scope tenant.TenantScope, i
 }
 
 // -----------------------------------------------------------------------------
-// Helpers
+// UpdateOrder
 // -----------------------------------------------------------------------------
 
-func (s *OrderService) validateCreateInput(in CreateOrderInput) error {
-	if strings.TrimSpace(in.Title) == "" {
-		return ErrOrderTitleRequired
-	}
-	if in.CustomerID == uuid.Nil {
-		return ErrCustomerNotFound
-	}
-	if len(in.Items) == 0 {
-		return ErrOrderNoItems
-	}
-	if strings.TrimSpace(in.Currency) == "" {
-		return ErrCurrencyRequired
-	}
-	for i, it := range in.Items {
-		if strings.TrimSpace(it.Description) == "" {
-			return fmt.Errorf("item %d: description required", i)
-		}
-		if it.QuantityScaled <= 0 {
-			return fmt.Errorf("item %d: quantity must be positive", i)
-		}
-		if it.UnitPriceMinor < 0 {
-			return fmt.Errorf("item %d: unit price cannot be negative", i)
-		}
-	}
-	return nil
-}
-
-func mustJSON(v any) []byte {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return nil
-	}
-	return b
-}
-
-// UpdateOrderInput is the request shape for editing an order.
-// Only mutable fields are included: items, title, description, discount,
-// tax, expected completion. Customer and status are changed elsewhere.
 type UpdateOrderInput struct {
 	Title              string
 	Description        string
@@ -320,8 +278,6 @@ type UpdateOrderInput struct {
 	TaxMinor           int64
 }
 
-// UpdateOrder replaces the mutable fields on an order. The state machine is
-// untouched — status changes go through ChangeStatus.
 func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, in UpdateOrderInput) (*order.Order, error) {
 	if strings.TrimSpace(in.Title) == "" {
 		return nil, ErrOrderTitleRequired
@@ -336,12 +292,10 @@ func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope
 		if err != nil {
 			return err
 		}
-
 		if o.Status.IsTerminal() {
 			return order.ErrInvalidTransition
 		}
 
-		// Replace items wholesale. Build a new slice.
 		o.Items = nil
 		for i, itemIn := range in.Items {
 			unit, err := money.New(itemIn.UnitPriceMinor, o.Currency)
@@ -361,7 +315,6 @@ func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope
 		o.Description = in.Description
 		o.ExpectedCompletion = in.ExpectedCompletion
 
-		// Reset discount/tax before re-applying, so removal works.
 		zero, _ := money.New(0, o.Currency)
 		o.Discount = zero
 		o.Tax = zero
@@ -410,9 +363,10 @@ func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope
 	return updated, nil
 }
 
-// ChangeStatus transitions an order to a new status. Enforces the state
-// machine, updates the timestamp, and writes an audit entry — all in one
-// transaction.
+// -----------------------------------------------------------------------------
+// ChangeStatus
+// -----------------------------------------------------------------------------
+
 func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, to order.Status) (*order.Order, error) {
 	if !to.IsValid() {
 		return nil, order.ErrInvalidTransition
@@ -424,7 +378,6 @@ func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScop
 		if err != nil {
 			return err
 		}
-
 		from := o.Status
 		if err := o.ChangeStatus(to, s.now()); err != nil {
 			return err
@@ -432,6 +385,25 @@ func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScop
 		if err := s.orders.ChangeStatusTx(ctx, tx, o, from, to, scope.UserID, s.now()); err != nil {
 			return err
 		}
+
+		// Notify the customer of the status change.
+		if s.outbox != nil {
+			cust, err := s.customers.GetByID(ctx, scope, o.CustomerID)
+			if err == nil && cust.Email != "" {
+				if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "order.status_changed", map[string]any{
+					"OrderID":       o.ID.String(),
+					"OrderNumber":   o.Number,
+					"From":          string(from),
+					"To":            string(to),
+					"CustomerName":  cust.Name,
+					"CustomerEmail": cust.Email,
+					"PortalURL":     "",
+				}); err != nil {
+					return err
+				}
+			}
+		}
+
 		updated = o
 		return nil
 	})
@@ -441,9 +413,11 @@ func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScop
 	return updated, nil
 }
 
+// -----------------------------------------------------------------------------
+// Public token
+// -----------------------------------------------------------------------------
+
 // GeneratePublicToken returns a random URL-safe token and its SHA-256 hash.
-// The raw token is what the customer sees in the URL; the hash is what we
-// store in the database.
 func GeneratePublicToken() (raw string, hash []byte, err error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -454,8 +428,7 @@ func GeneratePublicToken() (raw string, hash []byte, err error) {
 	return raw, sum[:], nil
 }
 
-// RegeneratePublicToken creates a fresh public token for an order, replacing
-// any previous token. The raw token is returned exactly once.
+// RegeneratePublicToken creates a fresh public token for an order.
 func (s *OrderService) RegeneratePublicToken(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) (string, error) {
 	raw, hash, err := GeneratePublicToken()
 	if err != nil {
@@ -483,4 +456,43 @@ func (s *OrderService) RegeneratePublicToken(ctx context.Context, scope tenant.T
 		return "", err
 	}
 	return raw, nil
+}
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+
+func (s *OrderService) validateCreateInput(in CreateOrderInput) error {
+	if strings.TrimSpace(in.Title) == "" {
+		return ErrOrderTitleRequired
+	}
+	if in.CustomerID == uuid.Nil {
+		return ErrCustomerNotFound
+	}
+	if len(in.Items) == 0 {
+		return ErrOrderNoItems
+	}
+	if strings.TrimSpace(in.Currency) == "" {
+		return ErrCurrencyRequired
+	}
+	for i, it := range in.Items {
+		if strings.TrimSpace(it.Description) == "" {
+			return fmt.Errorf("item %d: description required", i)
+		}
+		if it.QuantityScaled <= 0 {
+			return fmt.Errorf("item %d: quantity must be positive", i)
+		}
+		if it.UnitPriceMinor < 0 {
+			return fmt.Errorf("item %d: unit price cannot be negative", i)
+		}
+	}
+	return nil
+}
+
+func mustJSON(v any) []byte {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+	return b
 }

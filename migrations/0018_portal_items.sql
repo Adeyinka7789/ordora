@@ -2,9 +2,10 @@
 -- 0018_portal_items.sql
 --
 -- Returns the line items for one order, called by the portal
--- handler after it has validated the token. Narrowly scoped:
--- takes an order id, returns its items.
+-- handler after it has validated the token.
 -- =============================================================
+
+DROP FUNCTION IF EXISTS get_public_order_items(uuid);
 
 CREATE OR REPLACE FUNCTION get_public_order_items(p_order_id uuid)
 RETURNS TABLE (
@@ -13,7 +14,7 @@ RETURNS TABLE (
     unit_price_minor bigint,
     subtotal_minor   bigint,
     currency         text,
-    position         int
+    item_position    int
 )
 LANGUAGE plpgsql
 SECURITY DEFINER

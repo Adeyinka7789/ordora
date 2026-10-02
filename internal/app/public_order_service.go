@@ -34,10 +34,11 @@ type PublicOrg struct {
 	ID       uuid.UUID
 	Name     string
 	Currency string
+	Email    string
+	Slug     string
 }
 
 // PublicOrderDB is the persistence contract for public submissions.
-// Implemented in infra/postgres.
 type PublicOrderDB interface {
 	CreatePublicOrder(ctx context.Context, in PublicOrderInput) (*PublicOrderResult, error)
 	LookupOrgBySlug(ctx context.Context, slug string) (*PublicOrg, error)
@@ -53,22 +54,24 @@ var (
 
 // PublicOrderService handles order submissions from the public form.
 type PublicOrderService struct {
-	db  PublicOrderDB
-	ids IDGen
-	now func() time.Time
+	db     PublicOrderDB
+	outbox OutboxWriter
+	ids    IDGen
+	now    func() time.Time
 }
 
 type PublicOrderServiceDeps struct {
-	DB  PublicOrderDB
-	IDs IDGen
-	Now func() time.Time
+	DB     PublicOrderDB
+	Outbox OutboxWriter
+	IDs    IDGen
+	Now    func() time.Time
 }
 
 func NewPublicOrderService(d PublicOrderServiceDeps) *PublicOrderService {
 	if d.Now == nil {
 		d.Now = time.Now
 	}
-	return &PublicOrderService{db: d.DB, ids: d.IDs, now: d.Now}
+	return &PublicOrderService{db: d.DB, outbox: d.Outbox, ids: d.IDs, now: d.Now}
 }
 
 // LookupOrg returns the public-facing business info for a slug.
@@ -97,5 +100,28 @@ func (s *PublicOrderService) Submit(ctx context.Context, in PublicOrderInput) (*
 		return nil, ErrPublicDescRequired
 	}
 
-	return s.db.CreatePublicOrder(ctx, in)
+	result, err := s.db.CreatePublicOrder(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+
+	// Emit PublicIntakeReceived so the business owner gets notified.
+	if s.outbox != nil {
+		org, err := s.LookupOrg(ctx, in.Slug)
+		if err == nil && org.Email != "" {
+			_ = s.outbox.Enqueue(ctx, org.ID, "public.intake_received", map[string]any{
+				"OrderID":       result.OrderID.String(),
+				"OrderNumber":   result.OrderNumber,
+				"CustomerName":  result.CustomerName,
+				"CustomerEmail": in.CustomerEmail,
+				"CustomerPhone": in.CustomerPhone,
+				"Description":   in.Description,
+				"OrgName":       org.Name,
+				"OrgEmail":      org.Email,
+				"AdminURL":      "/orders/" + result.OrderID.String(),
+			})
+		}
+	}
+
+	return result, nil
 }

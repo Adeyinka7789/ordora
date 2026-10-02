@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,13 +30,15 @@ type PaymentReader interface {
 
 // PaymentService orchestrates recording payments against orders.
 type PaymentService struct {
-	db       TxRunner
-	payments PaymentWriter
-	paymentR PaymentReader
-	orders   OrderReader
-	audit    AuditWriter
-	ids      IDGen
-	now      func() time.Time
+	db        TxRunner
+	payments  PaymentWriter
+	paymentR  PaymentReader
+	orders    OrderReader
+	customers CustomerReader
+	audit     AuditWriter
+	outbox    OutboxWriter
+	ids       IDGen
+	now       func() time.Time
 }
 
 type PaymentServiceDeps struct {
@@ -45,7 +46,9 @@ type PaymentServiceDeps struct {
 	Payments    PaymentWriter
 	PaymentRead PaymentReader
 	Orders      OrderReader
+	Customers   CustomerReader
 	Audit       AuditWriter
+	Outbox      OutboxWriter
 	IDs         IDGen
 	Now         func() time.Time
 }
@@ -55,13 +58,15 @@ func NewPaymentService(d PaymentServiceDeps) *PaymentService {
 		d.Now = time.Now
 	}
 	return &PaymentService{
-		db:       d.DB,
-		payments: d.Payments,
-		paymentR: d.PaymentRead,
-		orders:   d.Orders,
-		audit:    d.Audit,
-		ids:      d.IDs,
-		now:      d.Now,
+		db:        d.DB,
+		payments:  d.Payments,
+		paymentR:  d.PaymentRead,
+		orders:    d.Orders,
+		customers: d.Customers,
+		audit:     d.Audit,
+		outbox:    d.Outbox,
+		ids:       d.IDs,
+		now:       d.Now,
 	}
 }
 
@@ -69,10 +74,9 @@ func NewPaymentService(d PaymentServiceDeps) *PaymentService {
 // Input / errors
 // -----------------------------------------------------------------------------
 
-// RecordPaymentInput is the request shape for recording a payment.
 type RecordPaymentInput struct {
 	OrderID   uuid.UUID
-	Amount    int64 // minor units, must be > 0
+	Amount    int64
 	Method    payment.Method
 	Reference string
 	PaidAt    time.Time
@@ -95,18 +99,6 @@ var (
 // RecordPayment
 // -----------------------------------------------------------------------------
 
-// RecordPayment records a payment against an order.
-//
-// Rules:
-//   - Amount must be > 0.
-//   - Method must be valid.
-//   - Paid date must not be in the future.
-//   - Order must belong to the caller's tenant.
-//   - Order must not be cancelled.
-//   - Amount cannot exceed the order's outstanding balance.
-//
-// The whole operation runs in one transaction. The DB trigger
-// trg_payments_refresh_order updates orders.amount_paid_minor automatically.
 func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantScope, in RecordPaymentInput) (*order.Order, error) {
 	if in.Amount <= 0 {
 		return nil, ErrPaymentAmountRequired
@@ -127,7 +119,6 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 			}
 			return err
 		}
-
 		if o.Status == order.StatusCancelled {
 			return ErrOrderIsCancelled
 		}
@@ -150,7 +141,6 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 		if err != nil {
 			return err
 		}
-
 		if err := s.payments.CreateTx(ctx, tx, p); err != nil {
 			return err
 		}
@@ -177,6 +167,28 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 				return err
 			}
 		}
+
+		if s.outbox != nil && s.customers != nil {
+			cust, err := s.customers.GetByID(ctx, scope, o.CustomerID)
+			if err == nil && cust.Email != "" {
+				if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "payment.recorded", map[string]any{
+					"PaymentID":     p.ID.String(),
+					"OrderID":       o.ID.String(),
+					"OrderNumber":   o.Number,
+					"AmountMinor":   p.Amount.Amount(),
+					"Currency":      p.Amount.Currency(),
+					"PaidMinor":     reloaded.Paid.Amount(),
+					"TotalMinor":    reloaded.Total.Amount(),
+					"BalanceMinor":  reloaded.Balance().Amount(),
+					"Method":        string(p.Method),
+					"CustomerName":  cust.Name,
+					"CustomerEmail": cust.Email,
+					"PortalURL":     "",
+				}); err != nil {
+					return err
+				}
+			}
+		}
 		return nil
 	})
 	if err != nil {
@@ -185,36 +197,18 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 	return updated, nil
 }
 
-// ListForOrder returns the payment history for an order.
-func (s *PaymentService) ListForOrder(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) ([]*payment.Payment, error) {
-	return s.paymentR.ListForOrder(ctx, scope, orderID)
-}
+// -----------------------------------------------------------------------------
+// ReversePayment
+// -----------------------------------------------------------------------------
 
-// ReverseInput describes a reversal request.
 type ReverseInput struct {
 	PaymentID  uuid.UUID
 	Reason     string
 	ReversedAt time.Time
 }
 
-// ReversePayment creates a reversal of an existing payment.
-//
-// The reversal is a new payment row with:
-//   - amount equal to the original
-//   - reverses = original.ID
-//   - notes = "Reversed: <reason>"
-//
-// The original's reversed_by is set to the reversal's id. The DB trigger
-// recalculates orders.amount_paid_minor because both rows are excluded from
-// the sum.
-//
-// Rules:
-//   - The payment must belong to the caller's tenant.
-//   - Cannot reverse a reversal.
-//   - Cannot reverse an already-reversed payment.
-//   - Reason is required.
 func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.TenantScope, in ReverseInput) (*order.Order, error) {
-	if strings.TrimSpace(in.Reason) == "" {
+	if in.Reason == "" {
 		return nil, ErrReasonRequired
 	}
 	reversedAt := in.ReversedAt
@@ -224,8 +218,6 @@ func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.Tenant
 
 	var updated *order.Order
 	err := s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
-		// Load original. We use the tx-aware getter so we're in the same
-		// transaction as the insert.
 		orig, err := s.paymentR.GetByIDTx(ctx, tx, in.PaymentID)
 		if err != nil {
 			return err
@@ -237,7 +229,6 @@ func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.Tenant
 			return ErrPaymentAlreadyReversed
 		}
 
-		// Build the reversal row.
 		rev, err := payment.New(
 			s.ids.New(), scope.OrgID, orig.OrderID,
 			orig.Amount, orig.Method,
@@ -247,7 +238,6 @@ func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.Tenant
 		if err != nil {
 			return err
 		}
-		// Mark it as a reversal of the original.
 		rev.Reverses = &orig.ID
 
 		if err := s.payments.CreateTx(ctx, tx, rev); err != nil {
@@ -257,7 +247,6 @@ func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.Tenant
 			return err
 		}
 
-		// Reload order to see the trigger's effect.
 		reloaded, err := s.orders.GetByID(ctx, scope, orig.OrderID)
 		if err != nil {
 			return err
@@ -288,7 +277,14 @@ func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.Tenant
 	return updated, nil
 }
 
-// GetPayment is a thin wrapper for loading a payment.
+// -----------------------------------------------------------------------------
+// Read helpers
+// -----------------------------------------------------------------------------
+
+func (s *PaymentService) ListForOrder(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) ([]*payment.Payment, error) {
+	return s.paymentR.ListForOrder(ctx, scope, orderID)
+}
+
 func (s *PaymentService) GetPayment(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*payment.Payment, error) {
 	return s.paymentR.GetByID(ctx, scope, id)
 }
