@@ -34,3 +34,13 @@ ALTER DEFAULT PRIVILEGES FOR ROLE ordora_admin IN SCHEMA public
 ALTER DEFAULT PRIVILEGES FOR ROLE ordora_admin IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO ordora_app;
 ```
+
+## Saving Files — Don't Trust the Editor
+
+When VS Code saves a file, it writes to disk and the buffer is clean. But **if disk is full, the save silently fails** in some cases.
+
+**Verification after every important edit:**
+
+```powershell
+Select-String -Path <file> -Pattern "the-change-you-made"
+```

@@ -1,37 +1,51 @@
 {{ define "products/edit.html" }}
-<section class="page-header">
-  <h1>Edit {{ .Product.Name }}</h1>
-  <a href="/products" class="btn-secondary">← Back</a>
-</section>
+<div class="p-space-lg lg:p-space-xl max-w-2xl mx-auto flex flex-col gap-space-lg">
 
-{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
-
-<form method="post" action="/products/{{ .Product.ID }}" class="form form-wide">
-  <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-
-  <label>
-    Name *
-    <input type="text" name="name" value="{{ .FormName }}" required maxlength="200">
-  </label>
-
-  <label>
-    SKU
-    <input type="text" name="sku" value="{{ .FormSKU }}" maxlength="64">
-  </label>
-
-  <label>
-    Unit price *
-    <input type="text" name="unit_price" value="{{ .FormPrice }}" required>
-  </label>
-
-  <label>
-    Description
-    <textarea name="description" rows="3" maxlength="5000">{{ .FormDesc }}</textarea>
-  </label>
-
-  <div class="form-actions">
-    <button type="submit" class="btn-primary">Save changes</button>
-    <a href="/products" class="btn-secondary">Cancel</a>
+  <div class="flex items-center justify-between">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Edit {{ .Product.Name }}</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Update the catalog entry.</p>
+    </div>
+    <a href="/products/{{ .Product.ID }}" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span>Back</span>
+    </a>
   </div>
-</form>
+
+  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  <form method="post" action="/products/{{ .Product.ID }}" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Name *</span>
+      <input type="text" name="name" value="{{ .FormName }}" required maxlength="200"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">SKU</span>
+      <input type="text" name="sku" value="{{ .FormSKU }}" maxlength="64"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Unit price *</span>
+      <input type="text" name="unit_price" value="{{ .FormPrice }}" required
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Existing orders keep their original price snapshot.</span>
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Description</span>
+      <textarea name="description" rows="3" maxlength="5000"
+                class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormDesc }}</textarea>
+    </label>
+
+    <div class="flex items-center gap-space-sm pt-space-xs">
+      <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save Changes</button>
+      <a href="/products/{{ .Product.ID }}" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">Cancel</a>
+    </div>
+  </form>
+</div>
 {{ end }}

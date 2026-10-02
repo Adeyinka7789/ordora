@@ -1,102 +1,175 @@
 {{ define "orders/edit.html" }}
-<section class="page-header">
-  <h1>Edit {{ .Order.Number }}</h1>
-  <a href="/orders/{{ .Order.ID }}" class="btn-secondary">← Back to order</a>
-</section>
+<div class="p-space-lg lg:p-space-xl max-w-4xl mx-auto flex flex-col gap-space-lg">
 
-{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
-
-<form method="post" action="/orders/{{ .Order.ID }}" class="order-form" id="order-form">
-  <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-  <input type="hidden" name="item_count" id="item-count" value="{{ len .FormItems }}">
-
-  <div class="form-row">
-    <label>
-      Customer
-      <input type="text" value="{{ range .Customers }}{{ if eq $.FormCustID (printf "%s" .ID) }}{{ .Name }}{{ end }}{{ end }}" disabled>
-    </label>
-    <label>
-      Expected completion
-      <input type="date" name="expected_completion" value="{{ .FormDueDate }}">
-    </label>
-  </div>
-
-  <label>
-    Title *
-    <input type="text" name="title" value="{{ .FormTitle }}" required maxlength="200">
-  </label>
-
-  <label>
-    Description
-    <textarea name="description" rows="2" maxlength="5000">{{ .FormDesc }}</textarea>
-  </label>
-
-  <fieldset class="items-fieldset">
-    <legend>Items</legend>
-    <table class="items-table" id="items-table">
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th class="qty-col">Quantity</th>
-          <th class="price-col">Unit price</th>
-          <th class="sub-col">Subtotal</th>
-          <th class="act-col"></th>
-        </tr>
-      </thead>
-      <tbody id="items-body">
-        {{ range $i, $it := .FormItems }}
-          <tr class="item-row">
-            <td><input type="text" name="items[{{ $i }}][description]" value="{{ $it.Description }}" required></td>
-            <td><input type="text" name="items[{{ $i }}][quantity]" value="{{ $it.Quantity }}" class="qty-input" required></td>
-            <td><input type="text" name="items[{{ $i }}][unit_price]" value="{{ $it.UnitPrice }}" class="price-input" required></td>
-            <td class="subtotal-cell">—</td>
-            <td><button type="button" class="remove-item" aria-label="Remove item">×</button></td>
-          </tr>
-        {{ end }}
-      </tbody>
-    </table>
-    <div class="items-actions">
-      <button type="button" id="add-item" class="btn-secondary">+ Add blank item</button>
-      <button type="button" id="pick-product" class="btn-secondary"> Add from catalog</button>
+  <div class="flex items-center justify-between">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Edit {{ .Order.Number }}</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .Order.Title }}</p>
     </div>
-  </fieldset>
+    <a href="/orders/{{ .Order.ID }}" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span>Back to Order</span>
+    </a>
+  </div>
 
-  <div id="product-picker" class="product-picker" hidden>
-    <div class="picker-header">
-      <input type="search" id="picker-search" name="q" placeholder="Search products…"
-             hx-get="/products/picker"
-             hx-trigger="input changed delay:300ms, load"
-             hx-target="#picker-results"
-             hx-swap="innerHTML"
-             autocomplete="off">
-      <button type="button" id="picker-close" class="btn-secondary btn-tiny">Close</button>
+  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  <form method="post" action="/orders/{{ .Order.ID }}" id="order-form" class="flex flex-col gap-space-lg">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <input type="hidden" name="item_count" id="item-count" value="{{ len .FormItems }}">
+
+    <!-- Order Details -->
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+        <span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Order Details</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <div class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Customer</span>
+          <div class="h-9 px-3 rounded bg-surface-container flex items-center text-on-surface-variant font-body-md text-body-md">
+            {{ range .Customers }}{{ if eq $.FormCustID (printf "%s" .ID) }}{{ .Name }}{{ end }}{{ end }}
+          </div>
+        </div>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Expected completion</span>
+          <input type="date" name="expected_completion" value="{{ .FormDueDate }}"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+      </div>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Title *</span>
+        <input type="text" name="title" value="{{ .FormTitle }}" required maxlength="200"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Description</span>
+        <textarea name="description" rows="2" maxlength="5000"
+                  class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormDesc }}</textarea>
+      </label>
     </div>
-    <div id="picker-results"></div>
-  </div>
 
-  <div class="form-row">
-    <label>
-      Discount (optional)
-      <input type="text" name="discount" value="{{ .FormDisc }}" placeholder="0.00">
-    </label>
-    <label>
-      Tax (optional)
-      <input type="text" name="tax" value="{{ .FormTax }}" placeholder="0.00">
-    </label>
-  </div>
+    <!-- Items -->
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/30">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
+          <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Items</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="add-item" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">add</span>
+            <span>Blank Row</span>
+          </button>
+          <button type="button" id="pick-product" class="h-8 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">inventory_2</span>
+            <span>From Catalog</span>
+          </button>
+        </div>
+      </div>
 
-  <div class="order-totals">
-    <div><span>Subtotal:</span> <span id="subtotal">0.00</span></div>
-    <div><span>Discount:</span> <span id="discount-total">0.00</span></div>
-    <div><span>Tax:</span> <span id="tax-total">0.00</span></div>
-    <div class="total"><span>Total:</span> <span id="grand-total">0.00</span></div>
-  </div>
+      <div id="product-picker" class="hidden rounded-lg bg-surface-container-low border border-outline-variant/30 overflow-hidden">
+        <div class="p-space-sm border-b border-outline-variant/30 flex items-center gap-2">
+          <div class="relative flex-1 flex items-center">
+            <span class="material-symbols-outlined absolute left-2.5 text-outline text-[16px]">search</span>
+            <input type="search" id="picker-search" name="q" placeholder="Search products…"
+                   hx-get="/products/picker"
+                   hx-trigger="input changed delay:300ms, load"
+                   hx-target="#picker-results"
+                   hx-swap="innerHTML"
+                   autocomplete="off"
+                   class="w-full h-8 pl-8 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm focus:outline-none focus:border-primary-container">
+          </div>
+          <button type="button" id="picker-close" class="h-8 px-2 rounded hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+            Close
+          </button>
+        </div>
+        <div id="picker-results" class="max-h-72 overflow-y-auto"></div>
+      </div>
 
-  <div class="form-actions">
-    <button type="submit" class="btn-primary">Save changes</button>
-    <a href="/orders/{{ .Order.ID }}" class="btn-secondary">Cancel</a>
-  </div>
-</form>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left" id="items-table">
+          <thead>
+            <tr class="bg-surface-container-low font-label-sm text-label-sm text-outline uppercase tracking-wider">
+              <th class="py-2 px-space-sm font-semibold rounded-l">Description</th>
+              <th class="py-2 px-space-sm font-semibold text-center w-24">Quantity</th>
+              <th class="py-2 px-space-sm font-semibold text-right w-32">Unit Price</th>
+              <th class="py-2 px-space-sm font-semibold text-right w-28 rounded-r">Subtotal</th>
+              <th class="w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="items-body">
+            {{ range $i, $it := .FormItems }}
+              <tr class="item-row border-b border-outline-variant/20">
+                <td class="py-2 px-space-sm">
+                  <input type="text" name="items[{{ $i }}][description]" value="{{ $it.Description }}" required
+                         class="w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                </td>
+                <td class="py-2 px-space-sm">
+                  <input type="text" name="items[{{ $i }}][quantity]" value="{{ $it.Quantity }}" required class="qty-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-center focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                </td>
+                <td class="py-2 px-space-sm">
+                  <input type="text" name="items[{{ $i }}][unit_price]" value="{{ $it.UnitPrice }}" required class="price-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-right focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                </td>
+                <td class="py-2 px-space-sm text-right font-code-md text-code-md text-on-surface-variant tabular-nums subtotal-cell">—</td>
+                <td class="py-2 px-space-sm text-center">
+                  <button type="button" class="remove-item p-1 rounded hover:bg-error-container text-on-surface-variant hover:text-error transition-colors" aria-label="Remove item">
+                    <span class="material-symbols-outlined text-[16px]">close</span>
+                  </button>
+                </td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
 
-<script src="/static/js/orders.js" defer></script>
+      <div class="flex flex-col sm:flex-row justify-end gap-space-md pt-space-md border-t border-outline-variant/30">
+        <div class="w-full sm:w-72 flex flex-col gap-1.5 text-right tabular-nums">
+          <div class="flex justify-between font-label-md text-label-md text-on-surface-variant">
+            <span>Subtotal:</span>
+            <span class="font-code-md text-on-surface" id="subtotal">0.00</span>
+          </div>
+          <div class="flex justify-between font-label-md text-label-md text-on-surface-variant">
+            <span>Discount:</span>
+            <span class="font-code-md text-on-surface" id="discount-total">0.00</span>
+          </div>
+          <div class="flex justify-between font-label-md text-label-md text-on-surface-variant">
+            <span>Tax:</span>
+            <span class="font-code-md text-on-surface" id="tax-total">0.00</span>
+          </div>
+          <div class="flex justify-between bg-surface-container-low px-2 py-1 rounded">
+            <span class="font-headline-md text-headline-md text-on-surface font-bold">Total:</span>
+            <span class="font-code-md text-code-md text-primary font-bold" id="grand-total">0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Discount (optional)</span>
+          <input type="text" name="discount" value="{{ .FormDisc }}" placeholder="0.00"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Tax (optional)</span>
+          <input type="text" name="tax" value="{{ .FormTax }}" placeholder="0.00"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-space-sm">
+      <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">check</span>
+        <span>Save Changes</span>
+      </button>
+      <a href="/orders/{{ .Order.ID }}" class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">Cancel</a>
+    </div>
+  </form>
+
+  <script src="/static/js/orders.js" defer></script>
+</div>
 {{ end }}
