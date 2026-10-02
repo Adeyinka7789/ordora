@@ -43,9 +43,46 @@
     </dl>
   </div>
 
-  <div class="bg-surface-container-lowest rounded shadow-sm p-space-lg">
-    <h2 class="font-headline-md text-headline-md text-on-surface font-semibold mb-space-sm">Orders</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant">Order history for this customer will appear here once linked.</p>
+    <div class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
+    <div class="p-space-md border-b border-outline-variant/20 flex items-center justify-between">
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Orders</h2>
+      <a href="/orders/new?customer={{ .Customer.ID }}" class="text-primary hover:underline font-label-sm text-label-sm font-semibold">+ New order</a>
+    </div>
+    {{ if .Orders }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-md text-body-md">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-2.5 px-space-md font-semibold">Order</th>
+              <th class="py-2.5 px-space-md font-semibold">Title</th>
+              <th class="py-2.5 px-space-md font-semibold">Status</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Total</th>
+              <th class="py-2.5 px-space-md font-semibold">Due</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Orders }}
+              {{ $o := .Order }}
+              <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+                <td class="py-3 px-space-md">
+                  <a href="/orders/{{ $o.ID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline">{{ $o.Number }}</a>
+                </td>
+                <td class="py-3 px-space-md text-on-surface truncate max-w-[240px]">{{ $o.Title }}</td>
+                <td class="py-3 px-space-md">{{ template "partials/status_badge.html" $o.Status }}</td>
+                <td class="py-3 px-space-md text-right font-code-md text-code-md font-semibold tabular-nums">{{ currency $o.Total.Amount $o.Currency }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">
+                  {{ if $o.ExpectedCompletion }}{{ $o.ExpectedCompletion.Format "Jan 2" }}{{ else }}—{{ end }}
+                </td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+    {{ else }}
+      <div class="p-space-xl text-center">
+        <p class="font-body-md text-body-md text-on-surface-variant">No orders yet for this customer.</p>
+      </div>
+    {{ end }}
   </div>
 </div>
 {{ end }}

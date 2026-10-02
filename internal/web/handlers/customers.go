@@ -17,17 +17,19 @@ import (
 
 // CustomerHandler serves /customers/*.
 type CustomerHandler struct {
-	Repo     *postgres.CustomerRepo
-	Renderer *render.Renderer
-	IDs      id.Generator
-	Now      func() time.Time
+	Repo      *postgres.CustomerRepo
+	OrderRepo *postgres.OrderRepo
+	Renderer  *render.Renderer
+	IDs       id.Generator
+	Now       func() time.Time
 }
 
-func NewCustomerHandler(repo *postgres.CustomerRepo, r *render.Renderer) *CustomerHandler {
+func NewCustomerHandler(repo *postgres.CustomerRepo, orderRepo *postgres.OrderRepo, r *render.Renderer) *CustomerHandler {
 	return &CustomerHandler{
-		Repo:     repo,
-		Renderer: r,
-		Now:      time.Now,
+		Repo:      repo,
+		OrderRepo: orderRepo,
+		Renderer:  r,
+		Now:       time.Now,
 	}
 }
 
@@ -57,6 +59,7 @@ type customerShowPage struct {
 	Title     string
 	CSRFToken string
 	Customer  *customer.Customer
+	Orders    []postgres.OrderListRow
 }
 
 // -----------------------------------------------------------------------------
@@ -204,12 +207,22 @@ func (h *CustomerHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Load recent orders for this customer (best-effort).
+	var orders []postgres.OrderListRow
+	if res, err := h.OrderRepo.List(r.Context(), scope, postgres.OrderListOptions{
+		CustomerID: cid,
+		Limit:      20,
+	}); err == nil {
+		orders = res.Rows
+	}
+
 	page := customerShowPage{
 		Title:     c.Name,
 		CSRFToken: csrfFromCtx(r),
 		Customer:  c,
+		Orders:    orders,
 	}
-	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "customers/show.html", page)
+	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "customers/show.html", page)
 }
 
 // -----------------------------------------------------------------------------

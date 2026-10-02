@@ -6,6 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ with .Data }}{{ if .Title }}{{ .Title }} — Ordora{{ else }}Ordora{{ end }}{{ else }}Ordora{{ end }}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ordora">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,8 +135,9 @@
         <span>End-to-end encrypted session</span>
       </span>
     </div>
-  </footer>
+    </footer>
 
+  <script src="/static/js/pwa.js" defer></script>
 </body>
 </html>
 {{ end }}

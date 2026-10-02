@@ -6,6 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ with .Data }}{{ if .Title }}{{ .Title }} — Ordora{{ else }}Ordora{{ end }}{{ else }}Ordora{{ end }}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/static/manifest.webmanifest">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Ordora">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
   <meta name="csrf-token" content="{{ csrfToken .Data }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -143,6 +149,22 @@
     </main>
   </div>
 
+    <!-- PWA install banner (hidden by default; shown if the browser offers install) -->
+  <div id="pwa-install-banner" class="hidden fixed bottom-space-md left-1/2 -translate-x-1/2 z-50 bg-surface-container-lowest shadow-lg border border-outline-variant/30 rounded-xl p-space-md flex items-center gap-space-md max-w-sm">
+    <img src="/static/logo.svg" alt="Ordora" class="w-10 h-10 flex-shrink-0">
+    <div class="flex flex-col gap-1 flex-1 min-w-0">
+      <span class="font-label-md text-label-md font-bold text-on-surface">Install Ordora</span>
+      <span class="font-body-sm text-body-sm text-on-surface-variant">Add to your home screen for quick access.</span>
+    </div>
+    <div class="flex items-center gap-space-xs flex-shrink-0">
+      <button id="pwa-install-btn" class="h-8 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold">Install</button>
+      <button id="pwa-install-dismiss" class="p-1 rounded hover:bg-surface-container-low text-on-surface-variant">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="/static/js/pwa.js" defer></script>
 </body>
 </html>
 {{ end }}

@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	texttemplate "text/template"
+
+	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 )
 
 // Renderer loads templates once at startup and renders either full pages
@@ -134,6 +136,69 @@ func (r *Renderer) Raw(name string, data any) (string, error) {
 	return buf.String(), nil
 }
 
+// NotFound renders the 404 page with the public layout. Used by error
+// middleware and by handlers that call http.NotFound indirectly.
+func (r *Renderer) NotFound(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	// Try the app layout first. If it fails (e.g. session missing), fall
+	// back to the public layout.
+	var buf bytes.Buffer
+	if err := r.tmpl.ExecuteTemplate(&buf, "errors/404.html", nil); err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	// Wrap in the app layout if the session is available, otherwise the
+	// public layout.
+	layout := "layouts/public.html"
+	if session := middleware.SessionFromContext(req.Context()); session != nil {
+		layout = "layouts/app.html"
+	}
+	view := struct {
+		Data    any
+		Content template.HTML
+		Shell   Shell
+	}{
+		Data:    nil,
+		Content: template.HTML(buf.String()), //nolint:gosec
+		Shell:   Shell{CSRFToken: middleware.CSRFTokenFrom(req.Context())},
+	}
+	if err := r.tmpl.ExecuteTemplate(w, layout, view); err != nil {
+		slog.Error("render: 404 layout", "err", err)
+	}
+}
+
+// ServerError renders the 500 page.
+func (r *Renderer) ServerError(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+
+	var buf bytes.Buffer
+	if err := r.tmpl.ExecuteTemplate(&buf, "errors/500.html", map[string]any{
+		"RequestID": middleware.RequestIDFrom(req.Context()),
+	}); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	layout := "layouts/public.html"
+	if session := middleware.SessionFromContext(req.Context()); session != nil {
+		layout = "layouts/app.html"
+	}
+	view := struct {
+		Data    any
+		Content template.HTML
+		Shell   Shell
+	}{
+		Data:    nil,
+		Content: template.HTML(buf.String()), //nolint:gosec
+		Shell:   Shell{CSRFToken: middleware.CSRFTokenFrom(req.Context())},
+	}
+	if err := r.tmpl.ExecuteTemplate(w, layout, view); err != nil {
+		slog.Error("render: 500 layout", "err", err)
+	}
+}
+
 func (r *Renderer) serverError(w http.ResponseWriter, err error, name string) {
 	slog.Error("render: template error", "template", name, "err", err)
 	var execErr *texttemplate.ExecError
@@ -142,4 +207,14 @@ func (r *Renderer) serverError(w http.ResponseWriter, err error, name string) {
 		return
 	}
 	http.Error(w, "internal server error", http.StatusInternalServerError)
+}
+
+// RenderFragment writes a fragment template directly with no layout.
+// Used for full-page templates like /offline that don't need a shell.
+func (r *Renderer) RenderFragment(w http.ResponseWriter, status int, fragment string, data any) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	if err := r.tmpl.ExecuteTemplate(w, fragment, data); err != nil {
+		slog.Error("render: fragment exec", "fragment", fragment, "err", err)
+	}
 }

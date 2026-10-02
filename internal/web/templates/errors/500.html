@@ -1,0 +1,27 @@
+{{ define "errors/500.html" }}
+<div class="min-h-screen flex items-center justify-center p-space-md">
+  <div class="max-w-md w-full text-center flex flex-col items-center gap-space-md">
+    <div class="w-16 h-16 rounded-full bg-error-container flex items-center justify-center text-error">
+      <span class="material-symbols-outlined text-[36px]">warning</span>
+    </div>
+    <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Something went wrong</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      We hit an unexpected error. Our team has been notified. Please try again in a moment.
+    </p>
+    {{ if .RequestID }}
+      <p class="font-code-md text-code-md text-on-surface-variant bg-surface-container-low px-3 py-1 rounded">
+        Reference: {{ .RequestID }}
+      </p>
+    {{ end }}
+    <div class="flex items-center gap-space-sm pt-space-xs">
+      <a href="/dashboard" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">home</span>
+        <span>Go to Dashboard</span>
+      </a>
+      <a href="javascript:location.reload()" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">
+        Try again
+      </a>
+    </div>
+  </div>
+</div>
+{{ end }}

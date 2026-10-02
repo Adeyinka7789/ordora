@@ -58,21 +58,23 @@ func Logger(next http.Handler) http.Handler {
 }
 
 // Recover catches panics so a single bad request can't take down the process.
-func Recover(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if rec := recover(); rec != nil {
-				slog.Error("http: panic",
-					"panic", rec,
-					"path", r.URL.Path,
-					"req_id", RequestIDFrom(r.Context()),
-					"stack", string(debug.Stack()),
-				)
-				http.Error(w, "internal server error", http.StatusInternalServerError)
-			}
-		}()
-		next.ServeHTTP(w, r)
-	})
+func Recover(r ErrorPageRenderer) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					slog.Error("http: panic",
+						"panic", rec,
+						"path", req.URL.Path,
+						"req_id", RequestIDFrom(req.Context()),
+						"stack", string(debug.Stack()),
+					)
+					r.ServerError(w, req)
+				}
+			}()
+			next.ServeHTTP(w, req)
+		})
+	}
 }
 
 // statusWriter captures the status code for logging.

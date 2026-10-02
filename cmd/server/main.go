@@ -109,12 +109,13 @@ func run() error {
 	}
 
 	custRepo := postgres.NewCustomerRepo(db)
-	customerH := handlers.NewCustomerHandler(custRepo, renderer)
 
 	// ---- Services ----
 	outboxRepo := postgres.NewOutboxRepo(db)
 	auditRepo := postgres.NewAuditRepo(db)
 	orderRepo := postgres.NewOrderRepo(db)
+
+	customerH := handlers.NewCustomerHandler(custRepo, orderRepo, renderer)
 	// ---- Attachments ----
 	blobs, err := storage.NewLocalFS(cfg.Storage.LocalDir)
 	if err != nil {
@@ -222,6 +223,11 @@ func run() error {
 	// ---- Router ----
 	mux := http.NewServeMux()
 
+	// Offline fallback page for the PWA service worker.
+	mux.HandleFunc("GET /offline", func(w http.ResponseWriter, r *http.Request) {
+		renderer.RenderFragment(w, http.StatusOK, "errors/offline.html", nil)
+	})
+
 	// Static
 	staticDir := filepath.Join("internal", "web", "static")
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
@@ -287,6 +293,15 @@ func run() error {
 	mux.HandleFunc("GET /password/reset", authH.ResetPage)
 	mux.HandleFunc("POST /password/reset", authH.Reset)
 
+	// Silent handlers for well-known browser probes.
+	mux.HandleFunc("GET /js/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		fmt.Fprint(w, "// no-op service worker\n")
+	})
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/static/favicon.svg", http.StatusMovedPermanently)
+	})
+
 	// ---- Dashboard (requires auth) ----
 	mux.Handle("GET /dashboard", middleware.RequireAuth(http.HandlerFunc(dashH.Index)))
 
@@ -346,7 +361,7 @@ func run() error {
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.
 	handler := chain(mux,
-		middleware.Recover,
+		middleware.Recover(renderer),
 		middleware.RequestID,
 		middleware.Logger,
 		middleware.SessionMiddleware(authService, cfg.Session.CookieName),
@@ -354,6 +369,7 @@ func run() error {
 			CookieName: cfg.Session.CSRFCookieName,
 			Secure:     !cfg.IsDev(),
 		}),
+		middleware.NotFoundInterceptor(renderer),
 	)
 
 	srv := &http.Server{
