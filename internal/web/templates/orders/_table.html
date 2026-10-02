@@ -1,66 +1,72 @@
 {{ define "orders/_table.html" }}
-<div id="orders-table">
+<div id="orders-table" class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
   {{ if not .Rows }}
-    <div class="empty-state">
+    <div class="p-space-xl text-center">
       {{ if or .Query .Status }}
-        <p>No orders match your filters.</p>
+        <p class="font-body-md text-body-md text-on-surface-variant">No orders match your filters.</p>
       {{ else }}
-        <p>No orders yet.</p>
-        <p><a href="/orders/new" class="btn-primary">Create your first order</a></p>
+        <p class="font-body-md text-body-md text-on-surface-variant">No orders yet.</p>
+        <a href="/orders/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Create your first order</a>
       {{ end }}
     </div>
   {{ else }}
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Order</th>
-          <th>Customer</th>
-          <th>Title</th>
-          <th class="num">Total</th>
-          <th class="num">Paid</th>
-          <th>Status</th>
-          <th>Due</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range .Rows }}
-          {{ $o := .Order }}
-          <tr>
-            <td><a href="/orders/{{ $o.ID }}">{{ $o.Number }}</a></td>
-            <td>{{ .CustomerName }}</td>
-            <td>{{ $o.Title }}</td>
-            <td class="num">{{ currency $o.Total.Amount $o.Currency }}</td>
-            <td class="num">{{ currency $o.Paid.Amount $o.Currency }}</td>
-            <td>
-              <span class="status-pill status-{{ $o.Status }}">{{ $o.Status.Label }}</span>
-            </td>
-            <td>
-              {{ if $o.ExpectedCompletion }}
-                {{ $o.ExpectedCompletion.Format "Jan 2" }}
-              {{ else }}
-                <span class="muted">—</span>
-              {{ end }}
-            </td>
+    <div class="w-full overflow-x-auto">
+      <table class="w-full text-left font-body-md text-body-md">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+            <th class="py-2.5 px-space-md font-semibold">Order</th>
+            <th class="py-2.5 px-space-md font-semibold">Customer</th>
+            <th class="py-2.5 px-space-md font-semibold">Title</th>
+            <th class="py-2.5 px-space-md font-semibold">Status</th>
+            <th class="py-2.5 px-space-md font-semibold text-right">Total</th>
+            <th class="py-2.5 px-space-md font-semibold">Due</th>
           </tr>
-        {{ end }}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {{ range .Rows }}
+            {{ $o := .Order }}
+            <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+              <td class="py-3 px-space-md">
+                <a href="/orders/{{ $o.ID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline">{{ $o.Number }}</a>
+              </td>
+              <td class="py-3 px-space-md">
+                <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .CustomerName }}</span>
+              </td>
+              <td class="py-3 px-space-md">
+                <span class="font-label-md text-label-md text-on-surface truncate max-w-[220px] inline-block">{{ $o.Title }}</span>
+              </td>
+              <td class="py-3 px-space-md">
+                {{ template "partials/status_badge.html" $o.Status }}
+              </td>
+              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold">
+                {{ currency $o.Total.Amount $o.Currency }}
+              </td>
+              <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">
+                {{ if $o.ExpectedCompletion }}{{ $o.ExpectedCompletion.Format "Jan 2" }}{{ else }}—{{ end }}
+              </td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
 
     {{ if gt .Pagination.TotalPages 1 }}
-      <nav class="pagination">
-        {{ if .Pagination.HasPrev }}
-          <a href="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.PrevOffset }}"
-             hx-get="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.PrevOffset }}"
-             hx-target="#orders-table" hx-swap="outerHTML" hx-push-url="true">← Previous</a>
-        {{ end }}
-        <span class="muted">
-          Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}
-        </span>
-        {{ if .Pagination.HasNext }}
-          <a href="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.NextOffset }}"
-             hx-get="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.NextOffset }}"
-             hx-target="#orders-table" hx-swap="outerHTML" hx-push-url="true">Next →</a>
-        {{ end }}
+      <nav class="p-space-md flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant border-t border-outline-variant/20">
+        <span>Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
+        <div class="flex gap-1">
+          {{ if .Pagination.HasPrev }}
+            <a href="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.PrevOffset }}"
+               hx-get="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.PrevOffset }}"
+               hx-target="#orders-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Prev</a>
+          {{ end }}
+          {{ if .Pagination.HasNext }}
+            <a href="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.NextOffset }}"
+               hx-get="/orders?q={{ .Query }}&status={{ .Status }}&offset={{ .Pagination.NextOffset }}"
+               hx-target="#orders-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Next</a>
+          {{ end }}
+        </div>
       </nav>
     {{ end }}
   {{ end }}

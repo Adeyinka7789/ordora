@@ -15,12 +15,29 @@ import (
 // DashboardStats is the shape of the counter row on the dashboard.
 type DashboardStats struct {
 	TotalOrders      int64
-	PendingOrders    int64 // not COMPLETED or CANCELLED
+	PendingOrders    int64
 	DueToday         int64
-	Overdue          int64 // expected_completion < today, not terminal
+	Overdue          int64
 	OutstandingMinor int64
 	Currency         string
 	RecentOrders     []DashboardRecentOrder
+	RecentPayments   []DashboardRecentPayment
+	// CountsByStatus maps order status → count. Used by the stage pipeline.
+	CountsByStatus map[string]int64
+	// ValueByStatus maps order status → total value in minor units.
+	ValueByStatus map[string]int64
+}
+
+// DashboardRecentPayment is a lightweight row for the ledger feed.
+type DashboardRecentPayment struct {
+	ID           uuid.UUID
+	OrderID      uuid.UUID
+	OrderNumber  string
+	CustomerName string
+	AmountMinor  int64
+	Currency     string
+	Method       string
+	PaidAt       time.Time
 }
 
 // DashboardRecentOrder is a lightweight row for the recent-orders table.
@@ -123,6 +140,58 @@ func (s *DashboardService) Load(ctx context.Context, scope tenant.TenantScope, c
 			}
 			r.Status = order.Status(statusStr)
 			stats.RecentOrders = append(stats.RecentOrders, r)
+		}
+
+		// Counts by status.
+		stats.CountsByStatus = map[string]int64{}
+		stats.ValueByStatus = map[string]int64{}
+		statusRows, err := tx.Query(ctx, `
+			SELECT status, count(*), COALESCE(SUM(total_minor), 0)
+			FROM orders
+			GROUP BY status
+		`)
+		if err != nil {
+			return err
+		}
+		defer statusRows.Close()
+		for statusRows.Next() {
+			var s string
+			var c, v int64
+			if err := statusRows.Scan(&s, &c, &v); err != nil {
+				return err
+			}
+			stats.CountsByStatus[s] = c
+			stats.ValueByStatus[s] = v
+		}
+		if err := statusRows.Err(); err != nil {
+			return err
+		}
+
+		// Recent payments.
+		payRows, err := tx.Query(ctx, `
+			SELECT p.id, p.order_id, o.order_number, c.name,
+			       p.amount_minor, p.currency, p.method, p.paid_at
+			FROM payments p
+			JOIN orders o ON o.id = p.order_id
+			JOIN customers c ON c.id = o.customer_id
+			WHERE p.reverses IS NULL AND p.reversed_by IS NULL
+			ORDER BY p.paid_at DESC
+			LIMIT 5
+		`)
+		if err != nil {
+			return err
+		}
+		defer payRows.Close()
+		for payRows.Next() {
+			var r DashboardRecentPayment
+			if err := payRows.Scan(&r.ID, &r.OrderID, &r.OrderNumber, &r.CustomerName,
+				&r.AmountMinor, &r.Currency, &r.Method, &r.PaidAt); err != nil {
+				return err
+			}
+			stats.RecentPayments = append(stats.RecentPayments, r)
+		}
+		if err := payRows.Err(); err != nil {
+			return err
 		}
 		return rows.Err()
 	})

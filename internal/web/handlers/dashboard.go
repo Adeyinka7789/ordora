@@ -54,5 +54,5 @@ func (h *DashboardHandler) Index(w http.ResponseWriter, r *http.Request) {
 		page.FlashError = v
 	}
 
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "dashboard/index.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "dashboard/index.html", page)
 }

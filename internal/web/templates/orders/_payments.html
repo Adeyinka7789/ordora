@@ -1,106 +1,109 @@
 {{ define "orders/_payments.html" }}
-<div id="payments-card" class="card">
-  <h2>Payments</h2>
+<div id="payments-card" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-[22px]">account_balance_wallet</span>
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Payment Ledger</h2>
+    </div>
+    {{ template "partials/payment_status_badge.html" .PayStatus }}
+  </div>
 
-  {{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
+  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
-  <dl class="totals-list">
-    <dt>Total</dt>
-    <dd>{{ currency .Order.Total.Amount .Order.Currency }}</dd>
+  <!-- Balance tri-split -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+    <div class="p-space-md rounded bg-surface-container-low flex flex-col gap-1">
+      <span class="font-label-sm text-label-sm text-outline font-semibold uppercase">Total Invoiced</span>
+      <span class="font-code-md text-headline-md font-bold text-on-surface tabular-nums">{{ currency .Order.Total.Amount .Order.Currency }}</span>
+    </div>
+    <div class="p-space-md rounded bg-surface-container-low flex flex-col gap-1">
+      <span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase">Total Settled</span>
+      <span class="font-code-md text-headline-md font-bold text-tertiary tabular-nums">{{ currency .Order.Paid.Amount .Order.Currency }}</span>
+      <span class="font-label-sm text-label-sm text-tertiary-container font-medium">{{ .PaidPercent }}% collected</span>
+    </div>
+    <div class="p-space-md rounded bg-error-container/30 flex flex-col gap-1">
+      <span class="font-label-sm text-label-sm text-on-error-container font-semibold uppercase">Outstanding Balance</span>
+      <span class="font-code-md text-headline-md font-bold text-error tabular-nums">{{ currency .Balance .Order.Currency }}</span>
+      <span class="font-label-sm text-label-sm text-on-error-container">Due before handover</span>
+    </div>
+  </div>
 
-    <dt>Paid</dt>
-    <dd>{{ currency .Order.Paid.Amount .Order.Currency }}</dd>
-
-    <dt>Balance</dt>
-    <dd class="{{ if gt .Balance 0 }}owes{{ else }}paid{{ end }}">
-      {{ currency .Balance .Order.Currency }}
-    </dd>
-
-    <dt>Status</dt>
-    <dd><span class="status-pill status-{{ .PayStatus }}">{{ .PayStatus.Label }}</span></dd>
-  </dl>
-
+  <!-- Payments list -->
   {{ if .Payments }}
-    <ul class="payment-list">
+    <div class="flex flex-col gap-space-xs">
+      <span class="font-label-sm text-label-sm font-semibold text-outline uppercase tracking-wider">Verified Transactions</span>
       {{ range .Payments }}
-        <li class="{{ if or .IsReversal .IsReversed }}payment-reversed{{ end }}">
-          <div class="payment-main">
-            <span class="payment-amount">{{ currency .Amount.Amount .Amount.Currency }}</span>
-            <span class="payment-method muted">{{ .Method.Label }}</span>
+        <div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm {{ if or .IsReversal .IsReversed }}opacity-60{{ end }}">
+          <div class="flex items-start gap-space-sm">
+            <div class="w-9 h-9 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center font-bold flex-shrink-0">
+              <span class="material-symbols-outlined text-[20px]">account_balance</span>
+            </div>
+            <div class="flex flex-col">
+              <div class="flex items-center gap-space-xs flex-wrap">
+                <span class="font-label-md text-label-md font-bold text-on-surface tabular-nums {{ if or .IsReversal .IsReversed }}line-through{{ end }}">{{ currency .Amount.Amount .Amount.Currency }}</span>
+                <span class="font-code-md text-code-md px-1.5 py-0.2 rounded bg-tertiary-container text-on-tertiary font-bold">{{ .Method.Label }}</span>
+                {{ if .IsReversed }}<span class="font-code-md text-code-md px-1.5 py-0.2 rounded bg-error-container text-on-error-container font-bold">REVERSED</span>{{ end }}
+                {{ if .IsReversal }}<span class="font-code-md text-code-md px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant font-bold">REVERSAL</span>{{ end }}
+              </div>
+              {{ if .Reference }}<span class="font-body-sm text-body-sm text-on-surface-variant">Ref: <code class="font-code-md">{{ .Reference }}</code></span>{{ end }}
+              <span class="font-label-sm text-label-sm text-outline">{{ .PaidAt.Format "Jan 2, 2006 at 15:04" }}</span>
+              {{ if .Notes }}<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">{{ .Notes }}</span>{{ end }}
+            </div>
           </div>
-          <div class="payment-meta muted">
-            {{ .PaidAt.Format "Jan 2, 2006" }}
-            {{ if .Reference }} · {{ .Reference }}{{ end }}
-            {{ if .IsReversed }} · reversed{{ end }}
-            {{ if .IsReversal }} · reversal{{ end }}
-          </div>
-          {{ if .Notes }}<div class="payment-notes muted">{{ .Notes }}</div>{{ end }}
-
-          {{ $atts := index $.AttachmentsByPayment .ID }}
-          {{ if $atts }}
-            <ul class="payment-receipts">
-              {{ range $atts }}
-                <li>
-                  <a href="/attachments/{{ .ID }}">
-                    <span class="attachment-icon">{{ if .IsImage }}🖼{{ else }}📄{{ end }}</span>
-                    {{ .Filename }}
-                    <span class="muted small">{{ .HumanSize }}</span>
-                  </a>
-                </li>
-              {{ end }}
-            </ul>
-          {{ end }}
-
           {{ if not (or .IsReversal .IsReversed) }}
-            <form hx-post="/payments/{{ .ID }}/attachments"
-                  hx-target="#payments-card"
-                  hx-swap="outerHTML"
-                  hx-encoding="multipart/form-data"
-                  class="payment-receipt-upload">
-              <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
-              <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required>
-              <button type="submit" class="btn-secondary btn-tiny">Upload receipt</button>
-            </form>
+            <div class="flex items-center gap-space-xs self-end sm:self-center flex-wrap">
+              {{ $atts := index $.AttachmentsByPayment .ID }}
+              {{ if $atts }}
+                {{ range $atts }}
+                  <a href="/attachments/{{ .ID }}" class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md hover:bg-surface-container transition-colors">
+                    <span class="material-symbols-outlined text-[16px] text-primary">picture_as_pdf</span>
+                    <span class="truncate max-w-[100px]">{{ .Filename }}</span>
+                  </a>
+                {{ end }}
+              {{ end }}
+              <details class="reverse-payment inline">
+                <summary class="inline-flex items-center gap-1 px-2 py-1 rounded text-error font-label-sm text-label-sm cursor-pointer hover:bg-error-container/30">
+                  <span class="material-symbols-outlined text-[14px]">undo</span>
+                  <span>Reverse</span>
+                </summary>
+                <form hx-post="/payments/{{ .ID }}/reverse"
+                      hx-target="#payments-card"
+                      hx-swap="outerHTML"
+                      class="mt-space-xs flex flex-col gap-space-xs p-space-sm rounded bg-error-container/20 border border-error-container/40">
+                  <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                  <input type="text" name="reason" placeholder="Reason (required)" required maxlength="500"
+                         class="h-8 px-2 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm">
+                  <button type="submit" class="h-8 px-2 rounded bg-error text-on-error font-label-sm text-label-sm font-semibold"
+                          onclick="return confirm('Reverse this payment? This cannot be undone.');">Confirm reversal</button>
+                </form>
+              </details>
+            </div>
           {{ end }}
-                      <details class="reverse-payment">
-              <summary>Reverse this payment</summary>
-              <form hx-post="/payments/{{ .ID }}/reverse"
-                    hx-target="#payments-card"
-                    hx-swap="outerHTML"
-                    class="reverse-form">
-                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
-                <label>
-                  Reason (required)
-                  <input type="text" name="reason" required maxlength="500" placeholder="e.g. Duplicate entry">
-                </label>
-                <button type="submit" class="btn-danger btn-tiny"
-                        onclick="return confirm('Reverse this payment? This cannot be undone.');">
-                  Confirm reversal
-                </button>
-              </form>
-            </details>
-        </li>
+        </div>
       {{ end }}
-    </ul>
+    </div>
   {{ else }}
-    <p class="muted">No payments recorded yet.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">No payments recorded yet.</p>
   {{ end }}
 
+  <!-- Record payment form -->
   {{ if ne .Order.Status "CANCELLED" }}
     <form hx-post="/orders/{{ .Order.ID }}/payments"
           hx-target="#payments-card"
           hx-swap="outerHTML"
-          class="payment-form">
+          class="flex flex-col gap-space-sm pt-space-md border-t border-outline-variant/30">
       <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
 
-      <div class="form-row">
-        <label>
-          Amount
-          <input type="text" name="amount" placeholder="0.00" required>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Amount</span>
+          <input type="text" name="amount" placeholder="0.00" required
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
         </label>
-        <label>
-          Method
-          <select name="method" required>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Method</span>
+          <select name="method" required
+                  class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
             <option value="BANK_TRANSFER">Bank transfer</option>
             <option value="CASH">Cash</option>
             <option value="CARD">Card</option>
@@ -110,23 +113,26 @@
         </label>
       </div>
 
-      <div class="form-row">
-        <label>
-          Payment date
-          <input type="date" name="paid_at" value="{{ .Order.CreatedAt.Format "2006-01-02" }}">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Payment date</span>
+          <input type="date" name="paid_at" value="{{ .Order.CreatedAt.Format "2006-01-02" }}"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
         </label>
-        <label>
-          Reference
-          <input type="text" name="reference" placeholder="Bank ref, POS slip, etc." maxlength="200">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Reference</span>
+          <input type="text" name="reference" placeholder="Bank ref, POS slip…" maxlength="200"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
         </label>
       </div>
 
-      <label>
-        Notes
-        <input type="text" name="notes" maxlength="2000">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Notes</span>
+        <input type="text" name="notes" maxlength="2000"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
       </label>
 
-      <button type="submit" class="btn-primary">Record payment</button>
+      <button type="submit" class="self-start h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors">Record Payment</button>
     </form>
   {{ end }}
 </div>

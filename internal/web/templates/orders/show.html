@@ -1,66 +1,249 @@
 {{ define "orders/show.html" }}
-<section class="page-header order-header">
-  <div>
-    <h1>{{ .Order.Number }}</h1>
-    <p class="muted">{{ .Order.Title }}</p>
-  </div>
-  <div class="actions">
-    {{ if not .Order.Status.IsTerminal }}
-      <a href="/orders/{{ .Order.ID }}/edit" class="btn-secondary">Edit</a>
-    {{ end }}
-    <a href="/orders" class="btn-secondary">← All orders</a>
-  </div>
-</section>
+<div class="p-space-lg lg:p-space-xl max-w-[1440px] mx-auto flex flex-col gap-space-lg">
 
-{{ if .FlashNotice }}<div class="flash flash-notice">{{ .FlashNotice }}</div>{{ end }}
-{{ if .FlashError }}<div class="flash flash-error">{{ .FlashError }}</div>{{ end }}
+  <!-- Breadcrumb + title bar -->
+  <div class="flex flex-col gap-space-md">
+    <div class="flex flex-wrap items-center justify-between gap-space-sm text-outline">
+      <div class="flex items-center gap-space-xs font-label-md text-label-md">
+        <a href="/orders" class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+          <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+          <span>Orders</span>
+        </a>
+        <span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+        <span class="font-code-md text-code-md px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface font-semibold">{{ .Order.Number }}</span>
+      </div>
+    </div>
 
-<div class="order-layout">
-  <div class="order-main">
-    <div class="card">
-      <h2>Customer</h2>
-      {{ if .Customer }}
-        <p><a href="/customers/{{ .Customer.ID }}">{{ .Customer.Name }}</a></p>
-        {{ if .Customer.Email }}<p class="muted">{{ .Customer.Email }}</p>{{ end }}
-        {{ if .Customer.Phone }}<p class="muted">{{ .Customer.Phone }}</p>{{ end }}
+    <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-space-lg">
+      <div class="flex flex-col gap-space-xs">
+        <div class="flex flex-wrap items-center gap-space-sm">
+          <h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">{{ .Order.Title }}</h1>
+          {{ template "partials/status_badge.html" .Order.Status }}
+        </div>
+        <div class="flex flex-wrap items-center gap-y-1 gap-x-space-md text-on-surface-variant font-body-sm text-body-sm">
+          {{ if .Customer }}
+            <div class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px] text-outline">person</span>
+              <a href="/customers/{{ .Customer.ID }}" class="font-medium text-on-surface hover:text-primary">{{ .Customer.Name }}</a>
+            </div>
+          {{ end }}
+          <span class="text-outline">/</span>
+          <div class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
+            <span>Created {{ .Order.CreatedAt.Format "Jan 2, 2006" }}</span>
+          </div>
+          {{ if .Order.ExpectedCompletion }}
+            <span class="text-outline">/</span>
+            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">
+              <span class="material-symbols-outlined text-[15px]">event_upcoming</span>
+              <span>Target: <strong>{{ .Order.ExpectedCompletion.Format "Jan 2, 2006" }}</strong></span>
+            </div>
+          {{ end }}
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-space-xs self-start xl:self-center">
+        {{ if not .Order.Status.IsTerminal }}
+          <a href="/orders/{{ .Order.ID }}/edit" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[18px]">edit</span>
+            <span>Edit</span>
+          </a>
+        {{ end }}
+        {{ if ne .Order.Status "CANCELLED" }}
+          <a href="#payments-card" class="h-9 px-space-sm rounded bg-secondary-container hover:bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[18px]">payments</span>
+            <span>Record Payment</span>
+          </a>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+
+  <!-- Lifecycle Stepper -->
+  <div id="order-timeline" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="font-headline-md text-headline-md text-on-surface font-bold">Fulfillment Lifecycle</span>
+        {{ template "partials/status_badge.html" .Order.Status }}
+      </div>
+      {{ if .Order.Status.IsTerminal }}
+        <span class="font-label-sm text-label-sm text-outline">Terminal state — no further transitions.</span>
       {{ else }}
-        <p class="muted">Customer not available.</p>
+        <div class="flex items-center gap-2">
+          {{ if .Error }}<span class="text-error font-label-sm text-label-sm">{{ .Error }}</span>{{ end }}
+          <form hx-post="/orders/{{ .Order.ID }}/status"
+                hx-target="#order-timeline"
+                hx-swap="outerHTML"
+                class="flex items-center gap-2">
+            <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+            <select name="status" class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary-container">
+              {{ range .Order.Status.NextStatuses }}
+                <option value="{{ . }}">{{ .Label }}</option>
+              {{ end }}
+            </select>
+            <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Advance</button>
+          </form>
+        </div>
       {{ end }}
     </div>
-
-    <div class="card">
-      <h2>Items</h2>
-      {{ template "orders/_items.html" .Order }}
-    </div>
-
-    {{ if .Order.Description }}
-      <div class="card">
-        <h2>Notes</h2>
-        <p class="notes">{{ .Order.Description }}</p>
-      </div>
-    {{ end }}
-
-    <div class="card">
-      <h2>Totals</h2>
-      <dl class="totals-list">
-        <dt>Subtotal</dt><dd>{{ currency .Order.Subtotal.Amount .Order.Currency }}</dd>
-        {{ if gt .Order.Discount.Amount 0 }}
-          <dt>Discount</dt><dd>− {{ currency .Order.Discount.Amount .Order.Currency }}</dd>
-        {{ end }}
-        {{ if gt .Order.Tax.Amount 0 }}
-          <dt>Tax</dt><dd>{{ currency .Order.Tax.Amount .Order.Currency }}</dd>
-        {{ end }}
-        <dt class="total-label">Total</dt><dd class="total-value">{{ currency .Order.Total.Amount .Order.Currency }}</dd>
-        <dt>Paid</dt><dd>{{ currency .Order.Paid.Amount .Order.Currency }}</dd>
-        <dt>Balance</dt><dd class="{{ if gt .Balance 0 }}owes{{ else }}paid{{ end }}">{{ currency .Balance .Order.Currency }}</dd>
-      </dl>
-    </div>
-    {{ template "orders/_payments.html" . }}
-    {{ template "orders/_attachments.html" . }}
+    {{ template "partials/lifecycle_stepper.html" .Order }}
   </div>
 
-  <aside class="order-aside">
-    {{ template "orders/_timeline.html" . }}
-  </aside>
+  <!-- Two-column layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+
+    <!-- LEFT: 8 cols -->
+    <div class="lg:col-span-8 flex flex-col gap-space-lg">
+
+      <!-- Items -->
+      <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[22px]">inventory_2</span>
+            <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Line Items</h2>
+          </div>
+          <span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">{{ len .Order.Items }} items</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-body-md text-body-md">
+            <thead>
+              <tr class="bg-surface-container-low font-label-sm text-label-sm text-outline uppercase tracking-wider">
+                <th class="py-2.5 px-space-sm font-semibold rounded-l">Description</th>
+                <th class="py-2.5 px-space-sm font-semibold text-center w-16">Qty</th>
+                <th class="py-2.5 px-space-sm font-semibold text-right w-28">Unit</th>
+                <th class="py-2.5 px-space-sm font-semibold text-right rounded-r w-32">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{ range .Order.Items }}
+                <tr class="border-b border-outline-variant/20">
+                  <td class="py-space-md px-space-sm">
+                    <span class="font-label-md text-label-md font-bold text-on-surface">{{ .Description }}</span>
+                  </td>
+                  <td class="py-space-md px-space-sm text-center font-code-md text-code-md font-semibold">{{ formatQty .Quantity }}</td>
+                  <td class="py-space-md px-space-sm text-right font-code-md text-code-md tabular-nums">{{ currency .UnitPrice.Amount .UnitPrice.Currency }}</td>
+                  <td class="py-space-md px-space-sm text-right font-code-md text-code-md font-bold tabular-nums">{{ currency .Subtotal.Amount .Subtotal.Currency }}</td>
+                </tr>
+              {{ end }}
+            </tbody>
+          </table>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end pt-space-sm bg-surface-container-low p-space-md rounded-lg gap-space-md">
+          <div class="flex flex-col gap-1 text-on-surface-variant font-body-sm text-body-sm">
+            {{ if .Order.Description }}
+              <span class="font-semibold text-on-surface">Notes:</span>
+              <span class="whitespace-pre-wrap">{{ .Order.Description }}</span>
+            {{ end }}
+          </div>
+          <div class="w-full sm:w-72 flex flex-col gap-1.5 text-right tabular-nums">
+            <div class="flex justify-between font-label-md text-label-md text-on-surface-variant">
+              <span>Subtotal:</span>
+              <span class="font-code-md text-on-surface">{{ currency .Order.Subtotal.Amount .Order.Currency }}</span>
+            </div>
+            {{ if gt .Order.Discount.Amount 0 }}
+              <div class="flex justify-between font-label-md text-label-md text-on-surface-variant">
+                <span>Discount:</span>
+                <span class="font-code-md text-on-surface">− {{ currency .Order.Discount.Amount .Order.Currency }}</span>
+              </div>
+            {{ end }}
+            {{ if gt .Order.Tax.Amount 0 }}
+              <div class="flex justify-between font-label-md text-label-md text-on-surface-variant">
+                <span>Tax:</span>
+                <span class="font-code-md text-on-surface">{{ currency .Order.Tax.Amount .Order.Currency }}</span>
+              </div>
+            {{ end }}
+            <div class="flex justify-between bg-surface-container-lowest px-2 py-1 rounded">
+              <span class="font-headline-md text-headline-md text-on-surface font-bold">Total:</span>
+              <span class="font-code-md text-code-md text-primary font-bold">{{ currency .Order.Total.Amount .Order.Currency }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payments -->
+      {{ template "orders/_payments.html" . }}
+
+      <!-- Attachments -->
+      {{ template "orders/_attachments.html" . }}
+
+      <!-- Audit trail -->
+      {{ if .AuditTrail }}
+        <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[22px]">history</span>
+              <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Audit Trail</h2>
+            </div>
+            <span class="font-label-sm text-label-sm text-outline">Postgres append-only log</span>
+          </div>
+          <div class="relative pl-6 flex flex-col gap-space-md before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-surface-container-high">
+            {{ range .AuditTrail }}
+              <div class="relative flex flex-col gap-0.5">
+                <span class="absolute -left-[27px] top-1 w-2.5 h-2.5 rounded-full bg-primary-container ring-4 ring-surface-container-lowest"></span>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-label-md text-label-md font-bold text-on-surface">{{ .ActorName }} — {{ .Action }}</span>
+                </div>
+                <span class="font-label-sm text-label-sm text-outline">{{ .CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+              </div>
+            {{ end }}
+          </div>
+        </div>
+      {{ end }}
+
+    </div>
+
+    <!-- RIGHT: 4 cols -->
+    <div class="lg:col-span-4 flex flex-col gap-space-lg">
+
+      <!-- Customer -->
+      {{ if .Customer }}
+        <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+          <div class="flex items-center justify-between">
+            <span class="font-headline-md text-headline-md text-on-surface font-bold">Client Details</span>
+          </div>
+          <div class="flex items-center gap-space-sm">
+            <div class="w-12 h-12 rounded-full bg-primary text-on-primary font-headline-md text-headline-md flex items-center justify-center font-bold">
+              {{ initials .Customer.Name }}
+            </div>
+            <div class="flex flex-col min-w-0">
+              <a href="/customers/{{ .Customer.ID }}" class="font-headline-md text-headline-md font-bold text-on-surface hover:text-primary truncate">{{ .Customer.Name }}</a>
+              {{ if .Customer.Email }}<span class="font-code-md text-code-md text-on-surface-variant truncate">{{ .Customer.Email }}</span>{{ end }}
+            </div>
+          </div>
+          {{ if .Customer.Phone }}
+            <div class="flex items-center gap-2 p-space-xs rounded bg-surface-container-low">
+              <span class="material-symbols-outlined text-[16px] text-outline">call</span>
+              <span class="font-code-md text-code-md text-on-surface">{{ .Customer.Phone }}</span>
+            </div>
+          {{ end }}
+          {{ if .Customer.Address }}
+            <div class="flex flex-col gap-1 p-space-sm rounded bg-surface-container-low">
+              <div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md font-semibold">
+                <span class="material-symbols-outlined text-[16px] text-primary">pin_drop</span>
+                <span>Delivery Address</span>
+              </div>
+              <span class="font-body-md text-body-md text-on-surface-variant">{{ .Customer.Address }}</span>
+            </div>
+          {{ end }}
+        </div>
+      {{ end }}
+
+      <!-- Portal preview placeholder -->
+      <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-primary text-[20px]">preview</span>
+            <span class="font-headline-md text-headline-md text-on-surface font-bold">Client Portal</span>
+          </div>
+          <span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">Zero-login</span>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Share a link with your customer so they can track progress and download receipts. This feature arrives in a future release.</p>
+      </div>
+
+    </div>
+  </div>
 </div>
 {{ end }}

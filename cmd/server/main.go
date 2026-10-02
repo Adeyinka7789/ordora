@@ -154,8 +154,11 @@ func run() error {
 		CustRepo:    custRepo,
 		Attachments: attachService,
 		Payments:    paymentService,
+		Audit:       auditRepo,
 		Renderer:    renderer,
 	}
+
+	stubH := &handlers.StubHandler{Renderer: renderer}
 
 	// ---- Router ----
 	mux := http.NewServeMux()
@@ -166,9 +169,12 @@ func run() error {
 
 	// Home
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		renderer.Page(w, http.StatusOK, "layouts/app.html", "partials/home.html", map[string]any{
-			"Title": "",
-		})
+		s := middleware.SessionFromContext(r.Context())
+		if s != nil {
+			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	})
 
 	// Health
@@ -212,6 +218,11 @@ func run() error {
 	mux.Handle("GET /customers/{id}/edit", middleware.RequireTenant(http.HandlerFunc(customerH.Edit)))
 	mux.Handle("POST /customers/{id}", middleware.RequireTenant(http.HandlerFunc(customerH.Update)))
 	mux.Handle("POST /customers/{id}/delete", middleware.RequireTenant(http.HandlerFunc(customerH.Delete)))
+	// ---- Stub pages (nav links that are on the roadmap) ----
+	mux.Handle("GET /reports", middleware.RequireTenant(http.HandlerFunc(stubH.Reports)))
+	mux.Handle("GET /settings", middleware.RequireTenant(http.HandlerFunc(stubH.Settings)))
+	mux.Handle("GET /payments", middleware.RequireTenant(http.HandlerFunc(stubH.Payments)))
+	mux.Handle("GET /storefront", middleware.RequireTenant(http.HandlerFunc(stubH.Storefront)))
 	// ---- Middleware chain ----
 	// ---- Products ----
 	mux.Handle("GET /products", middleware.RequireTenant(http.HandlerFunc(productH.Index)))

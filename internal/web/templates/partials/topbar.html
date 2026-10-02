@@ -30,19 +30,17 @@
       <span class="material-symbols-outlined text-[20px]">notifications</span>
     </button>
     <div class="flex items-center gap-space-sm pl-space-xs">
-      <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md font-bold">
-        {{ with $data }}{{ if .UserName }}{{ initials .UserName }}{{ else }}U{{ end }}{{ else }}U{{ end }}
+            <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md font-bold">
+        {{ if .Shell.UserName }}{{ initials .Shell.UserName }}{{ else }}U{{ end }}
       </div>
-      {{ with $data }}
-        {{ if .UserName }}
-          <div class="hidden xl:flex flex-col text-left">
-            <span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">{{ .UserName }}</span>
-            <span class="font-label-sm text-label-sm text-on-surface-variant leading-tight">{{ if .OrgRole }}{{ .OrgRole }}{{ else }}Owner{{ end }}</span>
-          </div>
-        {{ end }}
+      {{ if .Shell.UserName }}
+        <div class="hidden xl:flex flex-col text-left">
+          <span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">{{ .Shell.UserName }}</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant leading-tight">{{ if .Shell.OrgRole }}{{ .Shell.OrgRole }}{{ else }}Owner{{ end }}</span>
+        </div>
       {{ end }}
       <form method="post" action="/logout" class="inline">
-        <input type="hidden" name="_csrf" value="{{ csrfToken .Data }}">
+        <input type="hidden" name="_csrf" value="{{ .Shell.CSRFToken }}">
         <button type="submit" class="p-1 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors" title="Sign out">
           <span class="material-symbols-outlined text-[18px]">logout</span>
         </button>

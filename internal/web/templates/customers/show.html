@@ -1,41 +1,51 @@
 {{ define "customers/show.html" }}
-<section class="page-header">
-  <div>
-    <h1>{{ .Customer.Name }}</h1>
-    <p class="muted">Customer details</p>
+<div class="p-space-lg lg:p-space-xl max-w-3xl mx-auto flex flex-col gap-space-lg">
+
+  <div class="flex items-center justify-between">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">{{ .Customer.Name }}</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Customer details</p>
+    </div>
+    <div class="flex items-center gap-space-sm">
+      <a href="/customers/{{ .Customer.ID }}/edit" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">edit</span>
+        <span>Edit</span>
+      </a>
+      <form method="post" action="/customers/{{ .Customer.ID }}/delete" class="inline" onsubmit="return confirm('Delete this customer? This cannot be undone.');">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold flex items-center gap-1">
+          <span class="material-symbols-outlined text-[16px]">delete</span>
+          <span>Delete</span>
+        </button>
+      </form>
+    </div>
   </div>
-  <div class="actions">
-    <a href="/customers/{{ .Customer.ID }}/edit" class="btn-secondary">Edit</a>
-    <form method="post" action="/customers/{{ .Customer.ID }}/delete" class="inline-form"
-          onsubmit="return confirm('Delete this customer? This cannot be undone.');">
-      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-      <button type="submit" class="btn-danger">Delete</button>
-    </form>
+
+  <div class="bg-surface-container-lowest rounded shadow-sm p-space-lg">
+    <dl class="grid grid-cols-[140px_1fr] gap-x-space-md gap-y-space-sm">
+      <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Email</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ if .Customer.Email }}{{ .Customer.Email }}{{ else }}—{{ end }}</dd>
+
+      <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Phone</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ if .Customer.Phone }}{{ .Customer.Phone }}{{ else }}—{{ end }}</dd>
+
+      <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Address</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ if .Customer.Address }}{{ .Customer.Address }}{{ else }}—{{ end }}</dd>
+
+      <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Notes</dt>
+      <dd class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ if .Customer.Notes }}{{ .Customer.Notes }}{{ else }}—{{ end }}</dd>
+
+      <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Created</dt>
+      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Customer.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+
+      <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Updated</dt>
+      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Customer.UpdatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+    </dl>
   </div>
-</section>
 
-<dl class="detail-grid">
-  <dt>Email</dt>
-  <dd>{{ if .Customer.Email }}{{ .Customer.Email }}{{ else }}<span class="muted">—</span>{{ end }}</dd>
-
-  <dt>Phone</dt>
-  <dd>{{ if .Customer.Phone }}{{ .Customer.Phone }}{{ else }}<span class="muted">—</span>{{ end }}</dd>
-
-  <dt>Address</dt>
-  <dd>{{ if .Customer.Address }}{{ .Customer.Address }}{{ else }}<span class="muted">—</span>{{ end }}</dd>
-
-  <dt>Notes</dt>
-  <dd>{{ if .Customer.Notes }}<pre class="notes">{{ .Customer.Notes }}</pre>{{ else }}<span class="muted">—</span>{{ end }}</dd>
-
-  <dt>Created</dt>
-  <dd>{{ .Customer.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
-
-  <dt>Updated</dt>
-  <dd>{{ .Customer.UpdatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
-</dl>
-
-<section class="future-section">
-  <h2>Orders</h2>
-  <p class="muted">Order history for this customer will appear here once orders are implemented.</p>
-</section>
+  <div class="bg-surface-container-lowest rounded shadow-sm p-space-lg">
+    <h2 class="font-headline-md text-headline-md text-on-surface font-semibold mb-space-sm">Orders</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant">Order history for this customer will appear here once linked.</p>
+  </div>
+</div>
 {{ end }}

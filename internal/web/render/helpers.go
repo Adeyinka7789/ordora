@@ -17,12 +17,13 @@ func readFile(path string) (string, error) {
 	return string(b), nil
 }
 
-func funcMap() template.FuncMap {
+func templateFuncs() template.FuncMap {
 	return template.FuncMap{
 		"safeHTML": func(s string) template.HTML { return template.HTML(s) }, //nolint:gosec
 		"lower":    strings.ToLower,
 		"upper":    strings.ToUpper,
-		"title":    strings.Title, //nolint:staticcheck // fine for ASCII labels
+		"title":    strings.Title, //nolint:staticcheck
+
 		"formatTime": func(t time.Time, layout string) string {
 			if t.IsZero() {
 				return ""
@@ -36,8 +37,6 @@ func funcMap() template.FuncMap {
 			return t.Format("Jan 2, 2006")
 		},
 		"currency": func(minor int64, code string) string {
-			// Format minor units (kobo, cents) as a human string.
-			// Extend when we add non-2-decimal currencies.
 			major := minor / 100
 			frac := minor % 100
 			if frac < 0 {
@@ -46,8 +45,6 @@ func funcMap() template.FuncMap {
 			return fmt.Sprintf("%s %d.%02d", code, major, frac)
 		},
 		"formatQty": func(scaled int64) string {
-			// Quantity is scaled by 1000. Format with up to 3 decimals,
-			// trimming trailing zeros.
 			s := fmt.Sprintf("%.3f", float64(scaled)/1000.0)
 			s = strings.TrimRight(s, "0")
 			s = strings.TrimRight(s, ".")
@@ -81,7 +78,6 @@ func funcMap() template.FuncMap {
 				return "step"
 			}
 		},
-
 		"csrfToken": func(data any) string {
 			if data == nil {
 				return ""
@@ -107,11 +103,9 @@ func funcMap() template.FuncMap {
 			}
 			return ""
 		},
-
 		"divf": func(minor int64, divisor float64) float64 {
 			return float64(minor) / divisor
 		},
-
 		"initials": func(name string) string {
 			name = strings.TrimSpace(name)
 			if name == "" {
@@ -136,5 +130,42 @@ func funcMap() template.FuncMap {
 			}
 			return b.String()
 		},
+		"list": func(items ...any) []any { return items },
+		"statusLabel": func(status string) string {
+			switch status {
+			case "NEW":
+				return "New"
+			case "CONFIRMED":
+				return "Confirmed"
+			case "IN_PROGRESS":
+				return "In Progress"
+			case "READY":
+				return "Ready"
+			case "OUT_FOR_DELIVERY":
+				return "In Transit"
+			case "DELIVERED":
+				return "Delivered"
+			case "COMPLETED":
+				return "Completed"
+			case "CANCELLED":
+				return "Cancelled"
+			}
+			return status
+		},
+		"dict": func(values ...any) map[string]any {
+			if len(values)%2 != 0 {
+				return nil
+			}
+			m := make(map[string]any, len(values)/2)
+			for i := 0; i < len(values); i += 2 {
+				key, ok := values[i].(string)
+				if !ok {
+					continue
+				}
+				m[key] = values[i+1]
+			}
+			return m
+		},
+		"add1": func(i int) int { return i + 1 },
 	}
 }

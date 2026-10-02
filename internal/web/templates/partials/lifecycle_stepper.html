@@ -1,0 +1,71 @@
+{{ define "partials/lifecycle_stepper.html" }}
+{{/* Expects dot to be *order.Order. Renders a 7-stage lifecycle stepper. */}}
+{{ $current := .Status }}
+{{ $steps := list
+  (dict "key" "NEW"              "label" "Order Received"   "icon" "check")
+  (dict "key" "CONFIRMED"        "label" "Confirmed"        "icon" "payments")
+  (dict "key" "IN_PROGRESS"      "label" "In Production"    "icon" "cut")
+  (dict "key" "READY"            "label" "Quality Inspected" "icon" "verified")
+  (dict "key" "OUT_FOR_DELIVERY" "label" "Dispatched"       "icon" "local_shipping")
+  (dict "key" "DELIVERED"        "label" "Delivered"        "icon" "done_all")
+  (dict "key" "COMPLETED"        "label" "Completed"        "icon" "check_circle")
+}}
+
+{{ $currentIdx := -1 }}
+{{ $i := 0 }}
+{{ range $s := $steps }}
+  {{ if eq $current (index $s "key") }}{{ $currentIdx = $i }}{{ end }}
+  {{ $i = add1 $i }}
+{{ end }}
+
+{{ if eq $current "CANCELLED" }}
+  <div class="p-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md">
+    This order was cancelled.
+  </div>
+{{ else }}
+  <div class="relative w-full overflow-x-auto pb-space-xs">
+    <div class="min-w-[780px] grid grid-cols-7 gap-2">
+      {{ $idx := 0 }}
+      {{ range $s := $steps }}
+        {{ $key := index $s "key" }}
+        {{ $label := index $s "label" }}
+        {{ $icon := index $s "icon" }}
+        {{ if lt $idx $currentIdx }}
+          <!-- Completed step -->
+          <div class="flex flex-col gap-2 relative">
+            <div class="h-2 rounded-full bg-tertiary-container w-full"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full bg-tertiary-container text-on-tertiary flex items-center justify-center font-code-md text-[10px] font-bold">
+                <span class="material-symbols-outlined text-[12px]">done</span>
+              </span>
+              <span class="font-label-md text-label-md font-semibold text-on-surface">{{ $label }}</span>
+            </div>
+          </div>
+        {{ else if eq $idx $currentIdx }}
+          <!-- Active step -->
+          <div class="flex flex-col gap-2 relative">
+            <div class="h-2 rounded-full bg-primary-container w-full relative overflow-hidden">
+              <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-code-md text-[10px] font-bold ring-4 ring-primary-fixed/50">{{ add1 $idx }}</span>
+              <span class="font-label-md text-label-md font-bold text-primary">{{ $label }}</span>
+            </div>
+            <span class="font-label-sm text-label-sm text-primary font-medium pl-6.5">Current Stage</span>
+          </div>
+        {{ else }}
+          <!-- Future step -->
+          <div class="flex flex-col gap-2 opacity-60">
+            <div class="h-2 rounded-full bg-surface-container w-full"></div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center font-code-md text-[10px]">{{ add1 $idx }}</span>
+              <span class="font-label-md text-label-md font-medium text-on-surface-variant">{{ $label }}</span>
+            </div>
+          </div>
+        {{ end }}
+        {{ $idx = add1 $idx }}
+      {{ end }}
+    </div>
+  </div>
+{{ end }}
+{{ end }}

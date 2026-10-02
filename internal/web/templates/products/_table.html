@@ -1,59 +1,53 @@
 {{ define "products/_table.html" }}
-<div id="products-table">
+<div id="products-table" class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
   {{ if not .Products }}
-    <div class="empty-state">
+    <div class="p-space-xl text-center">
       {{ if .Query }}
-        <p>No products match <strong>{{ .Query }}</strong>.</p>
+        <p class="font-body-md text-body-md text-on-surface-variant">No products match <strong class="text-on-surface">{{ .Query }}</strong>.</p>
       {{ else }}
-        <p>No products yet.</p>
-        <p><a href="/products/new" class="btn-primary">Add your first product</a></p>
+        <p class="font-body-md text-body-md text-on-surface-variant">No products yet.</p>
+        <a href="/products/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Add your first product</a>
       {{ end }}
     </div>
   {{ else }}
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>SKU</th>
-          <th class="num">Price</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range .Products }}
-          <tr {{ if not .Active }}class="row-archived"{{ end }}>
-            <td><a href="/products/{{ .ID }}">{{ .Name }}</a></td>
-            <td>{{ if .SKU }}{{ .SKU }}{{ else }}<span class="muted">—</span>{{ end }}</td>
-            <td class="num">{{ currency .UnitPrice.Amount .Currency }}</td>
-            <td>
-              {{ if .Active }}
-                <span class="status-pill status-CONFIRMED">Active</span>
-              {{ else }}
-                <span class="status-pill status-CANCELLED">Archived</span>
-              {{ end }}
-            </td>
-            <td class="row-actions"><a href="/products/{{ .ID }}/edit">Edit</a></td>
+    <div class="w-full overflow-x-auto">
+      <table class="w-full text-left font-body-md text-body-md">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+            <th class="py-2.5 px-space-md font-semibold">Name</th>
+            <th class="py-2.5 px-space-md font-semibold">SKU</th>
+            <th class="py-2.5 px-space-md font-semibold text-right">Price</th>
+            <th class="py-2.5 px-space-md font-semibold">Status</th>
+            <th class="py-2.5 px-space-md font-semibold"></th>
           </tr>
-        {{ end }}
-      </tbody>
-    </table>
-
-    {{ if gt .Pagination.TotalPages 1 }}
-      <nav class="pagination">
-        {{ if .Pagination.HasPrev }}
-          <a href="/products?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
-             hx-get="/products?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
-             hx-target="#products-table" hx-swap="outerHTML" hx-push-url="true">← Previous</a>
-        {{ end }}
-        <span class="muted">Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
-        {{ if .Pagination.HasNext }}
-          <a href="/products?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
-             hx-get="/products?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
-             hx-target="#products-table" hx-swap="outerHTML" hx-push-url="true">Next →</a>
-        {{ end }}
-      </nav>
-    {{ end }}
+        </thead>
+        <tbody>
+          {{ range .Products }}
+            <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20 {{ if not .Active }}opacity-60{{ end }}">
+              <td class="py-3 px-space-md">
+                <a href="/products/{{ .ID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
+              </td>
+              <td class="py-3 px-space-md">
+                {{ if .SKU }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .SKU }}</span>{{ else }}<span class="text-outline">—</span>{{ end }}
+              </td>
+              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold">
+                {{ currency .UnitPrice.Amount .Currency }}
+              </td>
+              <td class="py-3 px-space-md">
+                {{ if .Active }}
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>ACTIVE</span>
+                {{ else }}
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-red-100 text-red-900"><span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>ARCHIVED</span>
+                {{ end }}
+              </td>
+              <td class="py-3 px-space-md text-right">
+                <a href="/products/{{ .ID }}/edit" class="font-label-sm text-label-sm text-primary font-semibold hover:underline">Edit</a>
+              </td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
   {{ end }}
 </div>
 {{ end }}

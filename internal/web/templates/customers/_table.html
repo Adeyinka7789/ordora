@@ -1,60 +1,64 @@
 {{ define "customers/_table.html" }}
-<div id="customers-table">
+<div id="customers-table" class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
   {{ if not .Customers }}
-    <div class="empty-state">
+    <div class="p-space-xl text-center">
       {{ if .Query }}
-        <p>No customers match <strong>{{ .Query }}</strong>.</p>
+        <p class="font-body-md text-body-md text-on-surface-variant">No customers match <strong class="text-on-surface">{{ .Query }}</strong>.</p>
       {{ else }}
-        <p>No customers yet.</p>
-        <p><a href="/customers/new" class="btn-primary">Add your first customer</a></p>
+        <p class="font-body-md text-body-md text-on-surface-variant">No customers yet.</p>
+        <a href="/customers/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Add your first customer</a>
       {{ end }}
     </div>
   {{ else }}
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range .Customers }}
-          <tr>
-            <td><a href="/customers/{{ .ID }}">{{ .Name }}</a></td>
-            <td>{{ if .Email }}{{ .Email }}{{ else }}<span class="muted">—</span>{{ end }}</td>
-            <td>{{ if .Phone }}{{ .Phone }}{{ else }}<span class="muted">—</span>{{ end }}</td>
-            <td class="row-actions">
-              <a href="/customers/{{ .ID }}/edit">Edit</a>
-            </td>
+    <div class="w-full overflow-x-auto">
+      <table class="w-full text-left font-body-md text-body-md">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+            <th class="py-2.5 px-space-md font-semibold">Name</th>
+            <th class="py-2.5 px-space-md font-semibold">Email</th>
+            <th class="py-2.5 px-space-md font-semibold">Phone</th>
+            <th class="py-2.5 px-space-md font-semibold"></th>
           </tr>
-        {{ end }}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {{ range .Customers }}
+            <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+              <td class="py-3 px-space-md">
+                <a href="/customers/{{ .ID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
+              </td>
+              <td class="py-3 px-space-md">
+                {{ if .Email }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .Email }}</span>{{ else }}<span class="text-outline">—</span>{{ end }}
+              </td>
+              <td class="py-3 px-space-md">
+                {{ if .Phone }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .Phone }}</span>{{ else }}<span class="text-outline">—</span>{{ end }}
+              </td>
+              <td class="py-3 px-space-md text-right">
+                <a href="/customers/{{ .ID }}/edit" class="font-label-sm text-label-sm text-primary font-semibold hover:underline">Edit</a>
+              </td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
 
     {{ if gt .Pagination.TotalPages 1 }}
-      <nav class="pagination">
-        {{ if .Pagination.HasPrev }}
-          <a href="/customers?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
-             hx-get="/customers?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
-             hx-target="#customers-table"
-             hx-swap="outerHTML"
-             hx-push-url="true">← Previous</a>
-        {{ end }}
-        <span class="muted">
-          Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}
-        </span>
-        {{ if .Pagination.HasNext }}
-          <a href="/customers?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
-             hx-get="/customers?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
-             hx-target="#customers-table"
-             hx-swap="outerHTML"
-             hx-push-url="true">Next →</a>
-        {{ end }}
+      <nav class="p-space-md flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant border-t border-outline-variant/20">
+        <span>Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
+        <div class="flex gap-1">
+          {{ if .Pagination.HasPrev }}
+            <a href="/customers?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
+               hx-get="/customers?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
+               hx-target="#customers-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Prev</a>
+          {{ end }}
+          {{ if .Pagination.HasNext }}
+            <a href="/customers?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
+               hx-get="/customers?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
+               hx-target="#customers-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Next</a>
+          {{ end }}
+        </div>
       </nav>
-    {{ else if gt .Pagination.Total 0 }}
-      <p class="muted small">{{ .Pagination.Total }} customer{{ if ne .Pagination.Total 1 }}s{{ end }}</p>
     {{ end }}
   {{ end }}
 </div>

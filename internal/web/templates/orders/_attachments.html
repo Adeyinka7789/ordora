@@ -1,32 +1,50 @@
 {{ define "orders/_attachments.html" }}
-<div id="attachments" class="card">
-  <h2>Attachments</h2>
+<div id="attachments" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-[22px]">folder_open</span>
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Attachments</h2>
+    </div>
+    <span class="font-label-sm text-label-sm text-outline">{{ len .Attachments }} file{{ if ne (len .Attachments) 1 }}s{{ end }}</span>
+  </div>
 
   {{ if .Attachments }}
-    <ul class="attachment-list">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-space-sm">
       {{ range .Attachments }}
-        <li>
-          <a href="/attachments/{{ .ID }}" class="attachment-link">
-            <span class="attachment-icon">{{ if .IsImage }}🖼{{ else }}📄{{ end }}</span>
-            <span class="attachment-name">{{ .Filename }}</span>
-            <span class="attachment-size muted">{{ .HumanSize }}</span>
+        <div class="p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-2">
+          <a href="/attachments/{{ .ID }}" class="block h-28 rounded overflow-hidden bg-surface-container-high flex items-center justify-center relative">
+            {{ if .IsImage }}
+              <span class="material-symbols-outlined text-[36px] text-primary">image</span>
+            {{ else }}
+              <span class="material-symbols-outlined text-[36px] text-primary">description</span>
+            {{ end }}
           </a>
-        </li>
+          <div class="flex items-center justify-between">
+            <div class="flex flex-col min-w-0">
+              <a href="/attachments/{{ .ID }}" class="font-label-md text-label-md font-bold text-on-surface truncate hover:text-primary">{{ .Filename }}</a>
+              <span class="font-label-sm text-label-sm text-outline">{{ .HumanSize }} · {{ .CreatedAt.Format "Jan 2" }}</span>
+            </div>
+            <a href="/attachments/{{ .ID }}" class="p-1 text-on-surface-variant hover:text-primary transition-colors" title="Download">
+              <span class="material-symbols-outlined text-[18px]">download</span>
+            </a>
+          </div>
+        </div>
       {{ end }}
-    </ul>
+    </div>
   {{ else }}
-    <p class="muted">No attachments yet.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">No attachments yet.</p>
   {{ end }}
 
   <form hx-post="/orders/{{ .OrderID }}/attachments"
         hx-target="#attachments"
         hx-swap="outerHTML"
         hx-encoding="multipart/form-data"
-        class="attachment-upload">
+        class="flex items-center gap-space-sm pt-space-md border-t border-outline-variant/30">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-    <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required>
-    <button type="submit" class="btn-secondary">Upload</button>
+    <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required
+           class="flex-1 font-body-sm text-body-sm text-on-surface-variant">
+    <button type="submit" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold">Upload</button>
   </form>
-  <p class="hint">JPG, PNG, WEBP, GIF, or PDF · up to 10 MiB</p>
+  <p class="font-label-sm text-label-sm text-outline">JPG, PNG, WEBP, GIF, or PDF · up to 10 MiB</p>
 </div>
 {{ end }}

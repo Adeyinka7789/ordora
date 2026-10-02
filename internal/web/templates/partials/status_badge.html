@@ -1,0 +1,22 @@
+{{ define "partials/status_badge.html" }}
+{{ $s := printf "%v" . }}
+{{ if eq $s "NEW" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container text-on-surface"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span>NEW</span>
+{{ else if eq $s "CONFIRMED" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-blue-100 text-blue-900"><span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>CONFIRMED</span>
+{{ else if eq $s "IN_PROGRESS" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-amber-100 text-amber-900"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>IN_PROGRESS</span>
+{{ else if eq $s "READY" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>READY</span>
+{{ else if eq $s "OUT_FOR_DELIVERY" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-purple-100 text-purple-900"><span class="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>OUT_FOR_DELIVERY</span>
+{{ else if eq $s "DELIVERED" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>DELIVERED</span>
+{{ else if eq $s "COMPLETED" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900"><span class="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>COMPLETED</span>
+{{ else if eq $s "CANCELLED" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-red-100 text-red-900"><span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>CANCELLED</span>
+{{ else }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container text-on-surface-variant">{{ $s }}</span>
+{{ end }}
+{{ end }}

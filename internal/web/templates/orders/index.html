@@ -1,34 +1,45 @@
 {{ define "orders/index.html" }}
-<section class="page-header">
-  <div>
-    <h1>Orders</h1>
-    <p class="muted">Track every order from creation to completion.</p>
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Orders</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Track every order from creation to completion.</p>
+    </div>
+    <a href="/orders/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span>New Order</span>
+    </a>
   </div>
-  <a href="/orders/new" class="btn-primary">New order</a>
-</section>
 
-{{ if .FlashNotice }}<div class="flash flash-notice">{{ .FlashNotice }}</div>{{ end }}
-{{ if .FlashError }}<div class="flash flash-error">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
-<form class="orders-filters"
-      hx-get="/orders"
-      hx-trigger="input changed delay:300ms from:input[name='q'], change from:select[name='status'], submit"
-      hx-target="#orders-table"
-      hx-swap="outerHTML"
-      hx-push-url="true">
-  <input type="search" name="q" value="{{ .Query }}" placeholder="Search by order number, customer, or title…" autocomplete="off">
-  <select name="status">
-    <option value="">All statuses</option>
-    <option value="NEW"             {{ if eq .Status "NEW" }}selected{{ end }}>New</option>
-    <option value="CONFIRMED"       {{ if eq .Status "CONFIRMED" }}selected{{ end }}>Confirmed</option>
-    <option value="IN_PROGRESS"     {{ if eq .Status "IN_PROGRESS" }}selected{{ end }}>In progress</option>
-    <option value="READY"           {{ if eq .Status "READY" }}selected{{ end }}>Ready</option>
-    <option value="OUT_FOR_DELIVERY"{{ if eq .Status "OUT_FOR_DELIVERY" }}selected{{ end }}>Out for delivery</option>
-    <option value="DELIVERED"       {{ if eq .Status "DELIVERED" }}selected{{ end }}>Delivered</option>
-    <option value="COMPLETED"       {{ if eq .Status "COMPLETED" }}selected{{ end }}>Completed</option>
-    <option value="CANCELLED"       {{ if eq .Status "CANCELLED" }}selected{{ end }}>Cancelled</option>
-  </select>
-</form>
+  <form class="flex flex-col sm:flex-row items-center gap-space-sm"
+        hx-get="/orders"
+        hx-trigger="input changed delay:300ms from:input[name='q'], change from:select[name='status'], submit"
+        hx-target="#orders-table"
+        hx-swap="outerHTML"
+        hx-push-url="true">
+    <div class="relative w-full max-w-md flex items-center">
+      <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+      <input type="search" name="q" value="{{ .Query }}" placeholder="Search by order #, customer, or title…" autocomplete="off"
+             class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
+    </div>
+    <select name="status"
+            class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary-container">
+      <option value="">All statuses</option>
+      <option value="NEW"              {{ if eq .Status "NEW" }}selected{{ end }}>New</option>
+      <option value="CONFIRMED"        {{ if eq .Status "CONFIRMED" }}selected{{ end }}>Confirmed</option>
+      <option value="IN_PROGRESS"      {{ if eq .Status "IN_PROGRESS" }}selected{{ end }}>In Progress</option>
+      <option value="READY"            {{ if eq .Status "READY" }}selected{{ end }}>Ready</option>
+      <option value="OUT_FOR_DELIVERY" {{ if eq .Status "OUT_FOR_DELIVERY" }}selected{{ end }}>Out for Delivery</option>
+      <option value="DELIVERED"        {{ if eq .Status "DELIVERED" }}selected{{ end }}>Delivered</option>
+      <option value="COMPLETED"        {{ if eq .Status "COMPLETED" }}selected{{ end }}>Completed</option>
+      <option value="CANCELLED"        {{ if eq .Status "CANCELLED" }}selected{{ end }}>Cancelled</option>
+    </select>
+  </form>
 
-{{ template "orders/_table.html" . }}
+  {{ template "orders/_table.html" . }}
+</div>
 {{ end }}

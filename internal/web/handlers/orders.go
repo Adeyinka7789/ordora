@@ -25,6 +25,7 @@ type OrderHandler struct {
 	CustRepo    *postgres.CustomerRepo
 	Attachments *app.AttachmentService
 	Payments    *app.PaymentService
+	Audit       *postgres.AuditRepo
 	Renderer    *render.Renderer
 }
 
@@ -90,6 +91,7 @@ type orderShowPage struct {
 	CSRFToken   string
 	Customer    *customer.Customer
 	Balance     int64
+	PaidPercent int // 0–100 for the payment progress bar
 	FlashNotice string
 	FlashError  string
 
@@ -101,6 +103,7 @@ type orderShowPage struct {
 	Payments             []*payment.Payment
 	PayStatus            payment.Status
 	AttachmentsByPayment map[uuid.UUID][]*attachment.Attachment
+	AuditTrail           []postgres.AuditTrailRow
 }
 
 // -----------------------------------------------------------------------------
@@ -567,17 +570,14 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	if v := queryValue(r, "error"); v != "" {
 		page.FlashError = v
 	}
-	// Load attachments (best-effort; if it fails, page still renders).
+	// Load attachments (best-effort).
 	if list, err := h.Attachments.List(r.Context(), scope, attachment.EntityOrder, o.ID); err == nil {
 		page.Attachments = list
 	}
 
-	// Load payments (best-effort).
-	// Load payments (best-effort).
+	// Load payments + per-payment receipts (best-effort).
 	if list, err := h.Payments.ListForOrder(r.Context(), scope, o.ID); err == nil {
 		page.Payments = list
-
-		// Load per-payment receipts.
 		byPayment := make(map[uuid.UUID][]*attachment.Attachment, len(list))
 		for _, p := range list {
 			atts, err := h.Attachments.List(r.Context(), scope, attachment.EntityPayment, p.ID)
@@ -588,7 +588,19 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 		}
 		page.AttachmentsByPayment = byPayment
 	}
+
+	// Audit trail (best-effort).
+	if h.Audit != nil {
+		if trail, err := h.Audit.ListTrailForEntity(r.Context(), scope, "ORDER", o.ID, 30); err == nil {
+			page.AuditTrail = trail
+		}
+	}
+
+	// Derived fields.
 	page.PayStatus = payment.DeriveStatus(o.Total, o.Paid)
+	if o.Total.Amount() > 0 {
+		page.PaidPercent = int(o.Paid.Amount() * 100 / o.Total.Amount())
+	}
 
 	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/show.html", page)
 }

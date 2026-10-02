@@ -1,27 +1,37 @@
 {{ define "products/index.html" }}
-<section class="page-header">
-  <div>
-    <h1>Products</h1>
-    <p class="muted">Reusable catalog items for faster order creation.</p>
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Products</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Reusable catalog items for faster order creation.</p>
+    </div>
+    <a href="/products/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span>New Product</span>
+    </a>
   </div>
-  <a href="/products/new" class="btn-primary">New product</a>
-</section>
 
-{{ if .FlashNotice }}<div class="flash flash-notice">{{ .FlashNotice }}</div>{{ end }}
-{{ if .FlashError }}<div class="flash flash-error">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
-<form class="orders-filters"
-      hx-get="/products"
-      hx-trigger="input changed delay:300ms from:input[name='q'], change from:input[name='archived'], submit"
-      hx-target="#products-table"
-      hx-swap="outerHTML"
-      hx-push-url="true">
-  <input type="search" name="q" value="{{ .Query }}" placeholder="Search by name or SKU…" autocomplete="off">
-  <label class="checkbox-inline">
-    <input type="checkbox" name="archived" value="1" {{ if .IncludeArch }}checked{{ end }}>
-    Show archived
-  </label>
-</form>
+  <form class="flex flex-col sm:flex-row items-center gap-space-sm"
+        hx-get="/products"
+        hx-trigger="input changed delay:300ms from:input[name='q'], change from:input[name='archived'], submit"
+        hx-target="#products-table"
+        hx-swap="outerHTML"
+        hx-push-url="true">
+    <div class="relative w-full max-w-md flex items-center">
+      <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+      <input type="search" name="q" value="{{ .Query }}" placeholder="Search by name or SKU…" autocomplete="off"
+             class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
+    </div>
+    <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
+      <input type="checkbox" name="archived" value="1" {{ if .IncludeArch }}checked{{ end }}>
+      Show archived
+    </label>
+  </form>
 
-{{ template "products/_table.html" . }}
+  {{ template "products/_table.html" . }}
+</div>
 {{ end }}

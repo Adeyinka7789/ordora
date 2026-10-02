@@ -1,39 +1,30 @@
 {{ define "orders/_timeline.html" }}
-<div id="order-timeline" class="card timeline-card">
-  <h2>Status</h2>
-
-  {{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
-
-  <ol class="timeline">
-    {{ $current := .Order.Status }}
-    <li class="{{ statusClass $current "NEW" }}"><span>New</span></li>
-    <li class="{{ statusClass $current "CONFIRMED" }}"><span>Confirmed</span></li>
-    <li class="{{ statusClass $current "IN_PROGRESS" }}"><span>In progress</span></li>
-    <li class="{{ statusClass $current "READY" }}"><span>Ready</span></li>
-    <li class="{{ statusClass $current "OUT_FOR_DELIVERY" }}"><span>Out for delivery</span></li>
-    <li class="{{ statusClass $current "DELIVERED" }}"><span>Delivered</span></li>
-    <li class="{{ statusClass $current "COMPLETED" }}"><span>Completed</span></li>
-  </ol>
-
-  {{ if eq $current "CANCELLED" }}
-    <div class="cancelled-note">This order was cancelled.</div>
-  {{ else if not $current.IsTerminal }}
-    <form hx-post="/orders/{{ .Order.ID }}/status"
-          hx-target="#order-timeline"
-          hx-swap="outerHTML"
-          class="status-form">
-      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-      <input type="hidden" name="prev_status" value="{{ $current }}">
-      <label>
-        Change status to:
-        <select name="status">
-          {{ range $current.NextStatuses }}
-            <option value="{{ . }}">{{ .Label }}</option>
-          {{ end }}
-        </select>
-      </label>
-      <button type="submit" class="btn-primary">Update</button>
-    </form>
-  {{ end }}
+<div id="order-timeline" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="font-headline-md text-headline-md text-on-surface font-bold">Fulfillment Lifecycle</span>
+      {{ template "partials/status_badge.html" .Order.Status }}
+    </div>
+    {{ if .Order.Status.IsTerminal }}
+      <span class="font-label-sm text-label-sm text-outline">Terminal state — no further transitions.</span>
+    {{ else }}
+      <div class="flex items-center gap-2">
+        {{ if .Error }}<span class="text-error font-label-sm text-label-sm">{{ .Error }}</span>{{ end }}
+        <form hx-post="/orders/{{ .Order.ID }}/status"
+              hx-target="#order-timeline"
+              hx-swap="outerHTML"
+              class="flex items-center gap-2">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <select name="status" class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary-container">
+            {{ range .Order.Status.NextStatuses }}
+              <option value="{{ . }}">{{ .Label }}</option>
+            {{ end }}
+          </select>
+          <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Advance</button>
+        </form>
+      </div>
+    {{ end }}
+  </div>
+  {{ template "partials/lifecycle_stepper.html" .Order }}
 </div>
 {{ end }}

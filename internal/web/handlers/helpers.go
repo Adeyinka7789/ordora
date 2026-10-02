@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
+	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
 // isHTMX reports whether the current request is an HTMX request.
@@ -90,4 +91,36 @@ func newPagination(total, limit, offset int) Pagination {
 		}
 	}
 	return p
+}
+
+// shellFromRequest builds the render.Shell from the current request's session
+// and CSRF token. Used by handlers when rendering a full page.
+// shellFromRequest builds the render.Shell from the current request's session
+// and CSRF token. Used when rendering a full authenticated page.
+func shellFromRequest(r *http.Request) render.Shell {
+	s := middleware.SessionFromContext(r.Context())
+	sh := render.Shell{
+		CSRFToken: middleware.CSRFTokenFrom(r.Context()),
+	}
+	if s != nil {
+		sh.UserName = s.User.Name
+		sh.UserEmail = s.User.Email.String()
+		sh.OrgRole = string(s.Scope.Role)
+	}
+	return sh
+}
+
+// page is a convenience for rendering an authenticated page with a populated
+// shell. Replaces the direct h.Renderer.Page(...) calls throughout this package.
+func page(w http.ResponseWriter, r *http.Request, renderer *render.Renderer, status int, layout, fragment string, data any) {
+	renderer.PageWithShell(w, status, layout, fragment, data, shellFromRequest(r))
+}
+
+// renderPage is a convenience wrapper: it renders a full page with the shell
+// populated from the request context. The name avoids shadowing the common
+// page data variable used by handlers.
+// renderPage is an alias for page. Both names exist because different handlers
+// use slightly different conventions; they do the same thing.
+func renderPage(w http.ResponseWriter, r *http.Request, renderer *render.Renderer, status int, layout, fragment string, data any) {
+	page(w, r, renderer, status, layout, fragment, data)
 }

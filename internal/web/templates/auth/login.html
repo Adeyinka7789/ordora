@@ -1,27 +1,30 @@
 {{ define "auth/login.html" }}
-<h1>Sign in</h1>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-lg">Sign in</h1>
 
-{{ if .Error }}<div class="flash flash-error">{{ .Error }}</div>{{ end }}
-{{ if .Notice }}<div class="flash flash-notice">{{ .Notice }}</div>{{ end }}
+{{ if .Error }}<div class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+{{ if .Notice }}<div class="mb-space-md p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Notice }}</div>{{ end }}
 
-<form method="post" action="/login" class="form">
+<form method="post" action="/login" class="flex flex-col gap-space-md">
   <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
 
-  <label>
-    Email
-    <input type="email" name="email" value="{{ .Email }}" required autofocus>
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Email</span>
+    <input type="email" name="email" value="{{ .Email }}" required autofocus
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
   </label>
 
-  <label>
-    Password
-    <input type="password" name="password" required>
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Password</span>
+    <input type="password" name="password" required
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
   </label>
 
-  <button type="submit" class="btn-primary">Sign in</button>
+  <button type="submit" class="h-10 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors">Sign in</button>
 </form>
 
-<p class="auth-alt">
-  <a href="/password/forgot">Forgot password?</a> ·
-  <a href="/register">Create an account</a>
+<p class="text-center font-label-md text-label-md text-on-surface-variant mt-space-lg">
+  <a href="/password/forgot" class="text-primary hover:underline">Forgot password?</a>
+  <span class="mx-1">·</span>
+  <a href="/register" class="text-primary hover:underline">Create an account</a>
 </p>
 {{ end }}

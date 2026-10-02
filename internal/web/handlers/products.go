@@ -97,7 +97,7 @@ func (h *ProductHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) renderIndex(w http.ResponseWriter, r *http.Request, page productsIndexPage) {
 	page.CSRFToken = csrfFromCtx(r)
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "products/index.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/index.html", page)
 }
 
 // New.
@@ -110,7 +110,7 @@ func (h *ProductHandler) New(w http.ResponseWriter, r *http.Request) {
 		Title:     "New product",
 		CSRFToken: csrfFromCtx(r),
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "products/new.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/new.html", page)
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +134,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			FormSKU:   formValue(r, "sku"),
 			FormPrice: formValue(r, "unit_price"),
 		}
-		h.Renderer.Page(w, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
+		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
 		return
 	}
 
@@ -155,7 +155,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			FormSKU:   formValue(r, "sku"),
 			FormPrice: formValue(r, "unit_price"),
 		}
-		h.Renderer.Page(w, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
+		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
 		return
 	}
 
@@ -187,7 +187,7 @@ func (h *ProductHandler) Show(w http.ResponseWriter, r *http.Request) {
 		CSRFToken: csrfFromCtx(r),
 		Product:   p,
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "products/show.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/show.html", page)
 }
 
 func (h *ProductHandler) Edit(w http.ResponseWriter, r *http.Request) {
@@ -218,7 +218,7 @@ func (h *ProductHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		FormSKU:   p.SKU,
 		FormPrice: formatMoneyMinor(p.UnitPrice.Amount()),
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "products/edit.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/edit.html", page)
 }
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {

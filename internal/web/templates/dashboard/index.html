@@ -1,87 +1,238 @@
 {{ define "dashboard/index.html" }}
-<section class="dashboard">
-  <div class="page-header">
-    <div>
-      <h1>Good day, {{ .UserName }}.</h1>
-      <p class="muted">Signed in as <strong>{{ .UserEmail }}</strong> · Role <strong>{{ .OrgRole }}</strong></p>
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div class="flex flex-col">
+      <div class="flex items-center gap-space-sm">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Good day, {{ .UserName }}.</h1>
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed font-label-sm text-label-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+          <span>Live Sync: Connected</span>
+        </div>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2 mt-0.5">
+        <span>{{ .UserEmail }}</span>
+        <span class="text-outline-variant">•</span>
+        <span>Role: {{ .OrgRole }}</span>
+      </p>
     </div>
-    <form method="post" action="/logout" class="inline-form">
-      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-      <button type="submit" class="btn-secondary">Sign out</button>
-    </form>
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <a href="/orders/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        <span>New Order</span>
+      </a>
+    </div>
   </div>
 
-  {{ if .FlashNotice }}<div class="flash flash-notice">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="flash flash-error">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   {{ if .Stats }}
-    <div class="stat-grid">
-      <a href="/orders" class="stat-card">
-        <div class="stat-label">Total orders</div>
-        <div class="stat-value">{{ .Stats.TotalOrders }}</div>
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all">
+        <div class="flex items-start justify-between">
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Active Orders</span>
+            <div class="font-display-lg text-display-lg text-on-surface mt-1 font-bold tracking-tight tabular-nums">{{ .Stats.TotalOrders }}</div>
+          </div>
+          <div class="w-9 h-9 rounded bg-secondary-container/60 flex items-center justify-center text-primary-container">
+            <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 mt-space-md pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
+          <span class="text-on-surface-variant">Total orders in system</span>
+        </div>
       </a>
 
-      <a href="/orders?status=IN_PROGRESS" class="stat-card">
-        <div class="stat-label">Pending</div>
-        <div class="stat-value">{{ .Stats.PendingOrders }}</div>
+      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all">
+        <div class="flex items-start justify-between">
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Outstanding Balance</span>
+            <div class="font-headline-lg text-headline-lg text-on-surface mt-1 font-bold tracking-tight tabular-nums">{{ currency .Stats.OutstandingMinor .Stats.Currency }}</div>
+          </div>
+          <div class="w-9 h-9 rounded bg-surface-container-low flex items-center justify-center text-primary">
+            <span class="material-symbols-outlined text-[20px]">payments</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-space-md pt-space-xs font-label-sm text-label-sm text-on-surface-variant">
+          <span>Pending payments</span>
+          <span class="text-error font-medium">{{ .Stats.PendingOrders }} orders open</span>
+        </div>
       </a>
 
-      <a href="/orders" class="stat-card">
-        <div class="stat-label">Due today</div>
-        <div class="stat-value">{{ .Stats.DueToday }}</div>
+      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all">
+        <div class="flex items-start justify-between">
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Due Today</span>
+            <div class="font-display-lg text-display-lg text-on-surface mt-1 font-bold tracking-tight tabular-nums">{{ .Stats.DueToday }} <span class="font-headline-md text-headline-md font-medium text-on-surface-variant">Orders</span></div>
+          </div>
+          <div class="w-9 h-9 rounded bg-amber-50 flex items-center justify-center text-amber-700">
+            <span class="material-symbols-outlined text-[20px]">schedule</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-space-md pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>Expected completions</span>
+          </div>
+        </div>
       </a>
 
-      <a href="/orders" class="stat-card {{ if gt .Stats.Overdue 0 }}stat-warn{{ end }}">
-        <div class="stat-label">Overdue</div>
-        <div class="stat-value">{{ .Stats.Overdue }}</div>
+      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all {{ if gt .Stats.Overdue 0 }}ring-1 ring-error-container{{ end }}">
+        <div class="flex items-start justify-between">
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Overdue / Action</span>
+            <div class="font-display-lg text-display-lg {{ if gt .Stats.Overdue 0 }}text-error{{ else }}text-on-surface{{ end }} mt-1 font-bold tracking-tight tabular-nums">
+              {{ .Stats.Overdue }} <span class="font-headline-md text-headline-md font-medium {{ if gt .Stats.Overdue 0 }}text-error{{ else }}text-on-surface-variant{{ end }}">Orders</span>
+            </div>
+          </div>
+          <div class="w-9 h-9 rounded {{ if gt .Stats.Overdue 0 }}bg-error-container/60 text-error{{ else }}bg-surface-container-low text-on-surface-variant{{ end }} flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">warning</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mt-space-md pt-space-xs font-body-sm text-body-sm">
+          <span class="{{ if gt .Stats.Overdue 0 }}text-error font-medium{{ else }}text-on-surface-variant{{ end }}">Past expected date</span>
+        </div>
       </a>
+    </div>
 
-      <div class="stat-card stat-wide">
-        <div class="stat-label">Outstanding</div>
-        <div class="stat-value">{{ currency .Stats.OutstandingMinor .Stats.Currency }}</div>
+    <!-- Fulfillment Stage Pipeline -->
+    <div class="bg-surface-container-lowest rounded shadow-sm p-space-sm flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between px-space-xs pb-1">
+        <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Fulfillment Stage Pipeline</span>
+        <span class="font-code-md text-code-md text-on-surface-variant">Real-time status</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 text-center">
+        {{ $counts := .Stats.CountsByStatus }}
+        {{ $values := .Stats.ValueByStatus }}
+        {{ $currency := .Stats.Currency }}
+        {{ range $statuses := (list "NEW" "CONFIRMED" "IN_PROGRESS" "READY" "OUT_FOR_DELIVERY" "DELIVERED" "COMPLETED") }}
+          {{ $c := index $counts $statuses }}
+          {{ $v := index $values $statuses }}
+          <a href="/orders?status={{ $statuses }}" class="flex flex-col items-center p-2 rounded bg-surface-container-low hover:bg-surface-container transition-all text-left">
+            <div class="flex items-center justify-between w-full">
+              <span class="font-label-sm text-label-sm text-on-surface-variant font-medium">{{ statusLabel $statuses }}</span>
+              <span class="w-2 h-2 rounded-full bg-outline"></span>
+            </div>
+            <div class="w-full flex items-baseline justify-between mt-1">
+              <span class="font-headline-md text-headline-md text-on-surface font-bold tabular-nums">{{ $c }}</span>
+              <span class="font-code-md text-code-md text-outline tabular-nums">{{ currency $v $currency }}</span>
+            </div>
+          </a>
+        {{ end }}
       </div>
     </div>
 
-    <section class="card">
-      <h2>Recent orders</h2>
-      {{ if .Stats.RecentOrders }}
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Customer</th>
-              <th>Title</th>
-              <th class="num">Total</th>
-              <th>Status</th>
-              <th>Due</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{ range .Stats.RecentOrders }}
-              <tr>
-                <td><a href="/orders/{{ .ID }}">{{ .Number }}</a></td>
-                <td>{{ .CustomerName }}</td>
-                <td>{{ .Title }}</td>
-                <td class="num">{{ currency .TotalMinor $.Stats.Currency }}</td>
-                <td><span class="status-pill status-{{ .Status }}">{{ .Status.Label }}</span></td>
-                <td>
-                  {{ if .ExpectedDate }}{{ .ExpectedDate.Format "Jan 2" }}{{ else }}<span class="muted">—</span>{{ end }}
-                </td>
-              </tr>
-            {{ end }}
-          </tbody>
-        </table>
-      {{ else }}
-        <div class="empty-state">
-          <p>No orders yet.</p>
-          <p><a href="/orders/new" class="btn-primary">Create your first order</a></p>
+    <!-- Main two-column layout -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+
+      <!-- Recent orders table (8 cols) -->
+      <div class="xl:col-span-8 flex flex-col gap-space-sm bg-surface-container-lowest rounded shadow-sm overflow-hidden">
+        <div class="p-space-md flex items-center justify-between bg-surface-container-lowest border-b border-outline-variant/20">
+          <span class="font-headline-md text-headline-md text-on-surface font-semibold">Recent Orders</span>
+          <a href="/orders" class="font-label-sm text-label-sm text-primary font-semibold hover:underline">View all →</a>
         </div>
-      {{ end }}
-    </section>
+
+        {{ if .Stats.RecentOrders }}
+          <div class="w-full overflow-x-auto">
+            <table class="w-full text-left font-body-md text-body-md">
+              <thead>
+                <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                  <th class="py-2.5 px-space-md font-semibold">Order</th>
+                  <th class="py-2.5 px-space-md font-semibold">Customer</th>
+                  <th class="py-2.5 px-space-md font-semibold">Title</th>
+                  <th class="py-2.5 px-space-md font-semibold">Status</th>
+                  <th class="py-2.5 px-space-md font-semibold text-right">Total</th>
+                  <th class="py-2.5 px-space-md font-semibold">Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{ range .Stats.RecentOrders }}
+                  <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+                    <td class="py-3 px-space-md">
+                      <a href="/orders/{{ .ID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline">{{ .Number }}</a>
+                    </td>
+                    <td class="py-3 px-space-md">
+                      <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .CustomerName }}</span>
+                    </td>
+                    <td class="py-3 px-space-md">
+                      <span class="font-label-md text-label-md text-on-surface truncate max-w-[200px] inline-block">{{ .Title }}</span>
+                    </td>
+                    <td class="py-3 px-space-md">
+                      {{ template "partials/status_badge.html" .Status }}
+                    </td>
+                    <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold">
+                      {{ currency .TotalMinor $.Stats.Currency }}
+                    </td>
+                    <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">
+                      {{ if .ExpectedDate }}{{ .ExpectedDate.Format "Jan 2" }}{{ else }}—{{ end }}
+                    </td>
+                  </tr>
+                {{ end }}
+              </tbody>
+            </table>
+          </div>
+        {{ else }}
+          <div class="p-space-xl text-center">
+            <p class="font-body-md text-body-md text-on-surface-variant">No orders yet.</p>
+            <a href="/orders/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Create your first order</a>
+          </div>
+        {{ end }}
+      </div>
+
+      <!-- Right column (4 cols) -->
+      <div class="xl:col-span-4 flex flex-col gap-space-lg">
+
+        <!-- Recent Ledger Feed -->
+        <div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col gap-space-md">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-tertiary-container text-[20px]">account_balance</span>
+              <h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Recent Payments</h2>
+            </div>
+          </div>
+          {{ if .Stats.RecentPayments }}
+            <div class="flex flex-col gap-space-sm">
+              {{ range .Stats.RecentPayments }}
+                <a href="/orders/{{ .OrderID }}" class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low transition-colors">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+                      <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .CustomerName }}</span>
+                      <span class="font-code-md text-code-md text-on-surface-variant">{{ .Method }} · {{ .PaidAt.Format "Jan 2 15:04" }}</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-end">
+                    <span class="font-code-md text-code-md font-bold text-tertiary tabular-nums">+{{ currency .AmountMinor .Currency }}</span>
+                    <span class="font-label-sm text-label-sm text-outline">{{ .OrderNumber }}</span>
+                  </div>
+                </a>
+              {{ end }}
+            </div>
+          {{ else }}
+            <p class="font-body-sm text-body-sm text-on-surface-variant">No payments recorded yet.</p>
+          {{ end }}
+        </div>
+
+        <!-- Dispatch placeholder -->
+        <div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col gap-space-sm">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
+            <h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Dispatch Schedule</h2>
+          </div>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">Delivery tracking arrives in a future release. For now, use the order detail page to manage fulfillment status.</p>
+          <a href="/orders?status=OUT_FOR_DELIVERY" class="font-label-sm text-label-sm text-primary font-semibold hover:underline">View orders in transit →</a>
+        </div>
+      </div>
+    </div>
   {{ else }}
-    <div class="notice">
-      <p>You don't have an active organization yet.</p>
+    <div class="p-space-xl rounded bg-surface-container-lowest shadow-sm text-center">
+      <p class="font-body-md text-body-md text-on-surface-variant">No active organization found.</p>
     </div>
   {{ end }}
-</section>
+</div>
 {{ end }}

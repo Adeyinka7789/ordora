@@ -111,7 +111,7 @@ func (h *CustomerHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 func (h *CustomerHandler) renderIndex(w http.ResponseWriter, r *http.Request, page customersIndexPage) {
 	page.CSRFToken = csrfFromCtx(r)
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "customers/index.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "customers/index.html", page)
 }
 
 // -----------------------------------------------------------------------------
@@ -127,7 +127,7 @@ func (h *CustomerHandler) New(w http.ResponseWriter, r *http.Request) {
 		CSRFToken: csrfFromCtx(r),
 		Customer:  &customer.Customer{},
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "customers/new.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "customers/new.html", page)
 }
 
 func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +162,7 @@ func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 				Notes:   formValue(r, "notes"),
 			},
 		}
-		h.Renderer.Page(w, http.StatusBadRequest, "layouts/app.html", "customers/new.html", page)
+		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "customers/new.html", page)
 		return
 	}
 
@@ -173,7 +173,7 @@ func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 			Error:     "Could not save customer. Please try again.",
 			Customer:  c,
 		}
-		h.Renderer.Page(w, http.StatusInternalServerError, "layouts/app.html", "customers/new.html", page)
+		renderPage(w, r, h.Renderer, http.StatusInternalServerError, "layouts/app.html", "customers/new.html", page)
 		return
 	}
 
@@ -209,7 +209,7 @@ func (h *CustomerHandler) Show(w http.ResponseWriter, r *http.Request) {
 		CSRFToken: csrfFromCtx(r),
 		Customer:  c,
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "customers/show.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "customers/show.html", page)
 }
 
 // -----------------------------------------------------------------------------
@@ -242,7 +242,7 @@ func (h *CustomerHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		Customer:  c,
 		IsEdit:    true,
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "customers/edit.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "customers/edit.html", page)
 }
 
 func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -284,7 +284,7 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 			Customer:  c,
 			IsEdit:    true,
 		}
-		h.Renderer.Page(w, http.StatusBadRequest, "layouts/app.html", "customers/edit.html", page)
+		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "customers/edit.html", page)
 		return
 	}
 
@@ -296,7 +296,7 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 			Customer:  c,
 			IsEdit:    true,
 		}
-		h.Renderer.Page(w, http.StatusInternalServerError, "layouts/app.html", "customers/edit.html", page)
+		renderPage(w, r, h.Renderer, http.StatusInternalServerError, "layouts/app.html", "customers/edit.html", page)
 		return
 	}
 

@@ -1,0 +1,12 @@
+{{ define "partials/payment_status_badge.html" }}
+{{ $s := printf "%v" . }}
+{{ if eq $s "PAID" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>PAID</span>
+{{ else if eq $s "PARTIALLY_PAID" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-amber-100 text-amber-900"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>PARTIALLY_PAID</span>
+{{ else if eq $s "UNPAID" }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-error-container text-on-error-container"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>UNPAID</span>
+{{ else }}
+  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container text-on-surface-variant">{{ $s }}</span>
+{{ end }}
+{{ end }}
