@@ -17,6 +17,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
+	"github.com/Adeyinka7789/ordora/internal/infra/email"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/infra/storage"
@@ -50,6 +51,13 @@ func run() error {
 	}
 	defer db.Close()
 	slog.Info("db connected", "host", cfg.DB.Host, "name", cfg.DB.Name, "user", cfg.DB.User)
+
+	// ---- Email ----
+	mailer, err := email.NewFromConfig(cfg.Email)
+	if err != nil {
+		return fmt.Errorf("email: %w", err)
+	}
+	_ = mailer // used by services
 
 	// ---- Auth service ----
 	authService := auth.NewService(auth.Deps{

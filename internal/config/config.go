@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -68,6 +69,13 @@ type SessionConfig struct {
 type EmailConfig struct {
 	Mode string // "console" | "smtp"
 	From string
+
+	// SMTP settings — only used when Mode == "smtp"
+	SMTPHost        string
+	SMTPPort        int
+	SMTPUsername    string
+	SMTPPassword    string
+	SMTPImplicitTLS bool
 }
 
 type StorageConfig struct {
@@ -106,8 +114,13 @@ func Load() (*Config, error) {
 			TTL:            time.Duration(getEnvInt("ORDORA_SESSION_TTL_HOURS", 720)) * time.Hour,
 		},
 		Email: EmailConfig{
-			Mode: getEnv("ORDORA_EMAIL_MODE", "console"),
-			From: getEnv("ORDORA_EMAIL_FROM", "no-reply@ordora.local"),
+			Mode:            getEnv("ORDORA_EMAIL_MODE", "console"),
+			From:            getEnv("ORDORA_EMAIL_FROM", "no-reply@ordora.local"),
+			SMTPHost:        getEnv("ORDORA_SMTP_HOST", ""),
+			SMTPPort:        getEnvInt("ORDORA_SMTP_PORT", 587),
+			SMTPUsername:    getEnv("ORDORA_SMTP_USERNAME", ""),
+			SMTPPassword:    getEnv("ORDORA_SMTP_PASSWORD", ""),
+			SMTPImplicitTLS: getEnvBool("ORDORA_SMTP_IMPLICIT_TLS", false),
 		},
 		Storage: StorageConfig{
 			Mode:     getEnv("ORDORA_STORAGE_MODE", "local"),
@@ -135,6 +148,14 @@ func (c *Config) validate() error {
 	case "console", "smtp":
 	default:
 		return fmt.Errorf("config: invalid ORDORA_EMAIL_MODE %q", c.Email.Mode)
+	}
+	if c.Email.Mode == "smtp" {
+		if c.Email.SMTPHost == "" {
+			return fmt.Errorf("config: ORDORA_SMTP_HOST is required when ORDORA_EMAIL_MODE=smtp")
+		}
+		if c.Email.SMTPPort == 0 {
+			return fmt.Errorf("config: ORDORA_SMTP_PORT is required when ORDORA_EMAIL_MODE=smtp")
+		}
 	}
 	switch c.Storage.Mode {
 	case "local", "s3":
@@ -173,4 +194,18 @@ func getEnvInt(key string, fallback int) int {
 		return fallback
 	}
 	return n
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return fallback
+	}
+	switch strings.ToLower(v) {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	}
+	return fallback
 }
