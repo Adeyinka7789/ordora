@@ -1,0 +1,101 @@
+{{ define "settings/index.html" }}
+<div class="p-space-lg lg:p-space-xl max-w-3xl mx-auto flex flex-col gap-space-lg">
+
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Business settings</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Configure your business profile, currency, and public link.</p>
+    </div>
+  </div>
+
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+
+  <form method="post" action="/settings" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Business name *</span>
+        <input type="text" name="name" value="{{ .FormName }}" required maxlength="120"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Public slug *</span>
+        <input type="text" name="slug" value="{{ .FormSlug }}" required
+               pattern="[a-z0-9](?:[a-z0-9-]{1,58}[a-z0-9])?"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Lowercase letters, numbers, and hyphens. Used in your public order URL: /order/your-slug</span>
+      </label>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Currency</span>
+        <select name="currency" {{ if .CurrencyLocked }}disabled{{ end }}
+                class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <option value="NGN" {{ if eq .FormCurrency "NGN" }}selected{{ end }}>NGN — Nigerian Naira</option>
+          <option value="USD" {{ if eq .FormCurrency "USD" }}selected{{ end }}>USD — US Dollar</option>
+          <option value="GBP" {{ if eq .FormCurrency "GBP" }}selected{{ end }}>GBP — Pound Sterling</option>
+          <option value="EUR" {{ if eq .FormCurrency "EUR" }}selected{{ end }}>EUR — Euro</option>
+          <option value="GHS" {{ if eq .FormCurrency "GHS" }}selected{{ end }}>GHS — Ghanaian Cedi</option>
+          <option value="KES" {{ if eq .FormCurrency "KES" }}selected{{ end }}>KES — Kenyan Shilling</option>
+          <option value="ZAR" {{ if eq .FormCurrency "ZAR" }}selected{{ end }}>ZAR — South African Rand</option>
+        </select>
+        {{ if .CurrencyLocked }}
+          <span class="font-label-sm text-label-sm text-error">Currency cannot be changed once you have orders.</span>
+        {{ else }}
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Used on all orders, invoices, and receipts.</span>
+        {{ end }}
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Timezone</span>
+        <select name="timezone"
+                class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <option value="Africa/Lagos" {{ if eq .FormTimezone "Africa/Lagos" }}selected{{ end }}>Africa/Lagos (WAT)</option>
+          <option value="Africa/Accra" {{ if eq .FormTimezone "Africa/Accra" }}selected{{ end }}>Africa/Accra (GMT)</option>
+          <option value="Africa/Nairobi" {{ if eq .FormTimezone "Africa/Nairobi" }}selected{{ end }}>Africa/Nairobi (EAT)</option>
+          <option value="Africa/Johannesburg" {{ if eq .FormTimezone "Africa/Johannesburg" }}selected{{ end }}>Africa/Johannesburg (SAST)</option>
+          <option value="Europe/London" {{ if eq .FormTimezone "Europe/London" }}selected{{ end }}>Europe/London</option>
+          <option value="America/New_York" {{ if eq .FormTimezone "America/New_York" }}selected{{ end }}>America/New_York</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Business email</span>
+      <input type="email" name="email" value="{{ .FormEmail }}" maxlength="254"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Public order submissions will notify this address.</span>
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Phone</span>
+      <input type="tel" name="phone" value="{{ .FormPhone }}" maxlength="40"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Address</span>
+      <textarea name="address" rows="2" maxlength="500"
+                class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormAddress }}</textarea>
+    </label>
+
+    <div class="flex items-center gap-space-sm pt-space-xs">
+      <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save settings</button>
+    </div>
+  </form>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Public intake link</h2>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Share this URL with customers so they can submit orders directly.</p>
+    <div class="flex items-center gap-2">
+      <code class="flex-1 font-code-md text-code-md bg-surface-container-low px-3 py-2 rounded">/order/{{ .FormSlug }}</code>
+      <button type="button" onclick="navigator.clipboard.writeText(window.location.origin + '/order/{{ .FormSlug }}')"
+              class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Copy</button>
+    </div>
+  </div>
+</div>
+{{ end }}

@@ -158,3 +158,18 @@ func scanUser(row pgx.Row) (*user.User, error) {
 		UpdatedAt:       updatedAt,
 	}, nil
 }
+
+// UpdateName updates a user's display name.
+func (r *UserRepo) UpdateName(ctx context.Context, id uuid.UUID, name string, now time.Time) error {
+	return r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `UPDATE users SET name = $2, updated_at = $3 WHERE id = $1`
+		ct, err := tx.Exec(ctx, q, id, name, now)
+		if err != nil {
+			return fmt.Errorf("user_repo: update name: %w", Classify(err))
+		}
+		if ct.RowsAffected() == 0 {
+			return user.ErrNotFound
+		}
+		return nil
+	})
+}

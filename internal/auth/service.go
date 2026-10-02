@@ -489,11 +489,13 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 
 // ResolvedSession is what the middleware injects into the request context.
 type ResolvedSession struct {
-	Session *Session
-	User    *user.User
-	Scope   tenant.TenantScope
-	OrgName string
-	OrgSlug string
+	Session     *Session
+	User        *user.User
+	Scope       tenant.TenantScope
+	OrgName     string
+	OrgSlug     string
+	OrgCurrency string
+	OrgTimezone string
 }
 
 // ResolveSession loads a session by raw token and constructs a TenantScope.
@@ -524,20 +526,22 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 		}
 	}
 
-	var orgName, orgSlug string
+	var orgName, orgSlug, orgCurrency, orgTimezone string
 	if sess.OrganizationID != nil {
 		_ = s.db.WithTenant(ctx, *sess.OrganizationID, func(tx pgx.Tx) error {
-			const q = `SELECT name, slug::text FROM organizations WHERE id = $1`
-			return tx.QueryRow(ctx, q, *sess.OrganizationID).Scan(&orgName, &orgSlug)
+			const q = `SELECT name, slug::text, currency::text, timezone FROM organizations WHERE id = $1`
+			return tx.QueryRow(ctx, q, *sess.OrganizationID).Scan(&orgName, &orgSlug, &orgCurrency, &orgTimezone)
 		})
 	}
 
 	return &ResolvedSession{
-		Session: sess,
-		User:    u,
-		Scope:   scope,
-		OrgName: orgName,
-		OrgSlug: orgSlug,
+		Session:     sess,
+		User:        u,
+		Scope:       scope,
+		OrgName:     orgName,
+		OrgSlug:     orgSlug,
+		OrgCurrency: orgCurrency,
+		OrgTimezone: orgTimezone,
 	}, nil
 }
 

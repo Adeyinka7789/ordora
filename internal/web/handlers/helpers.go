@@ -108,6 +108,8 @@ func shellFromRequest(r *http.Request) render.Shell {
 		sh.OrgRole = string(s.Scope.Role)
 		sh.OrgName = s.OrgName
 		sh.OrgSlug = s.OrgSlug
+		sh.OrgCurrency = s.OrgCurrency
+		sh.OrgTimezone = s.OrgTimezone
 	}
 	return sh
 }
@@ -125,4 +127,13 @@ func page(w http.ResponseWriter, r *http.Request, renderer *render.Renderer, sta
 // use slightly different conventions; they do the same thing.
 func renderPage(w http.ResponseWriter, r *http.Request, renderer *render.Renderer, status int, layout, fragment string, data any) {
 	page(w, r, renderer, status, layout, fragment, data)
+}
+
+// currencyFromRequest returns the org's currency from the session.
+// Falls back to "NGN" for anonymous requests.
+func currencyFromRequest(r *http.Request) string {
+	if s := middleware.SessionFromContext(r.Context()); s != nil && s.OrgCurrency != "" {
+		return s.OrgCurrency
+	}
+	return "NGN"
 }

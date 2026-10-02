@@ -140,3 +140,34 @@ func scanSession(row pgx.Row) (*auth.Session, error) {
 	s.RevokedAt = revokedAt
 	return &s, nil
 }
+
+// ListActiveForUser returns all non-revoked, non-expired sessions for a user.
+func (r *SessionRepo) ListActiveForUser(ctx context.Context, userID uuid.UUID) ([]*auth.Session, error) {
+	var out []*auth.Session
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `
+			SELECT id, user_id, token_hash, organization_id,
+			       COALESCE(user_agent,''), COALESCE(ip::text,''),
+			       expires_at, revoked_at, created_at
+			FROM sessions
+			WHERE user_id = $1
+			  AND revoked_at IS NULL
+			  AND expires_at > now()
+			ORDER BY created_at DESC
+		`
+		rows, err := tx.Query(ctx, q, userID)
+		if err != nil {
+			return fmt.Errorf("session_repo: list: %w", Classify(err))
+		}
+		defer rows.Close()
+		for rows.Next() {
+			s, err := scanSession(rows)
+			if err != nil {
+				return err
+			}
+			out = append(out, s)
+		}
+		return rows.Err()
+	})
+	return out, err
+}

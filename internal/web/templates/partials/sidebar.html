@@ -1,8 +1,7 @@
 {{ define "partials/sidebar.html" }}
-{{ $data := .Data }}
-<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between">
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col">
 
-  <div class="flex flex-col">
+  <div class="flex flex-col flex-1 overflow-y-auto">
     <!-- Brand -->
     <div class="h-16 px-space-md border-b border-outline-variant/30 flex items-center justify-between">
       <a href="/dashboard" class="flex items-center gap-space-sm">
@@ -63,12 +62,10 @@
     </nav>
 
     <!-- Channels & Tools -->
-    <div class="px-space-sm pt-space-md pb-space-xs">
-      <div class="px-space-sm">
-        <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Channels &amp; Tools</span>
-      </div>
+    <div class="px-space-md pt-space-md pb-space-xs">
+      <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Channels &amp; Tools</span>
     </div>
-    <nav class="flex flex-col gap-0.5 px-space-sm">
+    <nav class="flex flex-col gap-0.5 px-space-sm pb-space-md">
       <a href="/storefront" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
         <div class="flex items-center gap-space-sm">
           <span class="material-symbols-outlined text-[18px]">storefront</span>
@@ -88,11 +85,17 @@
           <span>Settings</span>
         </div>
       </a>
+      <a href="/profile" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">person</span>
+          <span>Profile</span>
+        </div>
+      </a>
     </nav>
   </div>
 
   <!-- Footer -->
-    <div class="p-space-sm border-t border-outline-variant/30 flex flex-col gap-space-xs bg-surface-container-lowest">
+  <div class="p-space-sm border-t border-outline-variant/30 flex flex-col gap-space-xs bg-surface-container-lowest shrink-0">
     {{ if .Shell.OrgSlug }}
       {{ $intakeURL := printf "/order/%s" .Shell.OrgSlug }}
       <div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30 flex flex-col gap-space-xs">
@@ -108,11 +111,8 @@
         <div class="font-code-md text-code-md text-on-surface font-medium truncate">{{ $intakeURL }}</div>
       </div>
       <div class="pt-space-xs px-space-xs flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
-          <span class="font-label-sm text-label-sm text-on-surface-variant">Postgres Sync Active</span>
-        </div>
-        <a href="{{ $intakeURL }}" target="_blank" rel="noopener" class="font-label-sm text-label-sm text-primary hover:underline font-medium">Portal View</a>
+        <a href="/profile" class="font-label-sm text-label-sm text-primary hover:underline font-medium">Your profile</a>
+        <a href="/settings" class="font-label-sm text-label-sm text-primary hover:underline font-medium">Settings</a>
       </div>
     {{ else }}
       <div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30">

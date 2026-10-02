@@ -42,7 +42,7 @@ func (h *DashboardHandler) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !scope.IsZero() {
-		if stats, err := h.Service.Load(r.Context(), scope, "NGN"); err == nil {
+		if stats, err := h.Service.Load(r.Context(), scope, currencyFromRequest(r)); err == nil {
 			page.Stats = stats
 		}
 	}

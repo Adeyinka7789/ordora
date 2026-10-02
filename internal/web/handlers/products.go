@@ -143,8 +143,9 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Description:    formValue(r, "description"),
 		SKU:            formValue(r, "sku"),
 		UnitPriceMinor: price,
-		Currency:       "NGN", // TODO: from org settings
+		Currency:       currencyFromRequest(r),
 	})
+
 	if err != nil {
 		page := productFormPage{
 			Title:     "New product",

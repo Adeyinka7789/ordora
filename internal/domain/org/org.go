@@ -104,3 +104,50 @@ func Slugify(name string) string {
 
 func (s Slug) String() string { return s.value }
 func (s Slug) IsZero() bool   { return s.value == "" }
+
+// Update replaces the mutable fields of the organization.
+//
+// Currency is immutable after the org has any orders — changing it would
+// silently rewrite the meaning of stored amounts. The service layer is
+// responsible for enforcing that rule; this method only validates input.
+func (o *Organization) Update(
+	name string,
+	slug Slug,
+	email, phone, address string,
+	timezone string,
+	now time.Time,
+) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ErrNameRequired
+	}
+	if len(name) > 120 {
+		return ErrNameInvalid
+	}
+	if slug.IsZero() {
+		return ErrSlugRequired
+	}
+
+	o.Name = name
+	o.Slug = slug
+	o.Email = strings.TrimSpace(email)
+	o.Phone = strings.TrimSpace(phone)
+	o.Address = strings.TrimSpace(address)
+	if timezone != "" {
+		o.Timezone = timezone
+	}
+	o.UpdatedAt = now
+	return nil
+}
+
+// SetCurrency updates the currency. Callers must verify no orders exist
+// before calling this.
+func (o *Organization) SetCurrency(currency string, now time.Time) error {
+	currency = strings.ToUpper(strings.TrimSpace(currency))
+	if len(currency) != 3 {
+		return ErrCurrencyInvalid
+	}
+	o.Currency = currency
+	o.UpdatedAt = now
+	return nil
+}

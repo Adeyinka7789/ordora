@@ -11,5 +11,7 @@ var (
 	ErrSlugInvalid  = errors.New("org: slug contains invalid characters")
 	ErrSlugTaken    = errors.New("org: slug already taken")
 
+	ErrCurrencyInvalid = errors.New("org: currency must be a 3-letter ISO code")
+
 	ErrNotFound = errors.New("org: not found")
 )

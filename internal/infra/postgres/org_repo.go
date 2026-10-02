@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/Adeyinka7789/ordora/internal/domain/org"
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 )
 
 // OrgRepo persists organizations. Organizations are tenant-scoped (they ARE
@@ -118,4 +119,62 @@ func nullIfEmpty(s string) any {
 		return nil
 	}
 	return s
+}
+
+// Update modifies the mutable fields of an organization.
+func (r *OrgRepo) Update(ctx context.Context, scope tenant.TenantScope, o *org.Organization) error {
+	if o.ID != scope.OrgID {
+		return fmt.Errorf("org_repo: org mismatch")
+	}
+	return r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		const q = `
+			UPDATE organizations
+			SET name = $2, slug = $3, email = $4, phone = $5,
+			    address = $6, currency = $7, timezone = $8, updated_at = $9
+			WHERE id = $1
+		`
+		ct, err := tx.Exec(ctx, q,
+			o.ID, o.Name, o.Slug.String(),
+			nullIfEmpty(o.Email), nullIfEmpty(o.Phone), nullIfEmpty(o.Address),
+			o.Currency, o.Timezone, o.UpdatedAt,
+		)
+		if err != nil {
+			classified := Classify(err)
+			if errors.Is(classified, ErrUniqueViolation) {
+				return org.ErrSlugTaken
+			}
+			return fmt.Errorf("org_repo: update: %w", classified)
+		}
+		if ct.RowsAffected() == 0 {
+			return org.ErrNotFound
+		}
+		return nil
+	})
+}
+
+// UpdateLogoKey sets the storage key of the org's logo.
+func (r *OrgRepo) UpdateLogoKey(ctx context.Context, scope tenant.TenantScope, key string, now time.Time) error {
+	return r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		const q = `UPDATE organizations SET logo_key = $2, updated_at = $3 WHERE id = $1`
+		ct, err := tx.Exec(ctx, q, scope.OrgID, nullIfEmpty(key), now)
+		if err != nil {
+			return fmt.Errorf("org_repo: logo: %w", Classify(err))
+		}
+		if ct.RowsAffected() == 0 {
+			return org.ErrNotFound
+		}
+		return nil
+	})
+}
+
+// GetTx loads an organization inside an existing transaction.
+func (r *OrgRepo) GetTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*org.Organization, error) {
+	const q = `
+		SELECT id, name, slug, COALESCE(logo_key,''), COALESCE(email::text,''),
+		       COALESCE(phone,''), COALESCE(address,''), currency, timezone,
+		       created_at, updated_at
+		FROM organizations
+		WHERE id = $1
+	`
+	return scanOrg(tx.QueryRow(ctx, q, id))
 }

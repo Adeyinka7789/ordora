@@ -1,0 +1,94 @@
+{{ define "profile/index.html" }}
+<div class="p-space-lg lg:p-space-xl max-w-3xl mx-auto flex flex-col gap-space-lg">
+
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Your profile</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Manage your account, password, and active sessions.</p>
+  </div>
+
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+
+  <!-- Basic info -->
+  <form method="post" action="/profile" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Basic info</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Name *</span>
+        <input type="text" name="name" value="{{ .Name }}" required maxlength="200"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Email</span>
+        <input type="email" value="{{ .Email }}" disabled
+               class="h-9 px-3 rounded bg-surface-container text-on-surface-variant font-body-md text-body-md">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Contact support to change your email.</span>
+      </label>
+    </div>
+
+    <div>
+      <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save profile</button>
+    </div>
+  </form>
+
+  <!-- Password -->
+  <form method="post" action="/profile/password" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Change password</h2>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Current password</span>
+      <input type="password" name="current_password" required
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">New password</span>
+      <input type="password" name="new_password" required minlength="10"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">At least 10 characters.</span>
+    </label>
+
+    <div>
+      <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Change password</button>
+    </div>
+  </form>
+
+  <!-- Sessions -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <div class="flex items-center justify-between">
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Active sessions</h2>
+      <form method="post" action="/profile/sign-out-everywhere"
+            onsubmit="return confirm('Sign out of every device? You will need to log in again.');">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="h-8 px-3 rounded bg-error-container hover:bg-error hover:text-on-error text-on-error-container font-label-sm text-label-sm font-semibold">
+          Sign out everywhere
+        </button>
+      </form>
+    </div>
+
+    {{ if .Sessions }}
+      <div class="flex flex-col divide-y divide-outline-variant/20">
+        {{ range .Sessions }}
+          <div class="py-space-sm flex items-start justify-between gap-space-sm">
+            <div class="flex flex-col min-w-0">
+              <span class="font-label-md text-label-md text-on-surface">
+                {{ if .Current }}<span class="text-tertiary font-bold">This device</span>{{ else }}{{ .UserAgent }}{{ end }}
+              </span>
+              <span class="font-code-md text-code-md text-on-surface-variant">IP: {{ .IP }} · Created {{ .CreatedAt }}</span>
+              <span class="font-label-sm text-label-sm text-outline">Expires {{ .ExpiresAt }}</span>
+            </div>
+          </div>
+        {{ end }}
+      </div>
+    {{ else }}
+      <p class="font-body-md text-body-md text-on-surface-variant">No active sessions.</p>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

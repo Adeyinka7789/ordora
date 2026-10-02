@@ -222,7 +222,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		CustomerID:  custID,
 		Title:       formValue(r, "title"),
 		Description: formValue(r, "description"),
-		Currency:    "NGN", // TODO: from org settings
+		Currency:    currencyFromRequest(r),
 	}
 
 	if due := formValue(r, "expected_completion"); due != "" {

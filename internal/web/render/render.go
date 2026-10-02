@@ -23,12 +23,14 @@ type Renderer struct {
 
 // Shell carries values needed by the application layout.
 type Shell struct {
-	UserName  string
-	UserEmail string
-	OrgName   string
-	OrgSlug   string
-	OrgRole   string
-	CSRFToken string
+	UserName    string
+	UserEmail   string
+	OrgName     string
+	OrgSlug     string
+	OrgRole     string
+	OrgCurrency string
+	OrgTimezone string
+	CSRFToken   string
 }
 
 // New loads all .html files under templatesDir.

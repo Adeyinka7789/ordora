@@ -187,6 +187,19 @@ func run() error {
 		Renderer:    renderer,
 	}
 
+	// ---- Settings + profile ----
+	settingsService := app.NewSettingsService(app.SettingsServiceDeps{
+		DB:       db,
+		Orgs:     postgres.NewOrgRepo(db),
+		Users:    postgres.NewUserRepo(db),
+		Sessions: postgres.NewSessionRepo(db),
+		Audit:    auditRepo,
+	})
+	settingsH := &handlers.SettingsHandler{
+		Service:  settingsService,
+		Renderer: renderer,
+	}
+
 	stubH := &handlers.StubHandler{Renderer: renderer}
 
 	// ---- Public portal ----
@@ -287,9 +300,17 @@ func run() error {
 	mux.Handle("POST /customers/{id}/delete", middleware.RequireTenant(http.HandlerFunc(customerH.Delete)))
 	// ---- Stub pages (nav links that are on the roadmap) ----
 	mux.Handle("GET /reports", middleware.RequireTenant(http.HandlerFunc(stubH.Reports)))
-	mux.Handle("GET /settings", middleware.RequireTenant(http.HandlerFunc(stubH.Settings)))
 	mux.Handle("GET /payments", middleware.RequireTenant(http.HandlerFunc(stubH.Payments)))
 	mux.Handle("GET /storefront", middleware.RequireTenant(http.HandlerFunc(stubH.Storefront)))
+
+	// ---- Settings + profile ----
+	mux.Handle("GET /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.Settings)))
+	mux.Handle("POST /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.UpdateSettings)))
+	mux.Handle("GET /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.Profile)))
+	mux.Handle("POST /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.UpdateProfile)))
+	mux.Handle("POST /profile/password", middleware.RequireAuth(http.HandlerFunc(settingsH.ChangePassword)))
+	mux.Handle("POST /profile/sign-out-everywhere", middleware.RequireAuth(http.HandlerFunc(settingsH.SignOutEverywhere)))
+
 	// ---- Middleware chain ----
 	// ---- Products ----
 	mux.Handle("GET /products", middleware.RequireTenant(http.HandlerFunc(productH.Index)))
