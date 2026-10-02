@@ -84,10 +84,13 @@ jobs:
       - name: go build
         run: go build ./...
 
-      - name: Install pg_trgm extension
+      - name: Install extensions (superuser only)
         run: |
-          PGPASSWORD=postgres psql -h localhost -U postgres -d ordora_test -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
-
+          PGPASSWORD=postgres psql -h localhost -U postgres -d ordora_test <<'SQL'
+            CREATE EXTENSION IF NOT EXISTS pgcrypto;
+            CREATE EXTENSION IF NOT EXISTS citext;
+            CREATE EXTENSION IF NOT EXISTS pg_trgm;
+          SQL
       - name: Create roles for RLS
         run: |
           PGPASSWORD=postgres psql -h localhost -U postgres -d ordora_test <<'SQL'

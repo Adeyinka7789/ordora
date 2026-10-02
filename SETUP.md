@@ -44,3 +44,14 @@ When VS Code saves a file, it writes to disk and the buffer is clean. But **if d
 ```powershell
 Select-String -Path <file> -Pattern "the-change-you-made"
 ```
+
+### Extensions (superuser only)
+
+The following extensions must be installed by the `postgres` superuser **before** running migrations:
+
+```sql
+\c ordora_dev
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS citext;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+```

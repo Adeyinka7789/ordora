@@ -4,10 +4,6 @@
 -- Runs as: ordora_admin
 -- =============================================================
 
--- ---------- Extensions ----------
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "citext";
-
 -- ---------- Enums ----------
 CREATE TYPE order_status AS ENUM (
     'NEW','CONFIRMED','IN_PROGRESS','READY','OUT_FOR_DELIVERY','DELIVERED','COMPLETED','CANCELLED'
