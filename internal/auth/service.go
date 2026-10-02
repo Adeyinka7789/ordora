@@ -484,6 +484,8 @@ type ResolvedSession struct {
 	Session *Session
 	User    *user.User
 	Scope   tenant.TenantScope
+	OrgName string
+	OrgSlug string
 }
 
 // ResolveSession loads a session by raw token and constructs a TenantScope.
@@ -513,10 +515,21 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 			Role:   role,
 		}
 	}
+
+	var orgName, orgSlug string
+	if sess.OrganizationID != nil {
+		_ = s.db.WithTenant(ctx, *sess.OrganizationID, func(tx pgx.Tx) error {
+			const q = `SELECT name, slug::text FROM organizations WHERE id = $1`
+			return tx.QueryRow(ctx, q, *sess.OrganizationID).Scan(&orgName, &orgSlug)
+		})
+	}
+
 	return &ResolvedSession{
 		Session: sess,
 		User:    u,
 		Scope:   scope,
+		OrgName: orgName,
+		OrgSlug: orgSlug,
 	}, nil
 }
 

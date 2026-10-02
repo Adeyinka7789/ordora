@@ -282,6 +282,7 @@ func run() error {
 	mux.Handle("GET /orders/{id}/edit", middleware.RequireTenant(http.HandlerFunc(orderH.Edit)))
 	mux.Handle("POST /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Update)))
 	mux.Handle("POST /orders/{id}/status", middleware.RequireTenant(http.HandlerFunc(orderH.ChangeStatus)))
+	mux.Handle("POST /orders/{id}/public-token/regenerate", middleware.RequireTenant(http.HandlerFunc(orderH.RegenerateToken)))
 	//
 	// ---- Payments ----
 	mux.Handle("POST /orders/{id}/payments", middleware.RequireTenant(http.HandlerFunc(paymentH.Record)))

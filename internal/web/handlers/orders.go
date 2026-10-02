@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -91,11 +92,13 @@ type orderShowPage struct {
 	CSRFToken   string
 	Customer    *customer.Customer
 	Balance     int64
-	PaidPercent int // 0–100 for the payment progress bar
+	PaidPercent int
 	FlashNotice string
 	FlashError  string
 
-	// Fields consumed by embedded fragments.
+	TokenRaw  string
+	PortalURL string
+
 	Error                string
 	Order                *order.Order
 	OrderID              uuid.UUID
@@ -544,6 +547,7 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
+		slog.Error("orders: get order failed", "err", err, "order_id", oid)
 		http.Error(w, "could not load order", http.StatusInternalServerError)
 		return
 	}
@@ -551,6 +555,7 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	// Load the customer for display (order stores only customer_id).
 	cust, err := h.CustRepo.GetByID(r.Context(), scope, o.CustomerID)
 	if err != nil && !errors.Is(err, customer.ErrNotFound) {
+		slog.Error("orders: get customer failed", "err", err, "customer_id", o.CustomerID)
 		http.Error(w, "could not load customer", http.StatusInternalServerError)
 		return
 	}
@@ -562,6 +567,16 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 		Balance:   o.Balance().Amount(),
 		Order:     o,
 		OrderID:   o.ID,
+	}
+
+	// If a fresh token was just generated, display it once.
+	if raw := queryValue(r, "token"); raw != "" {
+		page.TokenRaw = raw
+		scheme := "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+		page.PortalURL = scheme + "://" + r.Host + "/o/" + raw
 	}
 
 	if v := queryValue(r, "notice"); v != "" {
@@ -650,6 +665,31 @@ func parseMoneyMinor(s string) (int64, error) {
 
 func formatMoneyMinor(minor int64) string {
 	return strconv.FormatFloat(float64(minor)/100, 'f', 2, 64)
+}
+
+// RegenerateToken creates a fresh public portal token for the order and
+// redirects back to the order detail with the raw token in the URL.
+func (h *OrderHandler) RegenerateToken(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	oid, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+
+	raw, err := h.Service.RegeneratePublicToken(r.Context(), scope, oid)
+	if err != nil {
+		if errors.Is(err, order.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, "could not regenerate token", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/orders/"+oid.String()+"?token="+raw, http.StatusSeeOther)
 }
 
 func humanizeOrderError(err error) string {

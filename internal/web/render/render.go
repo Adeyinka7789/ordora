@@ -26,6 +26,7 @@ type Shell struct {
 	UserName  string
 	UserEmail string
 	OrgName   string
+	OrgSlug   string
 	OrgRole   string
 	CSRFToken string
 }

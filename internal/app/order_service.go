@@ -5,6 +5,9 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -149,6 +152,11 @@ var (
 //  5. Write an audit entry.
 //
 // If any step fails, nothing is committed.
+type CreateOrderResult struct {
+	Order       *order.Order
+	PublicToken string
+}
+
 func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope, in CreateOrderInput) (*order.Order, error) {
 	if err := s.validateCreateInput(in); err != nil {
 		return nil, err
@@ -176,6 +184,12 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 			number, in.Title, in.Description, in.Currency,
 			scope.UserID, now,
 		)
+		_, tokenHash, err := GeneratePublicToken()
+		if err != nil {
+			return err
+		}
+		o.PublicTokenHash = tokenHash
+
 		if err != nil {
 			return err
 		}
@@ -425,4 +439,48 @@ func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScop
 		return nil, err
 	}
 	return updated, nil
+}
+
+// GeneratePublicToken returns a random URL-safe token and its SHA-256 hash.
+// The raw token is what the customer sees in the URL; the hash is what we
+// store in the database.
+func GeneratePublicToken() (raw string, hash []byte, err error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", nil, err
+	}
+	raw = base64.RawURLEncoding.EncodeToString(b)
+	sum := sha256.Sum256([]byte(raw))
+	return raw, sum[:], nil
+}
+
+// RegeneratePublicToken creates a fresh public token for an order, replacing
+// any previous token. The raw token is returned exactly once.
+func (s *OrderService) RegeneratePublicToken(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) (string, error) {
+	raw, hash, err := GeneratePublicToken()
+	if err != nil {
+		return "", err
+	}
+
+	err = s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		const q = `
+			UPDATE orders
+			SET public_token_hash = $2,
+			    public_token_revoked_at = NULL,
+			    updated_at = now()
+			WHERE id = $1
+		`
+		ct, err := tx.Exec(ctx, q, orderID, hash)
+		if err != nil {
+			return err
+		}
+		if ct.RowsAffected() == 0 {
+			return order.ErrNotFound
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return raw, nil
 }

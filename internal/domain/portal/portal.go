@@ -38,3 +38,13 @@ type Order struct {
 	OrgCurrency string
 	OrgTimezone string
 }
+
+// Item is one line item in a public order view.
+type Item struct {
+	Description    string
+	Quantity       float64
+	UnitPriceMinor int64
+	SubtotalMinor  int64
+	Currency       string
+	Position       int
+}

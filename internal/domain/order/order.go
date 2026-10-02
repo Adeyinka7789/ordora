@@ -43,6 +43,8 @@ type Order struct {
 	ExpectedCompletion *time.Time
 	DeliveredAt        *time.Time
 
+	PublicTokenHash []byte
+
 	CreatedBy uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time

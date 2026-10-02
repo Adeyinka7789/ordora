@@ -42,16 +42,17 @@ func (r *OrderRepo) CreateTx(ctx context.Context, tx pgx.Tx, o *order.Order) err
 
 	const insertOrder = `
 		INSERT INTO orders (
-			id, organization_id, customer_id, order_number, title, description,
+			id, organization_id, customer_id, order_number,
+			public_token_hash, title, description,
 			status, currency,
 			subtotal_minor, discount_minor, tax_minor, total_minor, amount_paid_minor,
 			expected_completion, delivered_at,
 			created_by, created_at, updated_at
 		)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
 	`
 	_, err := tx.Exec(ctx, insertOrder,
-		o.ID, o.OrganizationID, o.CustomerID, o.Number, o.Title, nullIfEmpty(o.Description),
+		o.ID, o.OrganizationID, o.CustomerID, o.Number, o.PublicTokenHash, o.Title, nullIfEmpty(o.Description),
 		string(o.Status), o.Currency,
 		o.Subtotal.Amount(), o.Discount.Amount(), o.Tax.Amount(), o.Total.Amount(), o.Paid.Amount(),
 		o.ExpectedCompletion, o.DeliveredAt,
@@ -103,7 +104,8 @@ func (r *OrderRepo) GetByID(ctx context.Context, scope tenant.TenantScope, id uu
 func (r *OrderRepo) getByIDTx(ctx context.Context, tx pgx.Tx, scope tenant.TenantScope, id uuid.UUID) (*order.Order, error) {
 	const q = `
 		SELECT
-			id, organization_id, customer_id, order_number, title, COALESCE(description,''),
+			id, organization_id, customer_id, order_number,
+			public_token_hash, title, COALESCE(description,''),
 			status, currency,
 			subtotal_minor, discount_minor, tax_minor, total_minor, amount_paid_minor,
 			expected_completion, delivered_at,
@@ -383,6 +385,7 @@ func scanOrderRow(row scannable) (*order.Order, error) {
 		orgID       uuid.UUID
 		customerID  uuid.UUID
 		number      string
+		tokenHash   []byte
 		title       string
 		description string
 		statusStr   string
@@ -398,7 +401,7 @@ func scanOrderRow(row scannable) (*order.Order, error) {
 		createdAt   time.Time
 		updatedAt   time.Time
 	)
-	if err := row.Scan(&id, &orgID, &customerID, &number, &title, &description,
+	if err := row.Scan(&id, &orgID, &customerID, &number, &tokenHash, &title, &description,
 		&statusStr, &currency, &subtotal, &discount, &tax, &total, &paid,
 		&expected, &delivered, &createdBy, &createdAt, &updatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -418,6 +421,7 @@ func scanOrderRow(row scannable) (*order.Order, error) {
 		OrganizationID:     orgID,
 		CustomerID:         customerID,
 		Number:             number,
+		PublicTokenHash:    tokenHash,
 		Title:              title,
 		Description:        description,
 		Status:             order.Status(statusStr),

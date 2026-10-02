@@ -19,6 +19,7 @@ import (
 // PortalRepoStore is the read contract for the public portal.
 type PortalRepoStore interface {
 	GetByTokenHash(ctx context.Context, tokenHash []byte) (*portal.Order, error)
+	ListItems(ctx context.Context, orderID uuid.UUID) ([]portal.Item, error)
 }
 
 // PortalService serves the public customer-facing order view.
@@ -55,6 +56,8 @@ type PortalView struct {
 	DeliveredAt        *time.Time
 	CreatedAt          time.Time
 
+	Items []PortalItemView
+
 	CustomerName  string
 	CustomerEmail string
 	CustomerPhone string
@@ -64,6 +67,14 @@ type PortalView struct {
 	OrgEmail   string
 	OrgPhone   string
 	OrgAddress string
+}
+
+// PortalItemView is the display shape of a single line item in the portal.
+type PortalItemView struct {
+	Description string
+	Quantity    int64 // scaled by 1000, like order items
+	UnitPrice   money.Money
+	Subtotal    money.Money
 }
 
 // ErrPortalNotFound is returned when a token is invalid, revoked, or unknown.
@@ -106,6 +117,20 @@ func (s *PortalService) Load(ctx context.Context, rawToken string) (*PortalView,
 	var pct int
 	if tot.Amount() > 0 {
 		pct = int(paid.Amount() * 100 / tot.Amount())
+	}
+
+	// Load line items (best-effort; empty list is fine).
+	itemRows, _ := s.repo.ListItems(ctx, po.OrderID)
+	items := make([]PortalItemView, 0, len(itemRows))
+	for _, it := range itemRows {
+		up, _ := money.New(it.UnitPriceMinor, it.Currency)
+		st, _ := money.New(it.SubtotalMinor, it.Currency)
+		items = append(items, PortalItemView{
+			Description: it.Description,
+			Quantity:    int64(it.Quantity*1000 + 0.5), // scale to match internal representation
+			UnitPrice:   up,
+			Subtotal:    st,
+		})
 	}
 
 	return &PortalView{

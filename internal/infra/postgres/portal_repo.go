@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/Adeyinka7789/ordora/internal/domain/portal"
@@ -53,4 +54,28 @@ func (r *PortalRepo) GetByTokenHash(ctx context.Context, tokenHash []byte) (*por
 		return nil, ErrPortalTokenNotFound
 	}
 	return out, nil
+}
+
+// ListItems returns the line items for one order.
+// ListItems returns the line items for one order.
+func (r *PortalRepo) ListItems(ctx context.Context, orderID uuid.UUID) ([]portal.Item, error) {
+	var out []portal.Item
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `SELECT * FROM get_public_order_items($1)`
+		rows, err := tx.Query(ctx, q, orderID)
+		if err != nil {
+			return fmt.Errorf("portal_repo: items: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var it portal.Item
+			if err := rows.Scan(&it.Description, &it.Quantity, &it.UnitPriceMinor,
+				&it.SubtotalMinor, &it.Currency, &it.Position); err != nil {
+				return err
+			}
+			out = append(out, it)
+		}
+		return rows.Err()
+	})
+	return out, err
 }

@@ -106,6 +106,8 @@ func shellFromRequest(r *http.Request) render.Shell {
 		sh.UserName = s.User.Name
 		sh.UserEmail = s.User.Email.String()
 		sh.OrgRole = string(s.Scope.Role)
+		sh.OrgName = s.OrgName
+		sh.OrgSlug = s.OrgSlug
 	}
 	return sh
 }

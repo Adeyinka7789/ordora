@@ -14,6 +14,21 @@
       </div>
     </div>
 
+      {{ if .TokenRaw }}
+    <div class="p-space-sm rounded bg-primary-fixed text-on-primary-fixed flex flex-wrap items-center justify-between gap-space-sm">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">link</span>
+        <span class="font-label-md text-label-md font-semibold">Client tracking link — copy and share now. This is the only time you'll see it.</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <code class="font-code-md text-code-md bg-surface-container-lowest px-2 py-1 rounded">{{ .PortalURL }}</code>
+        <button onclick="navigator.clipboard.writeText('{{ .PortalURL }}')" class="h-7 px-2 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold">
+          Copy
+        </button>
+      </div>
+    </div>
+  {{ end }}
+
     <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-space-lg">
       <div class="flex flex-col gap-space-xs">
         <div class="flex flex-wrap items-center gap-space-sm">
@@ -41,6 +56,14 @@
           {{ end }}
         </div>
       </div>
+
+      <form method="post" action="/orders/{{ .Order.ID }}/public-token/regenerate" class="inline">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <button type="submit" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[18px]">link</span>
+            <span>Client Link</span>
+          </button>
+      </form>
 
       <div class="flex flex-wrap items-center gap-space-xs self-start xl:self-center">
         {{ if not .Order.Status.IsTerminal }}

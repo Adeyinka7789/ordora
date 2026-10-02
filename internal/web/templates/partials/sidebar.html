@@ -92,24 +92,33 @@
   </div>
 
   <!-- Footer -->
-  <div class="p-space-sm border-t border-outline-variant/30 flex flex-col gap-space-xs bg-surface-container-lowest">
-    <div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30 flex flex-col gap-space-xs">
-      <div class="flex items-center justify-between">
-        <span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Intake Link</span>
-        <button class="flex items-center gap-0.5 text-primary hover:text-on-primary-fixed-variant text-[11px] font-medium transition-colors">
-          <span class="material-symbols-outlined text-[14px]">content_copy</span>
-          <span>Copy</span>
-        </button>
+    <div class="p-space-sm border-t border-outline-variant/30 flex flex-col gap-space-xs bg-surface-container-lowest">
+    {{ if .Shell.OrgSlug }}
+      {{ $intakeURL := printf "/order/%s" .Shell.OrgSlug }}
+      <div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30 flex flex-col gap-space-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Intake Link</span>
+          <button type="button"
+                  onclick="navigator.clipboard.writeText(window.location.origin + '{{ $intakeURL }}'); this.querySelector('span:last-child').innerText='Copied';"
+                  class="flex items-center gap-0.5 text-primary hover:text-on-primary-fixed-variant text-[11px] font-medium transition-colors">
+            <span class="material-symbols-outlined text-[14px]">content_copy</span>
+            <span>Copy</span>
+          </button>
+        </div>
+        <div class="font-code-md text-code-md text-on-surface font-medium truncate">{{ $intakeURL }}</div>
       </div>
-      <div class="font-code-md text-code-md text-on-surface font-medium truncate">ordora.local/order/your-business</div>
-    </div>
-    <div class="pt-space-xs px-space-xs flex items-center justify-between">
-      <div class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Postgres Sync Active</span>
+      <div class="pt-space-xs px-space-xs flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Postgres Sync Active</span>
+        </div>
+        <a href="{{ $intakeURL }}" target="_blank" rel="noopener" class="font-label-sm text-label-sm text-primary hover:underline font-medium">Portal View</a>
       </div>
-      <a href="/storefront" class="font-label-sm text-label-sm text-primary hover:underline font-medium">Portal View</a>
-    </div>
+    {{ else }}
+      <div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Intake link will appear after you set a business slug.</span>
+      </div>
+    {{ end }}
   </div>
 </aside>
 {{ end }}
