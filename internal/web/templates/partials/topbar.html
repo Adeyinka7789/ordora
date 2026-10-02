@@ -1,0 +1,53 @@
+{{ define "partials/topbar.html" }}
+{{ $data := .Data }}
+<header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg">
+
+  <!-- Search -->
+  <div class="flex items-center gap-space-md flex-1 max-w-lg">
+    <div class="relative w-full flex items-center">
+      <span class="material-symbols-outlined absolute left-space-sm text-on-surface-variant text-[18px]">search</span>
+      <input class="w-full h-9 pl-9 pr-12 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:bg-surface-container-lowest transition-all"
+             placeholder="Search orders, customers, receipts…"
+             type="text"
+             hx-get="/orders"
+             hx-trigger="keyup changed delay:300ms"
+             hx-target="#orders-table"
+             hx-swap="outerHTML"
+             hx-push-url="true"
+             autocomplete="off">
+      <span class="font-code-md text-code-md absolute right-space-sm text-outline border border-outline-variant/40 rounded px-1 py-0.5 bg-surface-container-lowest">⌘K</span>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex items-center gap-space-md">
+    <a href="/orders/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span>New Order</span>
+    </a>
+    <div class="h-5 w-px bg-outline-variant/40"></div>
+    <button class="relative p-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors">
+      <span class="material-symbols-outlined text-[20px]">notifications</span>
+    </button>
+    <div class="flex items-center gap-space-sm pl-space-xs">
+      <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md font-bold">
+        {{ with $data }}{{ if .UserName }}{{ initials .UserName }}{{ else }}U{{ end }}{{ else }}U{{ end }}
+      </div>
+      {{ with $data }}
+        {{ if .UserName }}
+          <div class="hidden xl:flex flex-col text-left">
+            <span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">{{ .UserName }}</span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant leading-tight">{{ if .OrgRole }}{{ .OrgRole }}{{ else }}Owner{{ end }}</span>
+          </div>
+        {{ end }}
+      {{ end }}
+      <form method="post" action="/logout" class="inline">
+        <input type="hidden" name="_csrf" value="{{ csrfToken .Data }}">
+        <button type="submit" class="p-1 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors" title="Sign out">
+          <span class="material-symbols-outlined text-[18px]">logout</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</header>
+{{ end }}

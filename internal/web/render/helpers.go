@@ -111,5 +111,30 @@ func funcMap() template.FuncMap {
 		"divf": func(minor int64, divisor float64) float64 {
 			return float64(minor) / divisor
 		},
+
+		"initials": func(name string) string {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				return "?"
+			}
+			parts := strings.Fields(name)
+			if len(parts) == 0 {
+				return "?"
+			}
+			var b strings.Builder
+			for i, p := range parts {
+				if i >= 2 {
+					break
+				}
+				r := []rune(p)
+				if len(r) > 0 {
+					b.WriteString(strings.ToUpper(string(r[0])))
+				}
+			}
+			if b.Len() == 0 {
+				return "?"
+			}
+			return b.String()
+		},
 	}
 }

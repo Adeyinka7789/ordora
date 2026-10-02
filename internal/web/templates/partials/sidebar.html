@@ -1,0 +1,117 @@
+{{ define "partials/sidebar.html" }}
+{{ $data := .Data }}
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between">
+
+  <div class="flex flex-col">
+    <!-- Brand -->
+    <div class="h-16 px-space-md border-b border-outline-variant/30 flex items-center justify-between">
+      <a href="/dashboard" class="flex items-center gap-space-sm">
+        <img alt="Ordora" class="h-8 w-8 object-contain" src="/static/logo.svg">
+        <span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Ordora</span>
+      </a>
+      <span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-medium">v2.4</span>
+    </div>
+
+    <!-- Org switcher -->
+    {{ with $data }}
+      {{ if .OrgName }}
+        <div class="p-space-sm border-b border-outline-variant/20">
+          <button class="w-full flex items-center justify-between p-space-sm rounded bg-surface-container-low hover:bg-surface-container transition-colors text-left">
+            <div class="flex flex-col min-w-0 pr-space-xs">
+              <span class="font-label-md text-label-md text-on-surface font-medium truncate">{{ .OrgName }}</span>
+              <span class="font-label-sm text-label-sm text-primary font-semibold uppercase tracking-wider">Owner</span>
+            </div>
+            <span class="material-symbols-outlined text-on-surface-variant text-[18px]">unfold_more</span>
+          </button>
+        </div>
+      {{ end }}
+    {{ end }}
+
+    <!-- Operations -->
+    <div class="px-space-md pt-space-md pb-space-xs">
+      <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Operations</span>
+    </div>
+    <nav class="flex flex-col gap-0.5 px-space-sm">
+      <a href="/dashboard" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">dashboard</span>
+          <span>Dashboard</span>
+        </div>
+      </a>
+      <a href="/orders" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+          <span>Orders</span>
+        </div>
+      </a>
+      <a href="/customers" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">group</span>
+          <span>Customers</span>
+        </div>
+      </a>
+      <a href="/products" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+          <span>Products</span>
+        </div>
+      </a>
+      <a href="/payments" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+          <span>Payments &amp; Ledger</span>
+        </div>
+      </a>
+    </nav>
+
+    <!-- Channels & Tools -->
+    <div class="px-space-sm pt-space-md pb-space-xs">
+      <div class="px-space-sm">
+        <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Channels &amp; Tools</span>
+      </div>
+    </div>
+    <nav class="flex flex-col gap-0.5 px-space-sm">
+      <a href="/storefront" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">storefront</span>
+          <span>Public Storefront</span>
+        </div>
+        <span class="material-symbols-outlined text-[16px] text-outline">open_in_new</span>
+      </a>
+      <a href="/reports" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">query_stats</span>
+          <span>Reports &amp; Analytics</span>
+        </div>
+      </a>
+      <a href="/settings" class="flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <div class="flex items-center gap-space-sm">
+          <span class="material-symbols-outlined text-[18px]">settings</span>
+          <span>Settings</span>
+        </div>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Footer -->
+  <div class="p-space-sm border-t border-outline-variant/30 flex flex-col gap-space-xs bg-surface-container-lowest">
+    <div class="p-space-sm rounded bg-surface-container-low border border-outline-variant/30 flex flex-col gap-space-xs">
+      <div class="flex items-center justify-between">
+        <span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Intake Link</span>
+        <button class="flex items-center gap-0.5 text-primary hover:text-on-primary-fixed-variant text-[11px] font-medium transition-colors">
+          <span class="material-symbols-outlined text-[14px]">content_copy</span>
+          <span>Copy</span>
+        </button>
+      </div>
+      <div class="font-code-md text-code-md text-on-surface font-medium truncate">ordora.local/order/your-business</div>
+    </div>
+    <div class="pt-space-xs px-space-xs flex items-center justify-between">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Postgres Sync Active</span>
+      </div>
+      <a href="/storefront" class="font-label-sm text-label-sm text-primary hover:underline font-medium">Portal View</a>
+    </div>
+  </div>
+</aside>
+{{ end }}
