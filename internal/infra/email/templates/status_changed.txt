@@ -1,0 +1,9 @@
+{{.OrgName}}
+
+Order status updated
+
+Hi {{.CustomerName}}, your order {{.OrderNumber}} is now {{.ToLabel}}.
+
+{{if .PortalURL}}See details:
+{{.PortalURL}}
+{{end}}

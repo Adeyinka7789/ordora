@@ -1,0 +1,14 @@
+{{.OrgName}}
+
+Your order is confirmed.
+
+Hi {{.CustomerName}}, thanks for your order. We'll keep you updated as it progresses.
+
+Order number: {{.OrderNumber}}
+Item:         {{.Title}}
+Total:        {{.Currency}} {{.TotalMinorFormatted}}
+
+{{if .PortalURL}}Track your order anytime:
+{{.PortalURL}}
+{{end}}
+You're receiving this email from {{.OrgName}} via Ordora.

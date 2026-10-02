@@ -21,6 +21,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/infra/storage"
+	"github.com/Adeyinka7789/ordora/internal/jobs"
 	"github.com/Adeyinka7789/ordora/internal/web/handlers"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -56,6 +57,22 @@ func run() error {
 	mailer, err := email.NewFromConfig(cfg.Email)
 	if err != nil {
 		return fmt.Errorf("email: %w", err)
+	}
+
+	emailRenderer, err := email.NewRenderer()
+	if err != nil {
+		return fmt.Errorf("email renderer: %w", err)
+	}
+
+	// In development, run the background workers as goroutines so you
+	// don't have to manage two terminals. In production, cmd/worker runs
+	// them separately.
+	if cfg.IsDev() {
+		relay := jobs.NewOutboxRelay(db, jobs.OutboxRelayConfig{})
+		notifWorker := jobs.NewNotificationWorker(db, emailRenderer, mailer, jobs.NotificationWorkerConfig{})
+		go relay.Run(ctx)
+		go notifWorker.Run(ctx)
+		slog.Info("dev: background workers running in-process")
 	}
 	_ = mailer // used by services
 

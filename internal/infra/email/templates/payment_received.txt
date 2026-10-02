@@ -1,0 +1,11 @@
+{{.OrgName}} — payment received
+
+Hi {{.CustomerName}}, we've received your payment for order {{.OrderNumber}}.
+
+Amount paid:        {{.Currency}} {{.AmountMinorFormatted}}
+Total paid so far:  {{.Currency}} {{.PaidMinorFormatted}} of {{.Currency}} {{.TotalMinorFormatted}}
+Remaining balance:  {{.Currency}} {{.BalanceMinorFormatted}}
+
+{{if .PortalURL}}View your order:
+{{.PortalURL}}
+{{end}}

@@ -1,0 +1,9 @@
+Welcome to Ordora, {{.Name}}
+
+You're one click away from activating your account for {{.OrgName}}.
+
+Verify your email by opening this link:
+
+{{.VerifyURL}}
+
+This link expires in 24 hours.

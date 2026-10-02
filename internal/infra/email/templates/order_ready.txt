@@ -1,0 +1,9 @@
+{{.OrgName}}
+
+Your order is ready
+
+Hi {{.CustomerName}}, order {{.OrderNumber}} is ready for pickup or delivery.
+
+{{if .PortalURL}}View your order:
+{{.PortalURL}}
+{{end}}

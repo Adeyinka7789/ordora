@@ -1,0 +1,12 @@
+New order request
+
+{{.CustomerName}} submitted a new order request through your public form.
+
+Reference: {{.OrderNumber}}
+Contact:   {{.CustomerName}} — {{.CustomerEmail}}{{if .CustomerPhone}} — {{.CustomerPhone}}{{end}}
+
+Request:
+{{.Description}}
+
+View and confirm:
+{{.AdminURL}}

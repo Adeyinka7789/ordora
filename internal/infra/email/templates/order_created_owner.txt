@@ -1,0 +1,8 @@
+New order from {{.CustomerName}}
+
+Order {{.OrderNumber}} was created for {{.CustomerName}}.
+
+Item:  {{.Title}}
+Total: {{.Currency}} {{.TotalMinorFormatted}}
+
+Ordora — order management for your business.
