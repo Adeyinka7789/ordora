@@ -8,14 +8,15 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="/static/manifest.webmanifest">
   <meta name="theme-color" content="#4f46e5">
+  <meta name="description" content="Order management for tailors, bakers, printers, furniture makers, and every business that takes custom orders.">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
+  <script id="tailwind-config">
     tailwind.config = {
       theme: {
         extend: {
@@ -25,59 +26,94 @@
             "surface-container-low": "#eff4ff",
             "surface-container": "#e5eeff",
             "surface-container-high": "#dce9ff",
+            "surface-container-highest": "#d3e4fe",
             "on-surface": "#0b1c30",
             "on-surface-variant": "#464555",
             "primary": "#3525cd",
             "on-primary": "#ffffff",
             "primary-container": "#4f46e5",
+            "on-primary-container": "#dad7ff",
             "primary-fixed": "#e2dfff",
+            "primary-fixed-dim": "#c3c0ff",
             "on-primary-fixed": "#0f0069",
+            "on-primary-fixed-variant": "#3323cc",
+            "secondary": "#565e74",
+            "secondary-container": "#dae2fd",
+            "on-secondary-container": "#5c647a",
+            "secondary-fixed": "#dae2fd",
+            "on-secondary-fixed": "#131b2e",
             "tertiary": "#005338",
+            "on-tertiary": "#ffffff",
+            "tertiary-container": "#006e4b",
             "tertiary-fixed": "#6ffbbe",
+            "on-tertiary-fixed": "#002113",
+            "on-tertiary-fixed-variant": "#005236",
             "error": "#ba1a1a",
+            "on-error": "#ffffff",
             "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
             "outline": "#777587",
-            "outline-variant": "#c7c4d8"
+            "outline-variant": "#c7c4d8",
+            "inverse-surface": "#213145"
           },
           fontFamily: {
+            "display-lg": ["Inter"], "headline-lg": ["Inter"], "headline-md": ["Inter"],
             "body-lg": ["Inter"], "body-md": ["Inter"], "body-sm": ["Inter"],
-            "headline-md": ["Inter"], "headline-lg": ["Inter"], "display-lg": ["Inter"],
-            "label-md": ["Inter"], "label-sm": ["Inter"]
+            "label-md": ["Inter"], "label-sm": ["Inter"], "code-md": ["Inter"]
           },
           fontSize: {
-            "display-lg": ["56px", { lineHeight: "64px", letterSpacing: "-0.03em", fontWeight: "700" }],
-            "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.025em", fontWeight: "700" }],
-            "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.015em", fontWeight: "600" }],
-            "body-lg": ["17px", { lineHeight: "26px", fontWeight: "400" }],
-            "body-md": ["15px", { lineHeight: "22px", fontWeight: "400" }],
+            "display-lg": ["36px", { lineHeight: "44px", letterSpacing: "-0.025em", fontWeight: "700" }],
+            "headline-lg": ["26px", { lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-md": ["18px", { lineHeight: "26px", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "body-lg": ["16px", { lineHeight: "26px", letterSpacing: "-0.005em", fontWeight: "400" }],
+            "body-md": ["14px", { lineHeight: "22px", fontWeight: "400" }],
             "body-sm": ["13px", { lineHeight: "20px", fontWeight: "400" }],
-            "label-md": ["13px", { lineHeight: "20px", fontWeight: "600" }],
-            "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+            "label-md": ["12px", { lineHeight: "16px", fontWeight: "600" }],
+            "label-sm": ["11px", { lineHeight: "14px", fontWeight: "500" }],
+            "code-md": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+          },
+          spacing: {
+            "space-xs": "0.25rem", "space-sm": "0.5rem", "space-md": "0.75rem",
+            "space-lg": "1.25rem", "space-xl": "2rem"
           }
         }
       }
     };
   </script>
 
-  <style>.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }</style>
+  <link rel="stylesheet" href="/static/css/landing.css">
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a09db6; }
+  </style>
 </head>
-<body class="bg-surface font-body-md text-on-surface antialiased">
+<body class="bg-surface font-body-md text-on-surface antialiased overflow-x-hidden">
 
   <!-- Nav -->
-  <header class="w-full border-b border-outline-variant/30 bg-surface-container-lowest/90 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2">
-        <img src="/static/logo.svg" alt="Ordora" class="h-8 w-8">
+  <header class="w-full border-b border-outline-variant/30 bg-surface-container-lowest/85 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 group">
+        <img src="/static/logo.svg" alt="Ordora" class="h-8 w-8 transition-transform group-hover:scale-105">
         <span class="text-[20px] font-bold tracking-tight">Ordora</span>
+        <span class="font-label-sm px-2 py-0.5 rounded-md bg-secondary-container text-on-secondary-container font-semibold">V1.0</span>
       </a>
-      <nav class="hidden md:flex items-center gap-6 text-body-md text-on-surface-variant">
-        <a href="#features" class="hover:text-on-surface transition-colors">Features</a>
-        <a href="#how" class="hover:text-on-surface transition-colors">How it works</a>
-        <a href="#pricing" class="hover:text-on-surface transition-colors">Pricing</a>
+      <nav class="hidden lg:flex items-center gap-7 text-body-md text-on-surface-variant">
+        <a href="#features" class="nav-link hover:text-on-surface">Features</a>
+        <a href="#how" class="nav-link hover:text-on-surface">How it works</a>
+        <a href="#case-study" class="nav-link hover:text-on-surface">Case study</a>
+        <a href="#pricing" class="nav-link hover:text-on-surface">Pricing</a>
+        <a href="#faq" class="nav-link hover:text-on-surface">FAQ</a>
       </nav>
-      <div class="flex items-center gap-3">
-        <a href="/login" class="h-9 px-4 rounded text-body-md font-semibold text-on-surface-variant hover:text-on-surface transition-colors flex items-center">Sign in</a>
-        <a href="/register" class="h-9 px-4 rounded bg-primary-container hover:bg-primary text-on-primary text-body-md font-semibold transition-colors flex items-center">Start free</a>
+      <div class="flex items-center gap-2">
+        <a href="/login" class="hidden sm:inline-flex items-center h-9 px-4 rounded-lg text-body-md font-semibold text-on-surface-variant hover:text-on-surface transition-colors">Sign in</a>
+        <a href="/register" class="btn-pop inline-flex items-center h-9 px-4 rounded-lg bg-primary-container text-on-primary text-body-md font-semibold shadow-sm hover:bg-primary">
+          Start free
+        </a>
       </div>
     </div>
   </header>
@@ -85,42 +121,58 @@
   {{ .Content }}
 
   <!-- Footer -->
-  <footer class="w-full bg-surface-container-lowest border-t border-outline-variant/30 mt-24">
-    <div class="max-w-[1200px] mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
-      <div class="md:col-span-2 flex flex-col gap-3">
-        <a href="/" class="flex items-center gap-2">
-          <img src="/static/logo.svg" alt="Ordora" class="h-8 w-8">
-          <span class="text-[20px] font-bold tracking-tight">Ordora</span>
-        </a>
-        <p class="text-body-sm text-on-surface-variant max-w-md">
-          Order management and customer operations for growing businesses.
-          Take an order, get paid, fulfill it, and keep your customer informed — all in one place.
-        </p>
+  <footer class="w-full bg-surface-container-low border-t border-outline-variant/30 mt-24">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-8 pt-16 pb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center gap-2">
+            <img src="/static/logo.svg" alt="Ordora" class="h-8 w-8">
+            <span class="text-[20px] font-bold tracking-tight">Ordora</span>
+          </div>
+          <p class="text-body-sm text-on-surface-variant max-w-sm">
+            Order management for tailors, bakers, printers, furniture makers, and every business that takes custom orders.
+          </p>
+          <div class="flex items-center gap-2 pt-1">
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-tertiary bg-surface-container-highest px-2 py-1 rounded">
+              <span class="w-2 h-2 rounded-full bg-tertiary pulse-dot"></span>
+              All systems operational
+            </span>
+          </div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <span class="text-label-md uppercase tracking-wider text-outline font-semibold">Product</span>
+          <a href="#features" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">Features</a>
+          <a href="#how" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">How it works</a>
+          <a href="#pricing" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">Pricing</a>
+          <a href="#faq" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">FAQ</a>
+        </div>
+        <div class="flex flex-col gap-3">
+          <span class="text-label-md uppercase tracking-wider text-outline font-semibold">Company</span>
+          <a href="/register" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">Sign up</a>
+          <a href="/login" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">Sign in</a>
+          <a href="#" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">Contact</a>
+          <a href="#" class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">Terms &amp; Privacy</a>
+        </div>
+        <div class="flex flex-col gap-3">
+          <span class="text-label-md uppercase tracking-wider text-outline font-semibold">Built for</span>
+          <span class="text-body-sm text-on-surface-variant">Tailors &amp; fashion</span>
+          <span class="text-body-sm text-on-surface-variant">Bakers &amp; confectioners</span>
+          <span class="text-body-sm text-on-surface-variant">Woodwork &amp; custom crafts</span>
+          <span class="text-body-sm text-on-surface-variant">Rapid repair shops</span>
+        </div>
       </div>
-      <div class="flex flex-col gap-2">
-        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Product</span>
-        <a href="#features" class="text-body-sm text-on-surface-variant hover:text-on-surface">Features</a>
-        <a href="#pricing" class="text-body-sm text-on-surface-variant hover:text-on-surface">Pricing</a>
-        <a href="/register" class="text-body-sm text-on-surface-variant hover:text-on-surface">Sign up</a>
-      </div>
-      <div class="flex flex-col gap-2">
-        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Company</span>
-        <a href="/login" class="text-body-sm text-on-surface-variant hover:text-on-surface">Sign in</a>
-        <a href="#" class="text-body-sm text-on-surface-variant hover:text-on-surface">Contact</a>
-        <a href="#" class="text-body-sm text-on-surface-variant hover:text-on-surface">Terms &amp; Privacy</a>
-      </div>
-    </div>
-    <div class="border-t border-outline-variant/30">
-      <div class="max-w-[1200px] mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
+      <div class="border-t border-outline-variant/30 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <span class="text-label-sm text-on-surface-variant">© 2026 Ordora. All rights reserved.</span>
-        <span class="text-label-sm text-on-surface-variant flex items-center gap-1">
-          <span class="material-symbols-outlined text-[14px] text-tertiary">verified_user</span>
-          Secure by default
-        </span>
+        <div class="flex items-center gap-5 text-label-sm text-on-surface-variant">
+          <a href="#" class="hover:text-on-surface transition-colors">Privacy</a>
+          <a href="#" class="hover:text-on-surface transition-colors">Terms</a>
+          <a href="#" class="hover:text-on-surface transition-colors">Security</a>
+        </div>
       </div>
     </div>
   </footer>
 
+  <script src="/static/js/landing.js" defer></script>
   <script src="/static/js/pwa.js" defer></script>
 </body>
 </html>

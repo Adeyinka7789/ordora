@@ -1,22 +1,27 @@
 {{ define "partials/topbar.html" }}
-{{ $data := .Data }}
 <header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg">
 
-  <!-- Search -->
-  <div class="flex items-center gap-space-md flex-1 max-w-lg">
-    <div class="relative w-full flex items-center">
-      <span class="material-symbols-outlined absolute left-space-sm text-on-surface-variant text-[18px]">search</span>
-      <input class="w-full h-9 pl-9 pr-12 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:bg-surface-container-lowest transition-all"
-             placeholder="Search orders, customers, receipts…"
-             type="text"
-             hx-get="/orders"
-             hx-trigger="keyup changed delay:300ms"
-             hx-target="#orders-table"
-             hx-swap="outerHTML"
-             hx-push-url="true"
-             autocomplete="off">
-      <span class="font-code-md text-code-md absolute right-space-sm text-outline border border-outline-variant/40 rounded px-1 py-0.5 bg-surface-container-lowest">⌘K</span>
+  <!-- Global search -->
+  <div class="relative flex-1 max-w-lg">
+    <div class="relative flex items-center">
+      <span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px] pointer-events-none">search</span>
+      <input type="search"
+             name="q"
+             id="global-search"
+             placeholder="Search orders, customers, products…"
+             autocomplete="off"
+             class="w-full h-9 pl-10 pr-16 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:bg-surface-container-lowest transition-all"
+             hx-get="/search"
+             hx-trigger="input changed delay:300ms, focus"
+             hx-target="#search-results"
+             hx-swap="innerHTML"
+             hx-indicator="#search-spinner">
+      <span id="search-spinner" class="htmx-indicator absolute right-3 text-primary">
+        <span class="material-symbols-outlined text-[16px] animate-spin">refresh</span>
+      </span>
+      <kbd class="absolute right-3 font-code-md text-code-md text-outline border border-outline-variant/40 rounded px-1.5 py-0.5 bg-surface-container-lowest pointer-events-none">⌘K</kbd>
     </div>
+    <div id="search-results" class="absolute top-full left-0 right-0 mt-1 z-50"></div>
   </div>
 
   <!-- Actions -->
@@ -26,18 +31,18 @@
       <span>New Order</span>
     </a>
     <div class="h-5 w-px bg-outline-variant/40"></div>
-    <button class="relative p-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors">
+    <button class="relative p-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors" aria-label="Notifications">
       <span class="material-symbols-outlined text-[20px]">notifications</span>
     </button>
-        <div class="flex items-center gap-space-sm pl-space-xs">
+    <div class="flex items-center gap-space-sm pl-space-xs">
       <a href="/profile" class="flex items-center gap-space-sm hover:opacity-80 transition-opacity" title="Your profile">
-        <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md font-bold">
+        <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md font-bold">
           {{ if .Shell.UserName }}{{ initials .Shell.UserName }}{{ else }}U{{ end }}
         </div>
         {{ if .Shell.UserName }}
           <div class="hidden xl:flex flex-col text-left">
-            <span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">{{ .Shell.UserName }}</span>
-            <span class="font-label-sm text-label-sm text-on-surface-variant leading-tight">{{ if .Shell.OrgRole }}{{ .Shell.OrgRole }}{{ else }}Owner{{ end }}</span>
+            <span class="font-label-md font-semibold text-on-surface leading-tight">{{ .Shell.UserName }}</span>
+            <span class="font-label-sm text-on-surface-variant leading-tight">{{ if .Shell.OrgRole }}{{ .Shell.OrgRole }}{{ else }}Owner{{ end }}</span>
           </div>
         {{ end }}
       </a>
@@ -50,4 +55,37 @@
     </div>
   </div>
 </header>
+
+<script>
+  (function () {
+    var input = document.getElementById('global-search');
+    var results = document.getElementById('search-results');
+    if (!input || !results) return;
+
+    function close() { results.innerHTML = ''; }
+
+    // Close on Escape.
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') close();
+      // Cmd/Ctrl + K focuses the search.
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        input.focus();
+        input.select();
+      }
+    });
+
+    // Close on click outside.
+    document.addEventListener('click', function (e) {
+      if (!results.contains(e.target) && e.target !== input) close();
+    });
+
+    // After HTMX swaps content into #search-results, close if empty.
+    document.body.addEventListener('htmx:afterSwap', function (e) {
+      if (e.target && e.target.id === 'search-results') {
+        if (!results.innerHTML.trim()) close();
+      }
+    });
+  })();
+</script>
 {{ end }}

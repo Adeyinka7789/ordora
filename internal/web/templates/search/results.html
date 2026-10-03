@@ -1,0 +1,92 @@
+{{ define "search/results.html" }}
+<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-xl overflow-hidden max-h-[70vh] overflow-y-auto">
+
+  {{ if lt (len .Query) 2 }}
+    <div class="p-4 text-body-sm text-on-surface-variant">
+      Type at least 2 characters…
+    </div>
+  {{ else if eq .Total 0 }}
+    <div class="p-4 text-body-sm text-on-surface-variant">
+      No results for <strong class="text-on-surface">{{ .Query }}</strong>
+    </div>
+  {{ else }}
+
+    {{ if .Orders }}
+      <div class="p-2 border-b border-outline-variant/20">
+        <div class="px-2 py-1 text-label-sm uppercase tracking-wider text-outline font-semibold">Orders</div>
+        <ul>
+          {{ range .Orders }}
+            <li>
+              <a href="{{ .URL }}" class="block px-3 py-2 rounded hover:bg-surface-container-low transition-colors">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="material-symbols-outlined text-primary text-[18px] shrink-0">receipt_long</span>
+                    <div class="min-w-0">
+                      <div class="font-code-md text-code-md font-bold text-on-surface truncate">{{ .Title }}</div>
+                      <div class="text-label-sm text-on-surface-variant truncate">{{ .Subtitle }}</div>
+                    </div>
+                  </div>
+                  {{ if .Status }}
+                    <span class="text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">{{ .Status }}</span>
+                  {{ end }}
+                </div>
+              </a>
+            </li>
+          {{ end }}
+        </ul>
+      </div>
+    {{ end }}
+
+    {{ if .Customers }}
+      <div class="p-2 border-b border-outline-variant/20">
+        <div class="px-2 py-1 text-label-sm uppercase tracking-wider text-outline font-semibold">Customers</div>
+        <ul>
+          {{ range .Customers }}
+            <li>
+              <a href="{{ .URL }}" class="block px-3 py-2 rounded hover:bg-surface-container-low transition-colors">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="material-symbols-outlined text-primary text-[18px] shrink-0">group</span>
+                  <div class="min-w-0">
+                    <div class="font-label-md text-label-md font-semibold text-on-surface truncate">{{ .Title }}</div>
+                    {{ if .Subtitle }}<div class="text-label-sm text-on-surface-variant truncate">{{ .Subtitle }}</div>{{ end }}
+                  </div>
+                </div>
+              </a>
+            </li>
+          {{ end }}
+        </ul>
+      </div>
+    {{ end }}
+
+    {{ if .Products }}
+      <div class="p-2">
+        <div class="px-2 py-1 text-label-sm uppercase tracking-wider text-outline font-semibold">Products</div>
+        <ul>
+          {{ range .Products }}
+            <li>
+              <a href="{{ .URL }}" class="block px-3 py-2 rounded hover:bg-surface-container-low transition-colors">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="material-symbols-outlined text-primary text-[18px] shrink-0">inventory_2</span>
+                  <div class="min-w-0">
+                    <div class="font-label-md text-label-md font-semibold text-on-surface truncate">{{ .Title }}</div>
+                    {{ if .Subtitle }}<div class="text-code-md text-code-md text-on-surface-variant truncate">{{ .Subtitle }}</div>{{ end }}
+                  </div>
+                </div>
+              </a>
+            </li>
+          {{ end }}
+        </ul>
+      </div>
+    {{ end }}
+
+    <div class="px-4 py-3 border-t border-outline-variant/20 bg-surface-container-low flex items-center justify-between gap-2">
+      <span class="text-label-sm text-on-surface-variant">{{ .Total }} result{{ if ne .Total 1 }}s{{ end }}</span>
+      <div class="flex items-center gap-3">
+        <a href="/orders?q={{ .Query }}" class="text-label-sm text-primary hover:underline font-semibold">Orders</a>
+        <a href="/customers?q={{ .Query }}" class="text-label-sm text-primary hover:underline font-semibold">Customers</a>
+        <a href="/products?q={{ .Query }}" class="text-label-sm text-primary hover:underline font-semibold">Products</a>
+      </div>
+    </div>
+  {{ end }}
+</div>
+{{ end }}

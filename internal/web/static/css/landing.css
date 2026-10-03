@@ -1,0 +1,155 @@
+/* =============================================================
+   Ordora landing page — motion & polish
+   -------------------------------------------------------------
+   Small, tasteful animations. All respect prefers-reduced-motion.
+   ============================================================= */
+
+/* ---- Scroll reveal ---- */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+[data-reveal][data-delay="1"] { transition-delay: 80ms; }
+[data-reveal][data-delay="2"] { transition-delay: 160ms; }
+[data-reveal][data-delay="3"] { transition-delay: 240ms; }
+[data-reveal][data-delay="4"] { transition-delay: 320ms; }
+[data-reveal][data-delay="5"] { transition-delay: 400ms; }
+[data-reveal][data-delay="6"] { transition-delay: 480ms; }
+
+/* ---- Hero float ---- */
+@keyframes ordora-float {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+.float-slow  { animation: ordora-float 6s ease-in-out infinite; }
+.float-slower { animation: ordora-float 9s ease-in-out infinite; }
+
+/* ---- Pulse dot ---- */
+@keyframes ordora-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.85); }
+}
+.pulse-dot {
+  animation: ordora-pulse 1.8s ease-in-out infinite;
+}
+
+/* ---- Gradient drift (for hero background) ---- */
+@keyframes ordora-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(20px, -30px) scale(1.05); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.drift {
+  animation: ordora-drift 18s ease-in-out infinite;
+}
+
+/* ---- Hover lift for cards ---- */
+.card-lift {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 300ms ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(15, 23, 42, 0.12),
+              0 4px 8px -4px rgba(15, 23, 42, 0.06);
+}
+
+/* ---- Button hover polish ---- */
+.btn-pop {
+  transition: transform 150ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+.btn-pop:hover  { transform: translateY(-1px) scale(1.02); }
+.btn-pop:active { transform: translateY(0) scale(0.99); }
+
+/* ---- Nav link underline sweep ---- */
+.nav-link {
+  position: relative;
+  transition: color 200ms ease;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -4px;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* ---- FAQ accordion smooth ---- */
+details.faq-item > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details.faq-item > summary::-webkit-details-marker { display: none; }
+details.faq-item > summary .chev {
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+details.faq-item[open] > summary .chev {
+  transform: rotate(180deg);
+}
+details.faq-item[open] {
+  animation: ordora-fade-in 250ms ease;
+}
+@keyframes ordora-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---- Price crossfade ---- */
+.price-value {
+  display: inline-block;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.price-value.changing {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* ---- Marquee for trust badges (optional) ---- */
+@keyframes ordora-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee {
+  display: flex;
+  gap: 2rem;
+  animation: ordora-marquee 30s linear infinite;
+  width: max-content;
+}
+.marquee:hover { animation-play-state: paused; }
+
+/* ---- Reduced motion: disable everything ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ---- Focus ring polish ---- */
+a:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 6px;
+}

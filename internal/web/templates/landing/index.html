@@ -1,209 +1,626 @@
 {{ define "landing/index.html" }}
-<main>
+<main class="w-full">
 
-  <!-- Hero -->
-  <section class="max-w-[1200px] mx-auto px-6 pt-20 pb-24 flex flex-col items-center text-center gap-6">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed text-label-sm font-semibold">
-      <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
-      Now in beta — free for early businesses
-    </span>
-    <h1 class="text-display-lg text-on-surface max-w-4xl tracking-tight">
-      Stop losing orders in WhatsApp.
-    </h1>
-    <p class="text-body-lg text-on-surface-variant max-w-2xl">
-      Ordora is order management for tailors, bakers, printers, furniture makers, and every business
-      that takes custom orders. Track every order, record payments, share tracking links, and let
-      your customers stay updated — without a thousand chats.
-    </p>
-    <div class="flex flex-col sm:flex-row items-center gap-3 mt-4">
-      <a href="/register" class="h-12 px-8 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-body-lg font-semibold flex items-center gap-2 transition-colors shadow-sm">
-        Start free
-        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-      </a>
-      <a href="/login" class="h-12 px-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-lg font-semibold flex items-center transition-colors">
-        Sign in
-      </a>
-    </div>
-    <p class="text-body-sm text-on-surface-variant mt-2">No credit card required. Set up in 5 minutes.</p>
-  </section>
+  <!-- ============================================================ -->
+  <!-- Hero                                                         -->
+  <!-- ============================================================ -->
+  <section class="relative w-full overflow-hidden">
+    <!-- Decorative drifted blurs -->
+    <div class="absolute -top-40 -right-20 w-[500px] h-[500px] rounded-full bg-primary/15 blur-3xl pointer-events-none drift"></div>
+    <div class="absolute top-40 -left-32 w-[400px] h-[400px] rounded-full bg-tertiary/10 blur-3xl pointer-events-none drift" style="animation-delay: -6s;"></div>
 
-  <!-- Problem / Solution -->
-  <section class="max-w-[1200px] mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-    <div class="flex flex-col gap-6">
-      <span class="text-label-md uppercase tracking-wider text-error font-semibold">The problem</span>
-      <h2 class="text-headline-lg text-on-surface">Orders live everywhere and nowhere.</h2>
-      <ul class="flex flex-col gap-3 text-body-md text-on-surface-variant">
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
-          <span>Orders are scattered across WhatsApp, notebooks, and spreadsheets</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
-          <span>Payment balances are unclear and receipts go missing</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
-          <span>Customers keep asking "what's the status of my order?"</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
-          <span>You can't remember which orders are overdue</span>
-        </li>
-      </ul>
-    </div>
-    <div class="flex flex-col gap-6">
-      <span class="text-label-md uppercase tracking-wider text-tertiary font-semibold">The fix</span>
-      <h2 class="text-headline-lg text-on-surface">One place for every order.</h2>
-      <ul class="flex flex-col gap-3 text-body-md text-on-surface-variant">
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
-          <span>Create orders in seconds, or let customers submit their own</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
-          <span>Track every payment and receipt — balance is always correct</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
-          <span>Share a private link so customers track their own order status</span>
-        </li>
-        <li class="flex items-start gap-2">
-          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
-          <span>See what's due, overdue, and unpaid at a glance</span>
-        </li>
-      </ul>
-    </div>
-  </section>
+    <div class="relative max-w-[1440px] mx-auto px-6 md:px-8 pt-16 md:pt-24 pb-16 md:pb-24">
+      <div class="flex flex-col items-center text-center max-w-4xl mx-auto gap-6">
 
-  <!-- Features -->
-  <section id="features" class="max-w-[1200px] mx-auto px-6 py-20">
-    <div class="flex flex-col items-center text-center gap-4 mb-12">
-      <h2 class="text-headline-lg text-on-surface">Everything a growing business needs</h2>
-      <p class="text-body-md text-on-surface-variant max-w-2xl">
-        Built for real operations: from the moment you take an order to the moment the customer holds it in their hands.
-      </p>
-    </div>
+        <!-- Maker chips -->
+        <div data-reveal class="inline-flex flex-wrap items-center justify-center gap-1 bg-surface-container-low p-1 rounded-full">
+          <span class="text-label-sm text-on-surface font-semibold px-3 py-1 bg-surface-container-lowest rounded-full shadow-sm flex items-center gap-1">
+            <span class="material-symbols-outlined text-primary text-[14px]">styler</span>Tailors &amp; Fashion
+          </span>
+          <span class="text-label-sm text-on-surface-variant px-3 py-1 rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-secondary text-[14px]">cake</span>Artisanal Cakes
+          </span>
+          <span class="text-label-sm text-on-surface-variant px-3 py-1 rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-secondary text-[14px]">carpenter</span>Custom Carpentry
+          </span>
+          <span class="text-label-sm text-on-surface-variant px-3 py-1 rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-secondary text-[14px]">build</span>Rapid Repair
+          </span>
+        </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">receipt_long</span>
-        <h3 class="text-headline-md text-on-surface">Order management</h3>
-        <p class="text-body-sm text-on-surface-variant">Create orders, add line items, set delivery dates, and track status from New to Delivered.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">account_balance_wallet</span>
-        <h3 class="text-headline-md text-on-surface">Payment tracking</h3>
-        <p class="text-body-sm text-on-surface-variant">Record partial payments, upload receipts, and see outstanding balances in real time.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">group</span>
-        <h3 class="text-headline-md text-on-surface">Customer history</h3>
-        <p class="text-body-sm text-on-surface-variant">Every customer has their orders, payments, and notes in one profile.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">link</span>
-        <h3 class="text-headline-md text-on-surface">Public tracking links</h3>
-        <p class="text-body-sm text-on-surface-variant">Every order gets a secure link your customer can open — no login, no app.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">storefront</span>
-        <h3 class="text-headline-md text-on-surface">Public order intake</h3>
-        <p class="text-body-sm text-on-surface-variant">Share a link. Customers describe what they want. You get notified and confirm.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">inventory_2</span>
-        <h3 class="text-headline-md text-on-surface">Product catalog</h3>
-        <p class="text-body-sm text-on-surface-variant">Save your standard items and prices. Create orders in seconds instead of minutes.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">mail</span>
-        <h3 class="text-headline-md text-on-surface">Automatic emails</h3>
-        <p class="text-body-sm text-on-surface-variant">Customers get notified on order creation, payment, and every status change.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">insights</span>
-        <h3 class="text-headline-md text-on-surface">Dashboard</h3>
-        <p class="text-body-sm text-on-surface-variant">See pending orders, due today, overdue, and outstanding balances at a glance.</p>
-      </div>
-      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-        <span class="material-symbols-outlined text-primary text-[28px]">install_mobile</span>
-        <h3 class="text-headline-md text-on-surface">Works on any phone</h3>
-        <p class="text-body-sm text-on-surface-variant">Installable as an app. Add it to your home screen and it just works.</p>
-      </div>
-    </div>
-  </section>
+        <!-- Headline -->
+        <h1 data-reveal data-delay="1" class="text-display-lg md:text-[52px] md:leading-[60px] font-bold tracking-tight text-on-surface max-w-3xl">
+          Stop losing orders in WhatsApp &amp; spreadsheets.
+        </h1>
 
-  <!-- How it works -->
-  <section id="how" class="max-w-[1200px] mx-auto px-6 py-20">
-    <div class="flex flex-col items-center text-center gap-4 mb-12">
-      <h2 class="text-headline-lg text-on-surface">How it works</h2>
-      <p class="text-body-md text-on-surface-variant max-w-2xl">Set up in five minutes. Take your first order in ten.</p>
-    </div>
+        <!-- Subheadline -->
+        <p data-reveal data-delay="2" class="text-body-lg text-on-surface-variant max-w-2xl">
+          Ordora is order management for every business that takes custom orders — tailors, bakers, printers,
+          furniture makers, repair shops. Track every order, record payments, share tracking links, and let
+          customers follow along without a thousand chats.
+        </p>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div class="flex flex-col gap-3">
-        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">1</div>
-        <h3 class="text-headline-md text-on-surface">Create your account</h3>
-        <p class="text-body-sm text-on-surface-variant">Register your business in a minute. No credit card needed.</p>
-      </div>
-      <div class="flex flex-col gap-3">
-        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">2</div>
-        <h3 class="text-headline-md text-on-surface">Add your customers</h3>
-        <p class="text-body-sm text-on-surface-variant">Import or add them one by one. Names and phone numbers are enough.</p>
-      </div>
-      <div class="flex flex-col gap-3">
-        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">3</div>
-        <h3 class="text-headline-md text-on-surface">Take an order</h3>
-        <p class="text-body-sm text-on-surface-variant">Create it yourself, or share your public intake link so customers can order directly.</p>
-      </div>
-      <div class="flex flex-col gap-3">
-        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">4</div>
-        <h3 class="text-headline-md text-on-surface">Deliver and get paid</h3>
-        <p class="text-body-sm text-on-surface-variant">Track payments, upload receipts, and let the customer follow along.</p>
-      </div>
-    </div>
-  </section>
+        <!-- CTAs -->
+        <div data-reveal data-delay="3" class="flex flex-col sm:flex-row items-center gap-3 pt-2 w-full sm:w-auto">
+          <a href="/register" class="btn-pop w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-primary-container text-on-primary text-body-lg font-semibold shadow-md hover:bg-primary">
+            <span class="material-symbols-outlined text-[20px]">bolt</span>
+            Start free
+          </a>
+          <a href="#how" class="btn-pop w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-surface-container-lowest text-on-surface text-body-lg font-semibold shadow-sm hover:bg-surface-container border border-outline-variant/30">
+            <span class="material-symbols-outlined text-primary text-[20px]">play_circle</span>
+            See how it works
+          </a>
+        </div>
 
-  <!-- Pricing -->
-  <section id="pricing" class="max-w-[1200px] mx-auto px-6 py-20">
-    <div class="flex flex-col items-center text-center gap-4 mb-12">
-      <h2 class="text-headline-lg text-on-surface">Free during beta</h2>
-      <p class="text-body-md text-on-surface-variant max-w-2xl">
-        We're onboarding early businesses. Everything is free while we polish the product.
-        When we start charging, you'll be grandfathered in.
-      </p>
-    </div>
-
-    <div class="max-w-md mx-auto p-8 rounded-2xl bg-surface-container-lowest border-2 border-primary-container flex flex-col gap-6">
-      <div class="flex flex-col gap-1">
-        <span class="text-label-md uppercase tracking-wider text-primary font-bold">Beta</span>
-        <div class="flex items-baseline gap-1">
-          <span class="text-[48px] font-bold text-on-surface">Free</span>
-          <span class="text-body-md text-on-surface-variant">forever during beta</span>
+        <!-- Trust row -->
+        <div data-reveal data-delay="4" class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-4 text-label-sm text-on-surface-variant">
+          <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-tertiary text-[16px]">verified</span>No credit card required</span>
+          <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-tertiary text-[16px]">public</span>Multi-currency (NGN, USD, GBP, EUR)</span>
+          <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-tertiary text-[16px]">schedule</span>Set up in 5 minutes</span>
         </div>
       </div>
-      <ul class="flex flex-col gap-2 text-body-sm text-on-surface-variant">
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Unlimited orders</li>
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Unlimited customers</li>
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Public tracking links</li>
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Email notifications</li>
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Mobile PWA</li>
-      </ul>
-      <a href="/register" class="h-12 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-body-lg font-semibold flex items-center justify-center transition-colors">
-        Start free
-      </a>
+
+      <!-- Hero visual: order detail preview -->
+      <div data-reveal data-delay="5" class="relative mt-16 max-w-5xl mx-auto">
+        <!-- Sync status floating pill -->
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 z-20 bg-surface-container-lowest px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 text-label-sm font-semibold border border-outline-variant/30">
+          <span class="w-2 h-2 rounded-full bg-tertiary pulse-dot"></span>
+          <span>Live in real time — no app download required</span>
+        </div>
+
+        <div class="rounded-2xl bg-surface-container-low p-3 md:p-5 shadow-2xl border border-outline-variant/30">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            <!-- Left: order panel -->
+            <div class="lg:col-span-7 flex flex-col gap-3 bg-surface-container-lowest rounded-xl p-4 shadow-sm float-slow">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg bg-primary-fixed flex items-center justify-center text-primary font-bold text-code-md">ORD</div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-headline-md font-bold text-on-surface">ORD-2026-00128</span>
+                      <span class="text-label-sm bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded-full font-semibold">3-Piece Agbada</span>
+                    </div>
+                    <p class="text-body-sm text-on-surface-variant">Client: Tunde Bakare</p>
+                  </div>
+                </div>
+                <span class="text-label-sm bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded font-semibold inline-flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tertiary pulse-dot"></span>
+                  Active
+                </span>
+              </div>
+
+              <!-- Stepper -->
+              <div class="bg-surface-container-low p-3 rounded-lg">
+                <div class="flex justify-between text-label-sm text-on-surface-variant mb-2">
+                  <span class="text-tertiary font-bold">✓ Intake</span>
+                  <span class="text-tertiary font-bold">✓ Deposit</span>
+                  <span class="text-primary font-bold">● Crafting</span>
+                  <span>QA</span>
+                  <span>Ready</span>
+                </div>
+                <div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden flex">
+                  <div class="bg-tertiary w-1/4 h-full"></div>
+                  <div class="bg-tertiary w-1/4 h-full"></div>
+                  <div class="bg-primary w-1/4 h-full"></div>
+                  <div class="bg-surface-container-highest w-1/4 h-full"></div>
+                </div>
+              </div>
+
+              <!-- Financial tiles -->
+              <div class="grid grid-cols-3 gap-2">
+                <div class="bg-surface-container-low p-2.5 rounded-lg">
+                  <div class="text-label-sm text-on-surface-variant uppercase tracking-wider">Total</div>
+                  <div class="text-headline-md font-bold text-on-surface mt-0.5">₦193,500</div>
+                </div>
+                <div class="bg-surface-container-low p-2.5 rounded-lg">
+                  <div class="text-label-sm text-tertiary uppercase tracking-wider font-semibold">Paid</div>
+                  <div class="text-headline-md font-bold text-tertiary mt-0.5">₦100,000</div>
+                </div>
+                <div class="bg-surface-container p-2.5 rounded-lg">
+                  <div class="text-label-sm text-error uppercase tracking-wider font-semibold">Balance</div>
+                  <div class="text-headline-md font-bold text-error mt-0.5">₦93,500</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: portal preview -->
+            <div class="lg:col-span-5 flex flex-col gap-3 bg-surface-container-lowest rounded-xl p-4 shadow-sm float-slower" style="animation-delay: -3s;">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-bold text-[12px]">A</div>
+                  <span class="text-headline-md font-bold text-on-surface">Client Portal</span>
+                </div>
+                <span class="text-code-md text-on-surface-variant">/o/tk_88x9</span>
+              </div>
+
+              <div class="bg-primary-fixed p-3 rounded-lg">
+                <div class="flex justify-between text-label-sm">
+                  <span class="text-primary font-bold uppercase tracking-wider">Live Status</span>
+                  <span class="text-primary font-semibold">Est: 3 days</span>
+                </div>
+                <h4 class="text-headline-md font-bold text-on-surface mt-1">Crafting in progress</h4>
+                <p class="text-body-sm text-on-surface-variant mt-1">
+                  Your silk brocade is being assembled. Fitting scheduled for Friday at 2 PM.
+                </p>
+              </div>
+
+              <div class="bg-surface-container-low p-2.5 rounded-lg flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-tertiary text-[18px]">verified</span>
+                  <div>
+                    <div class="text-body-sm font-semibold text-on-surface">50% deposit</div>
+                    <div class="text-label-sm text-on-surface-variant">GTBank transfer</div>
+                  </div>
+                </div>
+                <span class="text-code-md font-bold text-tertiary">₦100,000</span>
+              </div>
+
+              <div class="bg-surface-container p-2.5 rounded-lg flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-error text-[18px]">hourglass_top</span>
+                  <div>
+                    <div class="text-body-sm font-semibold text-on-surface">Balance due</div>
+                    <div class="text-label-sm text-on-surface-variant">Before handover</div>
+                  </div>
+                </div>
+                <span class="text-code-md font-bold text-error">₦93,500</span>
+              </div>
+
+              <button class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-tertiary text-on-tertiary text-label-md font-semibold hover:bg-tertiary-container transition-colors">
+                <span class="material-symbols-outlined text-[18px]">lock</span>
+                Pay balance now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- Final CTA -->
-  <section class="max-w-[1200px] mx-auto px-6 py-20">
-    <div class="p-12 rounded-2xl bg-primary text-on-primary flex flex-col items-center text-center gap-6">
-      <h2 class="text-headline-lg">Ready to get organized?</h2>
-      <p class="text-body-lg opacity-90 max-w-2xl">Take your first order in ten minutes. Free during beta.</p>
-      <a href="/register" class="h-12 px-8 rounded-lg bg-on-primary text-primary text-body-lg font-semibold flex items-center gap-2">
-        Create your account
-        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-      </a>
+  <!-- ============================================================ -->
+  <!-- Problem / Solution                                          -->
+  <!-- ============================================================ -->
+  <section class="w-full bg-surface-container-low py-20 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-8">
+      <div data-reveal class="text-center max-w-2xl mx-auto mb-12">
+        <span class="text-label-sm text-primary font-bold uppercase tracking-wider">The shift</span>
+        <h2 class="text-headline-lg md:text-[32px] md:leading-[40px] font-bold text-on-surface mt-2">
+          Why top makers are leaving chat apps and notebooks behind
+        </h2>
+        <p class="text-body-md text-on-surface-variant mt-3">
+          Running bespoke commissions inside WhatsApp or spreadsheets leads to unpaid balances, missed delivery dates, and nonstop customer interruptions.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div data-reveal data-delay="1" class="card-lift bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+          <div class="flex items-center gap-3 pb-4">
+            <div class="w-9 h-9 rounded-full bg-error-container text-on-error-container flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">close</span>
+            </div>
+            <div>
+              <h3 class="text-headline-md font-bold text-on-surface">The chaos you know</h3>
+              <p class="text-body-sm text-on-surface-variant">Chat threads, missed deposits, manual friction</p>
+            </div>
+          </div>
+          <ul class="flex flex-col gap-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">cancel</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">Lost transfer receipts</strong>
+                <p class="text-body-sm text-on-surface-variant">Bank screenshots disappear in phone galleries. Nobody can confirm who paid.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">cancel</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">"Is my order ready?" at midnight</strong>
+                <p class="text-body-sm text-on-surface-variant">Customers message constantly, forcing you to search notebooks.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">cancel</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">Forgotten final balances</strong>
+                <p class="text-body-sm text-on-surface-variant">Items get dispatched before the balance is settled. You become a debt collector.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">cancel</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">Scattered measurements</strong>
+                <p class="text-body-sm text-on-surface-variant">Specs on scrap paper get lost between workbenches, causing costly recuts.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div data-reveal data-delay="2" class="card-lift bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-outline-variant/30">
+          <div class="flex items-center gap-3 pb-4">
+            <div class="w-9 h-9 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">check</span>
+            </div>
+            <div>
+              <h3 class="text-headline-md font-bold text-on-surface">The Ordora way</h3>
+              <p class="text-body-sm text-on-surface-variant">Systematized intake, live tracking, enforced billing</p>
+            </div>
+          </div>
+          <ul class="flex flex-col gap-4">
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5">check_circle</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">Public intake link</strong>
+                <p class="text-body-sm text-on-surface-variant">Customers submit requests via your branded link with photos and specs.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5">check_circle</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">Zero-login client portals</strong>
+                <p class="text-body-sm text-on-surface-variant">Every order gets a private link where customers see progress 24/7.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5">check_circle</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">Enforced split billing</strong>
+                <p class="text-body-sm text-on-surface-variant">The system tracks deposits and flags unpaid balances before dispatch.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5">check_circle</span>
+              <div>
+                <strong class="text-body-md font-semibold text-on-surface">Workshop stepper</strong>
+                <p class="text-body-sm text-on-surface-variant">Cutting, stitching, QA — single-tap status changes fire customer alerts automatically.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Features                                                     -->
+  <!-- ============================================================ -->
+  <section id="features" class="w-full max-w-[1440px] mx-auto px-6 md:px-8 py-20 md:py-24">
+    <div data-reveal class="text-center max-w-2xl mx-auto mb-12">
+      <span class="text-label-sm text-primary font-bold uppercase tracking-wider">Engineered for bespoke work</span>
+      <h2 class="text-headline-lg md:text-[32px] md:leading-[40px] font-bold text-on-surface mt-2">
+        Everything you need to run a real operation
+      </h2>
+      <p class="text-body-md text-on-surface-variant mt-3">
+        Standard e-commerce assumes pre-packaged stock. Ordora is built for make-to-order, custom specs, and milestone payments.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div data-reveal data-delay="1" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">edit_note</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Public intake links</h3>
+        <p class="text-body-sm text-on-surface-variant">Share a link. Customers submit requests, upload photos, and choose options. You get notified.</p>
+      </div>
+
+      <div data-reveal data-delay="2" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">receipt_long</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Order lifecycle</h3>
+        <p class="text-body-sm text-on-surface-variant">From NEW to COMPLETED, every stage tracked, timestamped, and audit-logged.</p>
+      </div>
+
+      <div data-reveal data-delay="3" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Split-balance ledger</h3>
+        <p class="text-body-sm text-on-surface-variant">Record partial payments, attach receipts, see outstanding balances in real time.</p>
+      </div>
+
+      <div data-reveal data-delay="4" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">link</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Customer tracking links</h3>
+        <p class="text-body-sm text-on-surface-variant">Every order gets a secure public URL — no login, no app, works on any phone.</p>
+      </div>
+
+      <div data-reveal data-delay="5" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">group</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Customer profiles</h3>
+        <p class="text-body-sm text-on-surface-variant">Every customer has their orders, payments, and notes in one place.</p>
+      </div>
+
+      <div data-reveal data-delay="6" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">inventory_2</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Product catalog</h3>
+        <p class="text-body-sm text-on-surface-variant">Save standard items and prices. Orders in seconds instead of minutes.</p>
+      </div>
+
+      <div data-reveal data-delay="1" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">mail</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Automatic emails</h3>
+        <p class="text-body-sm text-on-surface-variant">Customers get notified on creation, payment, and every status change.</p>
+      </div>
+
+      <div data-reveal data-delay="2" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">insights</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Live dashboard</h3>
+        <p class="text-body-sm text-on-surface-variant">Pending, due today, overdue, and outstanding balances at a glance.</p>
+      </div>
+
+      <div data-reveal data-delay="3" class="card-lift p-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <div class="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined text-[24px]">install_mobile</span>
+        </div>
+        <h3 class="text-headline-md font-bold text-on-surface">Installable app</h3>
+        <p class="text-body-sm text-on-surface-variant">Add to your phone home screen. Works offline. No app store needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- How it works                                                 -->
+  <!-- ============================================================ -->
+  <section id="how" class="w-full bg-surface-container-low py-20 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-8">
+      <div data-reveal class="text-center max-w-2xl mx-auto mb-12">
+        <span class="text-label-sm text-primary font-bold uppercase tracking-wider">Five minutes to set up</span>
+        <h2 class="text-headline-lg md:text-[32px] md:leading-[40px] font-bold text-on-surface mt-2">How Ordora works</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div data-reveal data-delay="1" class="flex flex-col gap-3">
+          <div class="w-12 h-12 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-[22px] font-bold shadow-sm">1</div>
+          <h3 class="text-headline-md font-bold text-on-surface">Create your account</h3>
+          <p class="text-body-sm text-on-surface-variant">Register your business in a minute. No credit card.</p>
+        </div>
+        <div data-reveal data-delay="2" class="flex flex-col gap-3">
+          <div class="w-12 h-12 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-[22px] font-bold shadow-sm">2</div>
+          <h3 class="text-headline-md font-bold text-on-surface">Add customers</h3>
+          <p class="text-body-sm text-on-surface-variant">A name and phone number is enough. Add more later.</p>
+        </div>
+        <div data-reveal data-delay="3" class="flex flex-col gap-3">
+          <div class="w-12 h-12 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-[22px] font-bold shadow-sm">3</div>
+          <h3 class="text-headline-md font-bold text-on-surface">Take orders</h3>
+          <p class="text-body-sm text-on-surface-variant">Create them yourself, or share your intake link for customers to submit.</p>
+        </div>
+        <div data-reveal data-delay="4" class="flex flex-col gap-3">
+          <div class="w-12 h-12 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-[22px] font-bold shadow-sm">4</div>
+          <h3 class="text-headline-md font-bold text-on-surface">Deliver and get paid</h3>
+          <p class="text-body-sm text-on-surface-variant">Record payments, upload receipts, and keep the customer informed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Case study                                                   -->
+  <!-- ============================================================ -->
+  <section id="case-study" class="w-full py-20 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-8">
+      <div data-reveal class="bg-surface-container-lowest rounded-3xl p-8 md:p-14 shadow-lg border border-outline-variant/30">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          <div class="lg:col-span-7 flex flex-col gap-5">
+            <span class="inline-flex items-center gap-2 text-label-sm text-on-tertiary-fixed-variant bg-tertiary-fixed px-3 py-1 rounded-full font-semibold w-fit">
+              <span class="material-symbols-outlined text-[14px]">workspace_premium</span>
+              Maker case study
+            </span>
+            <h3 class="text-headline-lg md:text-[30px] md:leading-[38px] font-bold text-on-surface">
+              "Ordora cut our WhatsApp pings by 84% in the first month."
+            </h3>
+            <p class="text-body-lg text-on-surface-variant">
+              "Before Ordora, my apprentices spent half their mornings looking through paper registers
+              to figure out who had paid their deposit and whose order was due Friday. Now, every
+              customer has their own tracking link. Balances get collected automatically."
+            </p>
+
+            <div class="flex items-center gap-4 pt-2">
+              <div class="w-12 h-12 rounded-full bg-primary-fixed text-primary font-bold flex items-center justify-center text-lg">AA</div>
+              <div>
+                <h4 class="text-headline-md font-bold text-on-surface">Adeola Adeleke</h4>
+                <p class="text-body-sm text-on-surface-variant">Founder &amp; Master Tailor, Ade Atelier — Victoria Island, Lagos</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 pt-4 border-t border-outline-variant/30">
+              <div>
+                <div class="text-display-lg font-bold text-primary" data-count-to="84" data-count-suffix="%">0%</div>
+                <div class="text-label-sm text-on-surface-variant mt-1">Fewer status inquiries</div>
+              </div>
+              <div>
+                <div class="text-display-lg font-bold text-tertiary" data-count-to="100" data-count-suffix="%">0%</div>
+                <div class="text-label-sm text-on-surface-variant mt-1">Balances collected</div>
+              </div>
+              <div>
+                <div class="text-display-lg font-bold text-on-surface" data-count-to="25" data-count-suffix=" hrs">0</div>
+                <div class="text-label-sm text-on-surface-variant mt-1">Saved / week on admin</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-5 bg-surface-container-low p-5 rounded-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+              <span class="text-label-sm font-semibold text-on-surface">Live operational metrics</span>
+              <span class="text-label-sm text-tertiary bg-tertiary-fixed px-2 py-0.5 rounded font-bold">Ade Atelier</span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div class="bg-surface-container-lowest p-3 rounded-lg flex items-center justify-between">
+                <span class="text-body-sm text-on-surface">Active commissions</span>
+                <span class="text-code-md font-bold text-primary">34</span>
+              </div>
+              <div class="bg-surface-container-lowest p-3 rounded-lg flex items-center justify-between">
+                <span class="text-body-sm text-on-surface">Monthly volume</span>
+                <span class="text-code-md font-bold text-on-surface">₦6.45M</span>
+              </div>
+              <div class="bg-surface-container-lowest p-3 rounded-lg flex items-center justify-between">
+                <span class="text-body-sm text-on-surface">Settlement speed</span>
+                <span class="text-code-md font-bold text-tertiary">&lt; 4 hrs post-QA</span>
+              </div>
+            </div>
+            <div class="bg-primary-fixed p-3 rounded-lg flex items-start gap-2">
+              <span class="material-symbols-outlined text-primary text-[20px] shrink-0">verified</span>
+              <p class="text-body-sm text-on-primary-fixed">
+                Ade Atelier runs 4 cutting benches and 8 sewing specialists on Ordora.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Pricing                                                      -->
+  <!-- ============================================================ -->
+  <section id="pricing" class="w-full bg-surface-container-low py-20 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-8">
+      <div data-reveal class="text-center max-w-2xl mx-auto mb-10">
+        <span class="text-label-sm text-primary font-bold uppercase tracking-wider">Pricing</span>
+        <h2 class="text-headline-lg md:text-[32px] md:leading-[40px] font-bold text-on-surface mt-2">
+          Free during beta
+        </h2>
+        <p class="text-body-md text-on-surface-variant mt-3">
+          We're onboarding early businesses. Everything is free while we polish. When we start charging, you'll be grandfathered in.
+        </p>
+      </div>
+
+      <div class="max-w-md mx-auto">
+        <div data-reveal data-delay="1" class="card-lift p-8 rounded-3xl bg-surface-container-lowest border-2 border-primary-container shadow-xl flex flex-col gap-6 relative overflow-hidden">
+          <div class="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-primary-fixed opacity-60 blur-2xl pointer-events-none"></div>
+          <div class="relative">
+            <span class="text-label-md uppercase tracking-wider text-primary font-bold">Beta</span>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="text-[52px] font-bold text-on-surface leading-none">Free</span>
+              <span class="text-body-md text-on-surface-variant">during beta</span>
+            </div>
+            <p class="text-body-sm text-on-surface-variant mt-3">Full access. No credit card. No time limit while we're in beta.</p>
+          </div>
+
+          <ul class="relative flex flex-col gap-3 text-body-md">
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[20px]">check</span>Unlimited orders &amp; customers</li>
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[20px]">check</span>Public tracking links</li>
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[20px]">check</span>Split-balance payment ledger</li>
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[20px]">check</span>Automatic email notifications</li>
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[20px]">check</span>Public intake link</li>
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[20px]">check</span>Installable mobile app (PWA)</li>
+          </ul>
+
+          <a href="/register" class="btn-pop relative h-12 rounded-xl bg-primary-container text-on-primary text-body-lg font-semibold flex items-center justify-center shadow-md hover:bg-primary">
+            Start free
+          </a>
+          <p class="relative text-label-sm text-on-surface-variant text-center">
+            Multi-currency: NGN · USD · GBP · EUR
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- FAQ                                                          -->
+  <!-- ============================================================ -->
+  <section id="faq" class="w-full py-20 md:py-24">
+    <div class="max-w-3xl mx-auto px-6 md:px-8">
+      <div data-reveal class="text-center mb-10">
+        <span class="text-label-sm text-primary font-bold uppercase tracking-wider">FAQ</span>
+        <h2 class="text-headline-lg md:text-[32px] md:leading-[40px] font-bold text-on-surface mt-2">
+          Questions before you switch
+        </h2>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <details data-reveal data-delay="1" class="faq-item bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 group">
+          <summary class="flex justify-between items-center gap-4 text-headline-md font-semibold text-on-surface">
+            <span>Do my customers need to download an app or create an account?</span>
+            <span class="material-symbols-outlined chev text-primary">expand_more</span>
+          </summary>
+          <p class="text-body-md text-on-surface-variant pt-4">
+            No. Customers open a private link that works in any browser. They see the order status,
+            photos, and balance — no login, no app, no friction.
+          </p>
+        </details>
+
+        <details data-reveal data-delay="2" class="faq-item bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 group">
+          <summary class="flex justify-between items-center gap-4 text-headline-md font-semibold text-on-surface">
+            <span>How are payments tracked?</span>
+            <span class="material-symbols-outlined chev text-primary">expand_more</span>
+          </summary>
+          <p class="text-body-md text-on-surface-variant pt-4">
+            Every payment is a separate record. Partial payments, deposits, and final settlements
+            all roll up into the order's balance automatically. Attach receipts and they stay
+            with the payment forever.
+          </p>
+        </details>
+
+        <details data-reveal data-delay="3" class="faq-item bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 group">
+          <summary class="flex justify-between items-center gap-4 text-headline-md font-semibold text-on-surface">
+            <span>Can I customize order stages for my workflow?</span>
+            <span class="material-symbols-outlined chev text-primary">expand_more</span>
+          </summary>
+          <p class="text-body-md text-on-surface-variant pt-4">
+            V1 ships with a fixed lifecycle: NEW → CONFIRMED → IN PROGRESS → READY →
+            OUT FOR DELIVERY → DELIVERED → COMPLETED. Configurable workflows arrive in a future release.
+          </p>
+        </details>
+
+        <details data-reveal data-delay="4" class="faq-item bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/30 group">
+          <summary class="flex justify-between items-center gap-4 text-headline-md font-semibold text-on-surface">
+            <span>Is my business data isolated from other businesses?</span>
+            <span class="material-symbols-outlined chev text-primary">expand_more</span>
+          </summary>
+          <p class="text-body-md text-on-surface-variant pt-4">
+            Yes — every business is isolated at the database level with row-level security. Your data
+            can never be seen by another business, by design. See our security page for details.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- Final CTA                                                    -->
+  <!-- ============================================================ -->
+  <section class="w-full max-w-[1440px] mx-auto px-6 md:px-8 py-20 md:py-24">
+    <div data-reveal class="relative w-full rounded-3xl bg-primary p-12 md:p-20 text-center overflow-hidden shadow-2xl flex flex-col items-center gap-6">
+      <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-container rounded-full opacity-50 blur-3xl pointer-events-none drift"></div>
+      <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-tertiary rounded-full opacity-30 blur-3xl pointer-events-none drift" style="animation-delay: -8s;"></div>
+
+      <div class="relative z-10 flex flex-col gap-4 max-w-2xl items-center">
+        <span class="text-label-sm text-primary-fixed uppercase tracking-wider font-bold">Launch today</span>
+        <h2 class="text-display-lg md:text-[44px] md:leading-[52px] font-bold text-on-primary">
+          Turn order chaos into effortless craftsmanship.
+        </h2>
+        <p class="text-body-lg text-on-primary-container">
+          Set up your branded intake link and start tracking orders in under five minutes.
+        </p>
+      </div>
+
+      <div class="relative z-10 flex flex-col sm:flex-row items-center gap-3 pt-2 w-full sm:w-auto">
+        <a href="/register" class="btn-pop w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-xl bg-surface-container-lowest text-primary text-body-lg font-bold shadow-lg hover:bg-surface-container">
+          Start free
+        </a>
+        <a href="/login" class="btn-pop w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-primary-container text-on-primary text-body-lg font-semibold hover:bg-primary-container/80">
+          <span class="material-symbols-outlined text-[18px]">login</span>
+          Sign in
+        </a>
+      </div>
+
+      <div class="relative z-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-label-sm text-on-primary-container pt-2">
+        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span>No credit card required</span>
+        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span>Free during beta</span>
+        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span>Multi-currency</span>
+      </div>
     </div>
   </section>
 

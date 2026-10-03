@@ -218,6 +218,16 @@ func run() error {
 
 	stubH := &handlers.StubHandler{Renderer: renderer}
 
+	// ---- Search ----
+	searchRepo := postgres.NewSearchRepo(db)
+	searchSvc := app.NewSearchService(app.SearchServiceDeps{
+		Repo: postgres.NewSearchAdapter(searchRepo),
+	})
+	searchH := &handlers.SearchHandler{
+		Service:  searchSvc,
+		Renderer: renderer,
+	}
+
 	// ---- Admin panel ----
 	adminAuthService := auth.NewAdminAuthService(auth.AdminAuthDeps{
 		Admins:   postgres.NewPlatformAdminRepo(db),
@@ -443,6 +453,8 @@ func run() error {
 	portalMux.HandleFunc("GET /o/{token}", portalH.Show)
 	portalMux.HandleFunc("GET /order/{slug}", portalH.IntakeForm)
 	portalMux.HandleFunc("POST /order/{slug}", portalH.IntakeSubmit)
+
+	mux.Handle("GET /search", middleware.RequireAuth(http.HandlerFunc(searchH.Handle)))
 
 	// Wire portal routes into the main mux, with rate limiting on POST only.
 	// (GET routes are cheap; the POST is what needs protection.)
