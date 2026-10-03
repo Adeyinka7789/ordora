@@ -1,0 +1,6 @@
+./auth_mailer.go
+./console.go
+./email.go
+./mailer.go
+./renderer.go
+./smtp.go

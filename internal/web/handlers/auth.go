@@ -3,7 +3,9 @@ package handlers
 import (
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Adeyinka7789/ordora/internal/auth"
@@ -19,17 +21,15 @@ type AuthHandler struct {
 	Cfg      *config.Config
 }
 
-// authPage is the shape every auth template receives.
 type authPage struct {
-	Title     string
-	CSRFToken string
-	Error     string
-	Notice    string
-	// Form values retained on error, so users don't retype everything.
+	Title        string
+	CSRFToken    string
+	Error        string
+	Notice       string
 	Email        string
 	Name         string
 	BusinessName string
-	VerifyLink   string // only set on the "check your email" page in dev
+	VerifyLink   string
 }
 
 func (h *AuthHandler) renderAuth(w http.ResponseWriter, r *http.Request, status int, templateName string, page authPage) {
@@ -74,14 +74,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Compose the verification URL and hand it to the mailer.
 	verifyURL := h.Cfg.BaseURL + "/verify?token=" + result.VerifyToken
 	if err := h.Auth.SendVerificationEmail(r.Context(), result.User, verifyURL); err != nil {
-		// Log but don't fail registration; the user can request a resend later.
 		slog.Error("auth: send verify email", "err", err, "user_id", result.User.ID)
 	}
 
-	// In dev, surface the link so the developer can click it immediately.
 	page := authPage{
 		Title:      "Check your email",
 		Email:      result.User.Email.String(),
@@ -180,7 +177,6 @@ func (h *AuthHandler) Forgot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email := r.PostFormValue("email")
-	// Always return the same page, regardless of whether the email exists.
 	_ = h.Auth.RequestPasswordReset(r.Context(), email)
 	h.renderAuth(w, r, http.StatusOK, "auth/forgot.html", authPage{
 		Title:  "Reset your password",
@@ -270,14 +266,11 @@ func humanizeAuthError(err error) string {
 	case errors.Is(err, auth.ErrPasswordTooLong):
 		return "Password must be at most 256 characters."
 	default:
-		// Log the real error server-side; return a generic message.
 		slog.Error("auth: unhandled error", "err", err)
 		return "Something went wrong. Please try again."
 	}
 }
 
-// renderAuthWithToken is a variant for pages that need to embed a hidden
-// token field (password reset).
 func (h *AuthHandler) renderAuthWithToken(w http.ResponseWriter, r *http.Request, status int, templateName string, page authPage, token string) {
 	page.CSRFToken = middleware.CSRFTokenFrom(r.Context())
 	data := struct {
@@ -289,3 +282,7 @@ func (h *AuthHandler) renderAuthWithToken(w http.ResponseWriter, r *http.Request
 	}
 	h.Renderer.Page(w, status, "layouts/auth.html", templateName, data)
 }
+
+// unused guard, can be removed later
+var _ = net.SplitHostPort
+var _ = strings.TrimSpace

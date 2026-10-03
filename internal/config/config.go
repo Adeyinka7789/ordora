@@ -18,6 +18,18 @@ type Config struct {
 	Session SessionConfig
 	Email   EmailConfig
 	Storage StorageConfig
+	Admin   AdminConfig
+}
+
+type AdminConfig struct {
+	// Path is the URL prefix for the admin panel. Defaults to a random-looking
+	// string to make discovery harder. Change it in production via env var.
+	Path string
+	// CookieName for the admin session. Must be different from the business
+	// session cookie.
+	CookieName string
+	// SessionTTL is how long an admin session lasts. Shorter than business.
+	SessionTTL time.Duration
 }
 
 type HTTPConfig struct {
@@ -125,6 +137,11 @@ func Load() (*Config, error) {
 		Storage: StorageConfig{
 			Mode:     getEnv("ORDORA_STORAGE_MODE", "local"),
 			LocalDir: getEnv("ORDORA_STORAGE_LOCAL_DIR", "./uploads"),
+		},
+		Admin: AdminConfig{
+			Path:       getEnv("ORDORA_ADMIN_PATH", "/ops-x9k2m"),
+			CookieName: getEnv("ORDORA_ADMIN_SESSION_COOKIE", "ordora_admin_session"),
+			SessionTTL: time.Duration(getEnvInt("ORDORA_ADMIN_SESSION_TTL_HOURS", 8)) * time.Hour,
 		},
 	}
 

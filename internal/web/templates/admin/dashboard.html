@@ -1,0 +1,44 @@
+{{ define "admin/dashboard.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Welcome, {{ .AdminName }}</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Signed in as <strong>{{ .AdminEmail }}</strong>.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+      <div class="flex items-center gap-2 mb-space-sm">
+        <span class="material-symbols-outlined text-primary text-[22px]">corporate_fare</span>
+        <span class="font-headline-md text-headline-md font-bold">Tenants</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant">Manage businesses, impersonate, suspend.</p>
+      <p class="font-label-sm text-label-sm text-outline mt-space-sm">Coming in A.2</p>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+      <div class="flex items-center gap-2 mb-space-sm">
+        <span class="material-symbols-outlined text-primary text-[22px]">group</span>
+        <span class="font-headline-md text-headline-md font-bold">Users</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant">Search and manage platform-wide users.</p>
+      <p class="font-label-sm text-label-sm text-outline mt-space-sm">Coming in A.2</p>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+      <div class="flex items-center gap-2 mb-space-sm">
+        <span class="material-symbols-outlined text-primary text-[22px]">storage</span>
+        <span class="font-headline-md text-headline-md font-bold">Data browser</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant">Read-only view of every table.</p>
+      <p class="font-label-sm text-label-sm text-outline mt-space-sm">Coming in A.3</p>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+    <p class="font-body-md text-body-md text-on-surface-variant">
+      This is the admin foundation. Tenant management, data browsers, ops tools, and analytics land in the next milestones.
+    </p>
+  </div>
+</div>
+{{ end }}

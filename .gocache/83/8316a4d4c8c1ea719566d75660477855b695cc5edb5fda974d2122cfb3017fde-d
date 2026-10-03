@@ -1,0 +1,12 @@
+./attachments.go
+./auth.go
+./customers.go
+./dashboard.go
+./fragments.go
+./helpers.go
+./orders.go
+./payments.go
+./portal.go
+./products.go
+./settings.go
+./stubs.go

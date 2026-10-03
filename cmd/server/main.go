@@ -23,6 +23,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/infra/storage"
 	"github.com/Adeyinka7789/ordora/internal/jobs"
 	"github.com/Adeyinka7789/ordora/internal/web/handlers"
+	adminhandlers "github.com/Adeyinka7789/ordora/internal/web/handlers/admin"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
@@ -203,6 +204,23 @@ func run() error {
 
 	stubH := &handlers.StubHandler{Renderer: renderer}
 
+	// ---- Admin panel ----
+	adminAuthService := auth.NewAdminAuthService(auth.AdminAuthDeps{
+		Admins:   postgres.NewPlatformAdminRepo(db),
+		Sessions: postgres.NewAdminSessionRepo(db),
+		IDs:      id.Generator{},
+		TTL:      cfg.Admin.SessionTTL,
+	})
+	adminAuthH := &adminhandlers.AuthHandler{
+		Auth:     adminAuthService,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+	adminDashH := &adminhandlers.DashboardHandler{
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+
 	// ---- Public portal ----
 	portalRepo := postgres.NewPortalRepo(db)
 	portalService := app.NewPortalService(app.PortalServiceDeps{
@@ -227,6 +245,25 @@ func run() error {
 	mux.HandleFunc("GET /offline", func(w http.ResponseWriter, r *http.Request) {
 		renderer.RenderFragment(w, http.StatusOK, "errors/offline.html", nil)
 	})
+
+	// ---- Admin panel (configurable path) ----
+	adminPath := cfg.Admin.Path
+	adminSessionMW := middleware.AdminSessionMiddleware(adminAuthService, cfg.Admin.CookieName)
+
+	mux.Handle("GET "+adminPath, adminSessionMW(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if middleware.AdminFromContext(r.Context()) != nil {
+			http.Redirect(w, r, adminPath+"/dashboard", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, adminPath+"/login", http.StatusSeeOther)
+	})))
+
+	mux.Handle("GET "+adminPath+"/login", adminSessionMW(http.HandlerFunc(adminAuthH.LoginPage)))
+	mux.HandleFunc("POST "+adminPath+"/login", adminAuthH.Login)
+	mux.HandleFunc("POST "+adminPath+"/logout", adminAuthH.Logout)
+
+	mux.Handle("GET "+adminPath+"/dashboard",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminDashH.Index))))
 
 	// Static
 	staticDir := filepath.Join("internal", "web", "static")

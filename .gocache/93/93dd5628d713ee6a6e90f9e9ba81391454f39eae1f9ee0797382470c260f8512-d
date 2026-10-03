@@ -1,0 +1,11 @@
+./admin_service.go
+./auth_token.go
+./mailer_noop.go
+./membership.go
+./password.go
+./service.go
+./session.go
+./token.go
+./admin_service_test.go
+./password_test.go
+./token_test.go
