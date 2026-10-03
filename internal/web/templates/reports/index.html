@@ -1,0 +1,252 @@
+{{ define "reports/index.html" }}
+{{ $b := .Bundle }}
+{{ $k := $b.KPIs }}
+<div class="p-space-lg lg:p-space-xl max-w-[1440px] mx-auto flex flex-col gap-space-lg">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Reports &amp; Analytics</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">
+        Financial health, cash flow recovery, and fulfillment metrics for <strong>{{ $b.Range.Label }}</strong>.
+      </p>
+    </div>
+    <div class="flex items-center gap-space-sm">
+      <a href="/reports/export.csv?range={{ $b.Range.Key }}"
+         class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md font-semibold flex items-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">download</span>
+        <span>Export CSV</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Range selector -->
+  <div class="bg-surface-container-lowest p-space-sm rounded-xl shadow-sm flex flex-wrap items-center gap-1">
+    {{ range .Ranges }}
+      <a href="/reports?range={{ .Key }}"
+         class="h-8 px-3 rounded font-label-md font-semibold flex items-center transition-colors
+                {{ if eq .Key $.CurrentKey }}bg-primary-container text-on-primary{{ else }}text-on-surface-variant hover:bg-surface-container-low{{ end }}">
+        {{ if eq .Key "7d" }}7 days{{ else if eq .Key "30d" }}30 days{{ else if eq .Key "90d" }}90 days{{ else if eq .Key "ytd" }}Year to date{{ else }}All time{{ end }}
+      </a>
+    {{ end }}
+  </div>
+
+  <!-- KPI cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
+    <!-- Gross invoiced -->
+    <a href="/orders" class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Gross invoiced</span>
+        <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
+      </div>
+      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.GrossInvoicedMinor $b.Range.Key }}</div>
+      <div class="text-label-sm text-on-surface-variant">
+        {{ $k.BookedOrders }} orders · avg {{ currency $k.AvgTicketMinor $b.Range.Key }}
+      </div>
+    </a>
+
+    <!-- Cash settled -->
+    <a href="/orders" class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Cash settled</span>
+        <span class="material-symbols-outlined text-tertiary text-[18px]">price_check</span>
+      </div>
+      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.CashSettledMinor $b.Range.Key }}</div>
+      <div class="w-full h-1.5 rounded-full bg-surface-container-low overflow-hidden flex">
+        <div class="h-full bg-tertiary-container" style="width: {{ $k.CollectionRatePct }}%;"></div>
+        <div class="h-full bg-error" style="width: {{ sub 100 $k.CollectionRatePct }}%;"></div>
+      </div>
+      <div class="text-label-sm text-on-surface-variant">{{ $k.CollectionRatePct }}% collected · {{ currency $k.OutstandingMinor $b.Range.Key }} outstanding</div>
+    </a>
+
+    <!-- Velocity -->
+    <div class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Velocity</span>
+        <span class="material-symbols-outlined text-primary text-[18px]">speed</span>
+      </div>
+      <div class="text-headline-lg font-bold text-on-surface tabular-nums">
+        {{ printf "%.1f" $k.VelocityDays }} days
+      </div>
+      <div class="text-label-sm text-on-surface-variant">Average time from creation to delivery</div>
+    </div>
+
+    <!-- Repeat customers -->
+    <div class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Repeat customers</span>
+        <span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+      </div>
+      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ $k.RepeatCustomerPct }}%</div>
+      <div class="text-label-sm text-on-surface-variant">{{ $k.RepeatCustomers }} of {{ $k.TotalCustomers }} customers</div>
+    </div>
+  </div>
+
+  <!-- Main chart + stages -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+    <div class="lg:col-span-8 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="font-headline-md font-bold text-on-surface">Revenue &amp; cash flow</h2>
+          <p class="font-body-sm text-on-surface-variant">Invoiced vs cash settled per bucket</p>
+        </div>
+      </div>
+      <div class="h-72 relative">
+        <canvas id="trend-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="lg:col-span-4 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+      <h2 class="font-headline-md font-bold text-on-surface">Fulfillment cycle</h2>
+      {{ if $b.Stages }}
+        <div class="flex flex-col gap-space-md">
+          {{ range $b.Stages }}
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between text-label-sm">
+                <span class="font-semibold text-on-surface">{{ .Stage }}</span>
+                <span class="font-code-md font-bold {{ if .Longest }}text-tertiary{{ else }}text-on-surface{{ end }}">{{ printf "%.1f" .AvgHours }} hrs</span>
+              </div>
+              <div class="w-full h-2 rounded-full bg-surface-container-low overflow-hidden">
+                <div class="h-full rounded-full {{ if .Longest }}bg-tertiary-container{{ else }}bg-primary-container{{ end }}"
+                     style="width: {{ if gt .AvgHours 24.0 }}90{{ else if gt .AvgHours 12.0 }}70{{ else if gt .AvgHours 6.0 }}50{{ else if gt .AvgHours 2.0 }}30{{ else }}15{{ end }}%;"></div>
+              </div>
+            </div>
+          {{ end }}
+        </div>
+      {{ else }}
+        <p class="text-body-sm text-on-surface-variant">No status changes recorded in this range.</p>
+      {{ end }}
+    </div>
+  </div>
+
+  <!-- Categories + Channels + Top customers -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-space-lg">
+    <!-- Categories -->
+    <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+      <div class="flex items-center justify-between">
+        <h3 class="font-headline-md font-bold text-on-surface">Top categories</h3>
+        <span class="text-label-sm text-outline">by revenue</span>
+      </div>
+      {{ if $b.Categories }}
+        <div class="flex flex-col gap-space-md">
+          {{ range $b.Categories }}
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="font-label-md font-semibold text-on-surface truncate max-w-[65%]">{{ .Description }}</span>
+                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</span>
+              </div>
+              <div class="flex justify-between text-label-sm text-on-surface-variant">
+                <span>{{ .Orders }} order{{ if ne .Orders 1 }}s{{ end }}</span>
+                <span>{{ printf "%.1f" .PercentOfTotal }}%</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-surface-container-low overflow-hidden">
+                <div class="h-full bg-primary-container rounded-full" style="width: {{ printf "%.0f" .PercentOfTotal }}%;"></div>
+              </div>
+            </div>
+          {{ end }}
+        </div>
+      {{ else }}
+        <p class="text-body-sm text-on-surface-variant">No items in this range.</p>
+      {{ end }}
+    </div>
+
+    <!-- Channels -->
+    <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+      <div class="flex items-center justify-between">
+        <h3 class="font-headline-md font-bold text-on-surface">Payment channels</h3>
+        <span class="text-label-sm text-outline">by amount received</span>
+      </div>
+      {{ if $b.Channels }}
+        <div class="flex flex-col gap-space-md">
+          {{ range $b.Channels }}
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between text-label-md">
+                <span class="font-semibold text-on-surface">{{ .Method }}</span>
+                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</span>
+              </div>
+              <div class="flex justify-between text-label-sm text-on-surface-variant">
+                <span>{{ .Count }} payment{{ if ne .Count 1 }}s{{ end }}</span>
+                <span>{{ printf "%.1f" .Percent }}%</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-surface-container-low overflow-hidden">
+                <div class="h-full bg-tertiary-container rounded-full" style="width: {{ printf "%.0f" .Percent }}%;"></div>
+              </div>
+            </div>
+          {{ end }}
+        </div>
+      {{ else }}
+        <p class="text-body-sm text-on-surface-variant">No payments in this range.</p>
+      {{ end }}
+    </div>
+
+    <!-- Top customers -->
+    <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+      <div class="flex items-center justify-between">
+        <h3 class="font-headline-md font-bold text-on-surface">Top customers</h3>
+        <span class="text-label-sm text-outline">by revenue</span>
+      </div>
+      {{ if $b.TopCustomers }}
+        <div class="flex flex-col gap-2">
+          {{ range $b.TopCustomers }}
+            <a href="/customers/{{ .ID }}" class="card-lift flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md font-bold shrink-0">
+                  {{ initials .Name }}
+                </div>
+                <div class="min-w-0">
+                  <div class="font-label-md font-semibold text-on-surface truncate">{{ .Name }}</div>
+                  <div class="text-label-sm text-on-surface-variant">{{ .Orders }} orders</div>
+                </div>
+              </div>
+              <div class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</div>
+            </a>
+          {{ end }}
+        </div>
+      {{ else }}
+        <p class="text-body-sm text-on-surface-variant">No customers with orders in this range.</p>
+      {{ end }}
+    </div>
+  </div>
+
+  <!-- Insights -->
+  {{ if $b.Insights }}
+    <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+      <div class="flex items-center justify-between">
+        <h3 class="font-headline-md font-bold text-on-surface">Operational insights</h3>
+        <span class="text-label-sm text-outline">Auto-generated</span>
+      </div>
+      <div class="flex flex-col gap-2">
+        {{ range $b.Insights }}
+          <div class="p-space-md rounded-lg bg-surface-container-low flex items-start gap-space-md">
+            <div class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center
+                        {{ if eq .Severity "critical" }}bg-error-container text-on-error-container
+                        {{ else if eq .Severity "warn" }}bg-amber-100 text-amber-900
+                        {{ else }}bg-secondary-container text-on-secondary-fixed{{ end }}">
+              <span class="material-symbols-outlined text-[18px]">
+                {{ if eq .Severity "critical" }}warning{{ else if eq .Severity "warn" }}schedule{{ else }}info{{ end }}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-label-md font-semibold text-on-surface">{{ .Title }}</div>
+              <p class="text-body-sm text-on-surface-variant mt-0.5">{{ .Message }}</p>
+            </div>
+            <a href="{{ .ActionURL }}" class="h-8 px-3 rounded bg-primary-container text-on-primary font-label-sm font-semibold flex items-center shrink-0">{{ .ActionText }}</a>
+          </div>
+        {{ end }}
+      </div>
+    </div>
+  {{ end }}
+
+</div>
+
+<script>
+  window.__ORDORA_REPORTS__ = {
+    trend: [
+      {{ range $i, $p := $b.Trend }}{{ if $i }},{{ end }}
+        { bucket_start: "{{ $p.BucketStart.Format "2006-01-02T15:04:05Z07:00" }}", invoiced_minor: {{ $p.InvoicedMinor }}, settled_minor: {{ $p.SettledMinor }} }
+      {{ end }}
+    ]
+  };
+</script>
+<script src="/static/js/reports.js" defer></script>
+{{ end }}

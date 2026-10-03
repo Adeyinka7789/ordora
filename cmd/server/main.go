@@ -228,6 +228,16 @@ func run() error {
 		Renderer: renderer,
 	}
 
+	// ---- Reports ----
+	reportRepo := postgres.NewReportRepo(db)
+	reportSvc := app.NewReportService(app.ReportServiceDeps{
+		Repo: postgres.NewReportAdapter(reportRepo),
+	})
+	reportH := &handlers.ReportHandler{
+		Service:  reportSvc,
+		Renderer: renderer,
+	}
+
 	// ---- Admin panel ----
 	adminAuthService := auth.NewAdminAuthService(auth.AdminAuthDeps{
 		Admins:   postgres.NewPlatformAdminRepo(db),
@@ -521,8 +531,12 @@ func run() error {
 	mux.Handle("GET /customers/{id}/edit", middleware.RequireTenant(http.HandlerFunc(customerH.Edit)))
 	mux.Handle("POST /customers/{id}", middleware.RequireTenant(http.HandlerFunc(customerH.Update)))
 	mux.Handle("POST /customers/{id}/delete", middleware.RequireTenant(http.HandlerFunc(customerH.Delete)))
+
+	// ---- Search  ----
+	mux.Handle("GET /reports", middleware.RequireTenant(http.HandlerFunc(reportH.Index)))
+	mux.Handle("GET /reports/export.csv", middleware.RequireTenant(http.HandlerFunc(reportH.ExportCSV)))
+
 	// ---- Stub pages (nav links that are on the roadmap) ----
-	mux.Handle("GET /reports", middleware.RequireTenant(http.HandlerFunc(stubH.Reports)))
 	mux.Handle("GET /payments", middleware.RequireTenant(http.HandlerFunc(stubH.Payments)))
 	mux.Handle("GET /storefront", middleware.RequireTenant(http.HandlerFunc(stubH.Storefront)))
 
