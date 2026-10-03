@@ -6,23 +6,43 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
+	"github.com/google/uuid"
 )
 
 // SessionResolver is the subset of *auth.Service the middleware needs.
-// Declared as an interface so the middleware can be tested without the DB.
 type SessionResolver interface {
 	ResolveSession(ctx context.Context, rawToken string) (*auth.ResolvedSession, error)
 }
 
 // SessionMiddleware reads the session cookie, resolves it, and injects the
-// resolved session into the request context. If the cookie is missing or
-// invalid, the request proceeds unauthenticated (no error, no redirect).
+// resolved session into the request context.
 //
-// Requiring authentication is the job of a *separate* middleware. This one is
-// deliberately permissive so that public pages can coexist with authed ones.
-func SessionMiddleware(resolver SessionResolver, cookieName string) func(http.Handler) http.Handler {
+// If an impersonation cookie is present and valid, it takes precedence: the
+// session context is built from the impersonation target instead of the
+// business session.
+func SessionMiddleware(
+	resolver SessionResolver,
+	cookieName string,
+	impersonationResolver ImpersonationResolver,
+	buildImpersonatedSession func(ctx context.Context, orgID uuid.UUID) (*auth.ResolvedSession, error),
+) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Impersonation check first.
+			if c, err := r.Cookie(ImpersonationCookieName); err == nil && c.Value != "" {
+				if sess, err := impersonationResolver.ResolveImpersonation(r.Context(), c.Value); err == nil {
+					// Build a synthetic session for the org's owner.
+					if resolved, err := buildImpersonatedSession(r.Context(), sess.OrganizationID); err == nil {
+						ctx := context.WithValue(r.Context(), ctxKeyImpersonation, sess)
+						ctx = context.WithValue(ctx, ctxKeyImpersonationOrgID, sess.OrganizationID)
+						ctx = withSession(ctx, resolved)
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					}
+				}
+			}
+
+			// Normal business session.
 			c, err := r.Cookie(cookieName)
 			if err != nil || c.Value == "" {
 				next.ServeHTTP(w, r)
@@ -30,7 +50,6 @@ func SessionMiddleware(resolver SessionResolver, cookieName string) func(http.Ha
 			}
 			resolved, err := resolver.ResolveSession(r.Context(), c.Value)
 			if err != nil {
-				// Invalid/expired token: don't fail. Just treat as anonymous.
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -67,7 +86,6 @@ func RequireTenant(next http.Handler) http.Handler {
 	})
 }
 
-// withSession stores the resolved session in the context.
 func withSession(ctx context.Context, s *auth.ResolvedSession) context.Context {
 	return context.WithValue(ctx, ctxKeySession, s)
 }
@@ -79,7 +97,6 @@ func SessionFromContext(ctx context.Context) *auth.ResolvedSession {
 }
 
 // ScopeFromContext returns the tenant scope, or zero-value if not authed.
-// Callers under RequireTenant can rely on this being non-zero.
 func ScopeFromContext(ctx context.Context) tenant.TenantScope {
 	if s := SessionFromContext(ctx); s != nil {
 		return s.Scope

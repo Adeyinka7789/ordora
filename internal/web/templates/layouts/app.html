@@ -140,9 +140,23 @@
 </head>
 <body class="bg-surface font-body-md text-on-surface antialiased">
 
+  {{ if .Shell.Impersonating }}
+    <div class="fixed top-0 left-0 right-0 z-[60] bg-error text-on-error px-space-md py-2 flex items-center justify-between text-label-md font-label-md">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">shield_person</span>
+        <span class="font-bold uppercase tracking-wider">Impersonating</span>
+        <span class="opacity-90">— you are viewing this app as <strong>{{ .Shell.ImpersonatingOrgName }}</strong>. Every action is logged.</span>
+      </div>
+      <form method="post" action="/impersonate/exit" class="inline">
+        <input type="hidden" name="_csrf" value="{{ .Shell.CSRFToken }}">
+        <button type="submit" class="h-7 px-3 rounded bg-on-error/15 hover:bg-on-error/25 text-on-error font-label-sm text-label-sm font-semibold">Exit impersonation</button>
+      </form>
+    </div>
+  {{ end }}
+
   {{ template "partials/sidebar.html" . }}
 
-  <div class="pl-64 flex flex-col min-h-screen">
+  <div class="pl-64 flex flex-col min-h-screen {{ if .Shell.Impersonating }}pt-10{{ end }}">
     {{ template "partials/topbar.html" . }}
     <main class="w-full pt-16 flex-1 bg-surface">
       {{ .Content }}

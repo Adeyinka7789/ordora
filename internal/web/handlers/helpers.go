@@ -111,6 +111,11 @@ func shellFromRequest(r *http.Request) render.Shell {
 		sh.OrgCurrency = s.OrgCurrency
 		sh.OrgTimezone = s.OrgTimezone
 	}
+	if middleware.IsImpersonating(r.Context()) {
+		sh.Impersonating = true
+		sh.ImpersonatingOrgID = middleware.ImpersonatedOrgID(r.Context()).String()
+		sh.ImpersonatingOrgName = s.OrgName // the org we're viewing
+	}
 	return sh
 }
 

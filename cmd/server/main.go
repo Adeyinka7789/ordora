@@ -12,11 +12,16 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
+
+	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
+	"github.com/Adeyinka7789/ordora/internal/domain/user"
 	"github.com/Adeyinka7789/ordora/internal/infra/email"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
@@ -260,6 +265,52 @@ func run() error {
 		Cfg:      cfg,
 	}
 
+	// Impersonation: build a synthetic ResolvedSession for a target org.
+	// Used by the business session middleware when the impersonation cookie
+	// is present. The synthetic session makes the admin appear as the org's
+	// OWNER. Actions are attributed to the admin by the audit system.
+	buildImpersonatedSession := func(ctx context.Context, orgID uuid.UUID) (*auth.ResolvedSession, error) {
+		var ownerID uuid.UUID
+		var ownerName, ownerEmail, orgName, orgSlug, orgCurrency, orgTimezone string
+
+		err := adminDB.WithTx(ctx, func(tx pgx.Tx) error {
+			const q = `
+				SELECT m.user_id, u.name, u.email::text, o.name, o.slug::text, o.currency::text, o.timezone
+				FROM organization_members m
+				JOIN users u ON u.id = m.user_id
+				JOIN organizations o ON o.id = m.organization_id
+				WHERE m.organization_id = $1 AND m.role = 'OWNER' AND m.status = 'ACTIVE'
+				ORDER BY m.created_at ASC
+				LIMIT 1
+			`
+			return tx.QueryRow(ctx, q, orgID).Scan(&ownerID, &ownerName, &ownerEmail,
+				&orgName, &orgSlug, &orgCurrency, &orgTimezone)
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// Minimal user object. We need Email + Name for the shell.
+		email, _ := user.NewEmail(ownerEmail)
+		u := &user.User{
+			ID:    ownerID,
+			Email: email,
+			Name:  ownerName,
+		}
+		return &auth.ResolvedSession{
+			User: u,
+			Scope: tenant.TenantScope{
+				OrgID:  orgID,
+				UserID: ownerID,
+				Role:   tenant.RoleOwner,
+			},
+			OrgName:     orgName,
+			OrgSlug:     orgSlug,
+			OrgCurrency: orgCurrency,
+			OrgTimezone: orgTimezone,
+		}, nil
+	}
+
 	// ---- Public portal ----
 	portalRepo := postgres.NewPortalRepo(db)
 	portalService := app.NewPortalService(app.PortalServiceDeps{
@@ -455,7 +506,13 @@ func run() error {
 		middleware.Recover(renderer),
 		middleware.RequestID,
 		middleware.Logger,
-		middleware.SessionMiddleware(authService, cfg.Session.CookieName),
+		middleware.ImpersonationMiddleware(adminSvc),
+		middleware.SessionMiddleware(
+			authService,
+			cfg.Session.CookieName,
+			adminSvc,
+			buildImpersonatedSession,
+		),
 		middleware.CSRF(middleware.CSRFConfig{
 			CookieName: cfg.Session.CSRFCookieName,
 			Secure:     !cfg.IsDev(),

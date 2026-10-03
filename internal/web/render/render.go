@@ -33,6 +33,11 @@ type Shell struct {
 	OrgCurrency string
 	OrgTimezone string
 	CSRFToken   string
+
+	// Impersonation
+	Impersonating        bool
+	ImpersonatingOrgID   string
+	ImpersonatingOrgName string
 }
 
 // New loads all .html files under templatesDir.
