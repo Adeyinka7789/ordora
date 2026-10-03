@@ -33,3 +33,66 @@ details > summary::-webkit-details-marker { display: none; }
 
 /* Small: keep tabular numbers tight for money columns */
 .tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ---- Central HTMX skeleton (see partials/skeleton.html + js/skeleton.js) ----
+ * .ordora-loading dims the swap target while a request is in flight.
+ * .ordora-skeleton / .ordora-shimmer render the shimmer placeholder.
+ * Markup uses classes only (never swap-target ids) so outerHTML swaps stay
+ * rigid-safe. Honors prefers-reduced-motion.
+ */
+.ordora-loading {
+  opacity: 0.75;
+  pointer-events: none;
+  transition: opacity 150ms ease-in;
+}
+
+.ordora-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.ordora-skeleton-row,
+.ordora-skeleton-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.ordora-skeleton-header {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(195, 207, 209, 0.4);
+}
+
+.ordora-skeleton-title,
+.ordora-skeleton-line {
+  display: flex;
+}
+
+.ordora-skeleton-card { gap: 0.75rem; }
+.ordora-skeleton-list .ordora-skeleton-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(195, 207, 209, 0.25);
+}
+
+.ordora-shimmer {
+  display: block;
+  height: 0.85rem;
+  border-radius: 0.375rem;
+  background: linear-gradient(90deg, #e0ebeb 25%, #edf3f3 50%, #e0ebeb 75%);
+  background-size: 200% 100%;
+  animation: ordora-shimmer 1.2s ease-in-out infinite;
+}
+
+.ordora-skeleton-title .ordora-shimmer { height: 1.1rem; }
+
+@keyframes ordora-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ordora-shimmer { animation: none; }
+  .ordora-loading { transition: none; }
+}

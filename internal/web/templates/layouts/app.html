@@ -12,6 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Ordora">
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/css/app.css">
   <meta name="csrf-token" content="{{ csrfToken .Data }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -231,6 +232,11 @@
   </div>
 
   <script src="/static/js/pwa.js" defer></script>
+  <script src="/static/js/skeleton.js" defer></script>
+
+  {{/* Central HTMX skeletons. Rendered once per full page, outside every
+      hx-target, so no swap can remove the <template> definitions. */}}
+  {{ template "partials/skeleton.html" . }}
 
   <script>
     (function () {
