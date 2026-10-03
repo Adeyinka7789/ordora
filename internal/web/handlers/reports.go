@@ -24,6 +24,9 @@ type reportPageData struct {
 	Bundle     *app.ReportBundle
 	Ranges     []app.ReportRange
 	CurrentKey string
+	// Currency is the org currency for money display. (The bundle's range
+	// key is a date preset like "30d", never a currency — don't mix them.)
+	Currency string
 }
 
 // Index handles GET /reports.
@@ -47,6 +50,7 @@ func (h *ReportHandler) Index(w http.ResponseWriter, r *http.Request) {
 		Bundle:     bundle,
 		Ranges:     app.AvailableRanges(),
 		CurrentKey: bundle.Range.Key,
+		Currency:   currencyFromRequest(r),
 	}
 	page(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "reports/index.html", data)
 }

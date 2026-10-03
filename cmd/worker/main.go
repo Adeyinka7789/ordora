@@ -13,6 +13,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/infra/email"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/jobs"
+	"github.com/Adeyinka7789/ordora/internal/observe"
 )
 
 func main() {
@@ -29,6 +30,11 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
+	if err := observe.Init(cfg.Sentry.DSN, cfg.Sentry.Environment); err != nil {
+		return err
+	}
+	defer observe.Flush()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -53,8 +59,8 @@ func run() error {
 	relay := jobs.NewOutboxRelay(db, jobs.OutboxRelayConfig{})
 	worker := jobs.NewNotificationWorker(db, renderer, mailer, jobs.NotificationWorkerConfig{})
 
-	go relay.Run(ctx)
-	go worker.Run(ctx)
+	observe.SafeGo("outbox-relay", func() { relay.Run(ctx) })
+	observe.SafeGo("notifications", func() { worker.Run(ctx) })
 
 	<-ctx.Done()
 	slog.Info("worker: shutting down")

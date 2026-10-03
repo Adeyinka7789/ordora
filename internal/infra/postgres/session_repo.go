@@ -23,8 +23,8 @@ func NewSessionRepo(db *DB) *SessionRepo { return &SessionRepo{db: db} }
 // Create inserts a session.
 func (r *SessionRepo) Create(ctx context.Context, s *auth.Session) error {
 	const q = `
-		INSERT INTO sessions (id, user_id, token_hash, organization_id, user_agent, ip, expires_at, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO sessions (id, user_id, token_hash, organization_id, user_agent, ip, expires_at, created_at, last_seen_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
 	`
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		_, e := tx.Exec(ctx, q,
@@ -44,7 +44,7 @@ func (r *SessionRepo) Create(ctx context.Context, s *auth.Session) error {
 func (r *SessionRepo) GetActiveByTokenHash(ctx context.Context, hash []byte) (*auth.Session, error) {
 	const q = `
 		SELECT id, user_id, token_hash, organization_id, COALESCE(user_agent,''), COALESCE(ip::text,''),
-		       expires_at, revoked_at, created_at
+		       expires_at, revoked_at, created_at, last_seen_at
 		FROM sessions
 		WHERE token_hash = $1
 		  AND revoked_at IS NULL
@@ -95,6 +95,26 @@ func (r *SessionRepo) Touch(ctx context.Context, sessionID uuid.UUID, newExpiry 
 	})
 }
 
+// TouchSeen refreshes last_seen_at. Called opportunistically (at most
+// hourly per session) so idle enforcement doesn't cost a write per request.
+func (r *SessionRepo) TouchSeen(ctx context.Context, sessionID uuid.UUID, now time.Time) error {
+	const q = `UPDATE sessions SET last_seen_at = $2 WHERE id = $1 AND revoked_at IS NULL`
+	return r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, q, sessionID, now)
+		return err
+	})
+}
+
+// RevokeOthersForUser revokes every active session for a user except one.
+// Used after a password change: the current device stays signed in.
+func (r *SessionRepo) RevokeOthersForUser(ctx context.Context, userID, exceptSessionID uuid.UUID, now time.Time) error {
+	const q = `UPDATE sessions SET revoked_at = $3 WHERE user_id = $1 AND id <> $2 AND revoked_at IS NULL`
+	return r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, q, userID, exceptSessionID, now)
+		return err
+	})
+}
+
 // RoleForSession resolves the session user's role in the session's org.
 func (r *SessionRepo) RoleForSession(ctx context.Context, s *auth.Session) (tenant.Role, error) {
 	if s.OrganizationID == nil {
@@ -128,7 +148,7 @@ func scanSession(row pgx.Row) (*auth.Session, error) {
 		revokedAt *time.Time
 	)
 	if err := row.Scan(&s.ID, &s.UserID, &s.TokenHash, &orgID,
-		&userAgent, &ip, &s.ExpiresAt, &revokedAt, &s.CreatedAt); err != nil {
+		&userAgent, &ip, &s.ExpiresAt, &revokedAt, &s.CreatedAt, &s.LastSeenAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
@@ -148,7 +168,7 @@ func (r *SessionRepo) ListActiveForUser(ctx context.Context, userID uuid.UUID) (
 		const q = `
 			SELECT id, user_id, token_hash, organization_id,
 			       COALESCE(user_agent,''), COALESCE(ip::text,''),
-			       expires_at, revoked_at, created_at
+			       expires_at, revoked_at, created_at, last_seen_at
 			FROM sessions
 			WHERE user_id = $1
 			  AND revoked_at IS NULL

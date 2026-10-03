@@ -594,16 +594,16 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 		page.Attachments = list
 	}
 
-	// Load payments + per-payment receipts (best-effort).
+	// Load payments + per-payment receipts (best-effort, one batched query).
 	if list, err := h.Payments.ListForOrder(r.Context(), scope, o.ID); err == nil {
 		page.Payments = list
-		byPayment := make(map[uuid.UUID][]*attachment.Attachment, len(list))
+		ids := make([]uuid.UUID, 0, len(list))
 		for _, p := range list {
-			atts, err := h.Attachments.List(r.Context(), scope, attachment.EntityPayment, p.ID)
-			if err != nil {
-				continue
-			}
-			byPayment[p.ID] = atts
+			ids = append(ids, p.ID)
+		}
+		byPayment := make(map[uuid.UUID][]*attachment.Attachment, len(list))
+		if grouped, err := h.Attachments.ListForEntities(r.Context(), scope, attachment.EntityPayment, ids); err == nil {
+			byPayment = grouped
 		}
 		page.AttachmentsByPayment = byPayment
 	}

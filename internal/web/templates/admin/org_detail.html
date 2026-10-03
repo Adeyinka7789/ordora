@@ -91,7 +91,7 @@
     </div>
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
       <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Outstanding</div>
-      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums {{ if gt .Org.OutstandingGMV 0 }}text-error{{ end }}">{{ .Org.Currency }} {{ .Org.OutstandingGMV }}</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums {{ if gt .Org.OutstandingGMV 0 }}text-error{{ end }}">{{ currency .Org.OutstandingGMV .Org.Currency }}</div>
     </div>
   </div>
 

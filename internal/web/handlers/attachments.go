@@ -213,14 +213,14 @@ func (h *AttachmentHandler) rendersPaymentsFragmentForOrder(w http.ResponseWrite
 		return
 	}
 
-	// Build a per-payment attachments map.
-	attachmentsByPayment := make(map[uuid.UUID][]*attachment.Attachment, len(payments))
+	// Build a per-payment attachments map with one batched query.
+	ids := make([]uuid.UUID, 0, len(payments))
 	for _, p := range payments {
-		list, err := h.Service.List(r.Context(), scope, attachment.EntityPayment, p.ID)
-		if err != nil {
-			continue
-		}
-		attachmentsByPayment[p.ID] = list
+		ids = append(ids, p.ID)
+	}
+	attachmentsByPayment := make(map[uuid.UUID][]*attachment.Attachment, len(payments))
+	if grouped, err := h.Service.ListForEntities(r.Context(), scope, attachment.EntityPayment, ids); err == nil {
+		attachmentsByPayment = grouped
 	}
 
 	h.Renderer.Fragment(w, r, http.StatusOK, "orders/_payments.html", paymentsFragment{

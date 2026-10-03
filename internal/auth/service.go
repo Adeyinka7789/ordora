@@ -49,8 +49,10 @@ type SessionStore interface {
 	GetActiveByTokenHash(ctx context.Context, hash []byte) (*Session, error)
 	Revoke(ctx context.Context, sessionID uuid.UUID, now time.Time) error
 	RevokeAllForUser(ctx context.Context, userID uuid.UUID, now time.Time) error
+	RevokeOthersForUser(ctx context.Context, userID, exceptSessionID uuid.UUID, now time.Time) error
 	SetActiveOrg(ctx context.Context, sessionID, orgID uuid.UUID) error
 	Touch(ctx context.Context, sessionID uuid.UUID, newExpiry time.Time) error
+	TouchSeen(ctx context.Context, sessionID uuid.UUID, now time.Time) error
 	RoleForSession(ctx context.Context, s *Session) (tenant.Role, error)
 }
 
@@ -86,6 +88,7 @@ type Service struct {
 	mailer   Mailer
 	now      Clock
 	outbox   OutboxWriter
+	idleTTL  time.Duration
 }
 
 // Deps bundles the service dependencies.
@@ -100,6 +103,9 @@ type Deps struct {
 	Outbox   OutboxWriter
 	IDs      IDGen
 	Now      Clock
+	// IdleTTL caps session lifetime without activity. Zero disables
+	// idle enforcement (absolute expiry still applies).
+	IdleTTL time.Duration
 }
 
 // OutboxWriter writes domain events to the transactional outbox.
@@ -122,6 +128,7 @@ func NewService(d Deps) *Service {
 		mailer:   d.Mailer,
 		now:      d.Now,
 		outbox:   d.Outbox,
+		idleTTL:  d.IdleTTL,
 	}
 }
 
@@ -143,10 +150,13 @@ type RegisterResult struct {
 	VerifyToken  string // raw token; caller emails the link
 }
 
-// LoginInput carries credentials.
+// LoginInput carries credentials plus request metadata recorded on the
+// session (device list, security review).
 type LoginInput struct {
-	Email    string
-	Password string
+	Email     string
+	Password  string
+	UserAgent string
+	IP        string
 }
 
 // LoginResult carries the session token that the HTTP layer puts in a cookie.
@@ -331,8 +341,11 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 		UserID:         u.ID,
 		TokenHash:      hash,
 		OrganizationID: &active.OrgID,
+		UserAgent:      in.UserAgent,
+		IP:             in.IP,
 		ExpiresAt:      now.Add(TokenSession.TTL()),
 		CreatedAt:      now,
+		LastSeenAt:     now,
 	}
 	if err := s.sessions.Create(ctx, sess); err != nil {
 		return nil, err
@@ -508,6 +521,17 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 			return nil, ErrTokenInvalid
 		}
 		return nil, err
+	}
+	now := s.now()
+	if s.idleTTL > 0 && now.Sub(sess.LastSeenAt) > s.idleTTL {
+		return nil, ErrTokenInvalid
+	}
+	// Opportunistic activity tracking: at most one write per hour per
+	// session, so idle enforcement doesn't cost a write per request.
+	// Best-effort — the session stays valid even if the write fails.
+	if now.Sub(sess.LastSeenAt) > time.Hour {
+		_ = s.sessions.TouchSeen(ctx, sess.ID, now)
+		sess.LastSeenAt = now
 	}
 	u, err := s.users.GetByID(ctx, sess.UserID)
 	if err != nil {

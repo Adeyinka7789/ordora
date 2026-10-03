@@ -115,6 +115,7 @@ func mapCustomers(rows []*CustomerLookup) []*app.CustomerLookup {
 			OrganizationID: c.OrganizationID,
 			OrgName:        c.OrgName,
 			OrgSlug:        c.OrgSlug,
+			Currency:       c.Currency,
 			Name:           c.Name,
 			Email:          c.Email,
 			Phone:          c.Phone,

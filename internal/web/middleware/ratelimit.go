@@ -103,6 +103,12 @@ func (l *limiter) cleanup() {
 	}
 }
 
+// ClientIP extracts the best-guess client IP for handlers that need to
+// record it (e.g. login sessions). Same logic as the rate limiter uses.
+func ClientIP(r *http.Request) string {
+	return clientIP(r)
+}
+
 // clientIP extracts the best-guess client IP.
 func clientIP(r *http.Request) string {
 	// X-Forwarded-For: client, proxy1, proxy2 — take the first.

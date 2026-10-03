@@ -12,7 +12,7 @@
       </p>
     </div>
     <div class="flex items-center gap-space-sm">
-      <a href="/reports/export.csv?range={{ $b.Range.Key }}"
+      <a href="/reports/export.csv?range={{ .CurrentKey }}"
          class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md font-semibold flex items-center gap-2 transition-colors">
         <span class="material-symbols-outlined text-[18px]">download</span>
         <span>Export CSV</span>
@@ -39,9 +39,9 @@
         <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Gross invoiced</span>
         <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
       </div>
-      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.GrossInvoicedMinor $b.Range.Key }}</div>
+      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.GrossInvoicedMinor $.Currency }}</div>
       <div class="text-label-sm text-on-surface-variant">
-        {{ $k.BookedOrders }} orders · avg {{ currency $k.AvgTicketMinor $b.Range.Key }}
+        {{ $k.BookedOrders }} orders · avg {{ currency $k.AvgTicketMinor $.Currency }}
       </div>
     </a>
 
@@ -51,12 +51,12 @@
         <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Cash settled</span>
         <span class="material-symbols-outlined text-tertiary text-[18px]">price_check</span>
       </div>
-      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.CashSettledMinor $b.Range.Key }}</div>
+      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.CashSettledMinor $.Currency }}</div>
       <div class="w-full h-1.5 rounded-full bg-surface-container-low overflow-hidden flex">
         <div class="h-full bg-tertiary-container" style="width: {{ $k.CollectionRatePct }}%;"></div>
         <div class="h-full bg-error" style="width: {{ sub 100 $k.CollectionRatePct }}%;"></div>
       </div>
-      <div class="text-label-sm text-on-surface-variant">{{ $k.CollectionRatePct }}% collected · {{ currency $k.OutstandingMinor $b.Range.Key }} outstanding</div>
+      <div class="text-label-sm text-on-surface-variant">{{ $k.CollectionRatePct }}% collected · {{ currency $k.OutstandingMinor $.Currency }} outstanding</div>
     </a>
 
     <!-- Velocity -->
@@ -87,18 +87,18 @@
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
       <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
         <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Revenue</div>
-        <div class="text-headline-lg font-bold text-on-surface tabular-nums mt-1">{{ currency $b.Profit.TotalRevenueMinor "NGN" }}</div>
+        <div class="text-headline-lg font-bold text-on-surface tabular-nums mt-1">{{ currency $b.Profit.TotalRevenueMinor $.Currency }}</div>
         <div class="text-label-sm text-on-surface-variant mt-1">{{ $b.Profit.OrdersWithCosts }} orders</div>
       </div>
       <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
         <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Costs</div>
-        <div class="text-headline-lg font-bold text-error tabular-nums mt-1">{{ currency $b.Profit.TotalCostsMinor "NGN" }}</div>
+        <div class="text-headline-lg font-bold text-error tabular-nums mt-1">{{ currency $b.Profit.TotalCostsMinor $.Currency }}</div>
         <div class="text-label-sm text-on-surface-variant mt-1">Materials, labor, delivery, overhead</div>
       </div>
       <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm {{ if gt $b.Profit.ProfitMinor 0 }}ring-1 ring-tertiary-container{{ end }}">
         <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Gross profit</div>
         <div class="text-headline-lg font-bold {{ if gt $b.Profit.ProfitMinor 0 }}text-tertiary{{ else if lt $b.Profit.ProfitMinor 0 }}text-error{{ else }}text-on-surface{{ end }} tabular-nums mt-1">
-          {{ currency $b.Profit.ProfitMinor "NGN" }}
+          {{ currency $b.Profit.ProfitMinor $.Currency }}
         </div>
         <div class="text-label-sm text-on-surface-variant mt-1">{{ printf "%.1f" $b.Profit.MarginPercent }}% margin</div>
       </div>
@@ -161,7 +161,7 @@
             <div class="flex flex-col gap-1">
               <div class="flex items-center justify-between">
                 <span class="font-label-md font-semibold text-on-surface truncate max-w-[65%]">{{ .Description }}</span>
-                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</span>
+                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor $.Currency }}</span>
               </div>
               <div class="flex justify-between text-label-sm text-on-surface-variant">
                 <span>{{ .Orders }} order{{ if ne .Orders 1 }}s{{ end }}</span>
@@ -190,7 +190,7 @@
             <div class="flex flex-col gap-1">
               <div class="flex items-center justify-between text-label-md">
                 <span class="font-semibold text-on-surface">{{ .Method }}</span>
-                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</span>
+                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor $.Currency }}</span>
               </div>
               <div class="flex justify-between text-label-sm text-on-surface-variant">
                 <span>{{ .Count }} payment{{ if ne .Count 1 }}s{{ end }}</span>
@@ -226,7 +226,7 @@
                   <div class="text-label-sm text-on-surface-variant">{{ .Orders }} orders</div>
                 </div>
               </div>
-              <div class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</div>
+              <div class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor $.Currency }}</div>
             </a>
           {{ end }}
         </div>
@@ -247,7 +247,7 @@
             <div class="flex flex-col gap-1">
               <div class="flex items-center justify-between text-label-md">
                 <span class="font-semibold text-on-surface">{{ .Category }}</span>
-                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</span>
+                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor $.Currency }}</span>
               </div>
               <div class="flex justify-between text-label-sm text-on-surface-variant">
                 <span>{{ .Count }} entr{{ if ne .Count 1 }}ies{{ else }}y{{ end }}</span>

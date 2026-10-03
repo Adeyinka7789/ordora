@@ -24,6 +24,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/domain/user"
 	"github.com/Adeyinka7789/ordora/internal/flags"
 	"github.com/Adeyinka7789/ordora/internal/infra/email"
+	"github.com/Adeyinka7789/ordora/internal/observe"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/infra/storage"
@@ -48,6 +49,12 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
+
+	// Error monitoring. Empty DSN (local dev) disables Sentry entirely.
+	if err := observe.Init(cfg.Sentry.DSN, cfg.Sentry.Environment); err != nil {
+		return fmt.Errorf("sentry: %w", err)
+	}
+	defer observe.Flush()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -86,8 +93,8 @@ func run() error {
 	if cfg.IsDev() {
 		relay := jobs.NewOutboxRelay(db, jobs.OutboxRelayConfig{})
 		notifWorker := jobs.NewNotificationWorker(db, emailRenderer, mailer, jobs.NotificationWorkerConfig{})
-		go relay.Run(ctx)
-		go notifWorker.Run(ctx)
+		observe.SafeGo("outbox-relay", func() { relay.Run(ctx) })
+		observe.SafeGo("notifications", func() { notifWorker.Run(ctx) })
 		slog.Info("dev: background workers running in-process")
 	}
 	_ = mailer // used by services
@@ -103,6 +110,7 @@ func run() error {
 		Tokens:   postgres.NewAuthTokenRepo(db),
 		IDs:      id.Generator{},
 		Mailer:   authMailer,
+		IdleTTL:  cfg.Session.IdleTTL,
 	})
 
 	// ---- Templates ----
@@ -656,6 +664,7 @@ func run() error {
 	mux.Handle("POST /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.UpdateProfile)))
 	mux.Handle("POST /profile/password", middleware.RequireAuth(http.HandlerFunc(settingsH.ChangePassword)))
 	mux.Handle("POST /profile/sign-out-everywhere", middleware.RequireAuth(http.HandlerFunc(settingsH.SignOutEverywhere)))
+	mux.Handle("POST /profile/sessions/{id}/revoke", middleware.RequireAuth(http.HandlerFunc(settingsH.RevokeSession)))
 
 	// ---- Middleware chain ----
 	// ---- Products ----

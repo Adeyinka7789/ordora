@@ -18,6 +18,9 @@ type Session struct {
 	ExpiresAt      time.Time
 	RevokedAt      *time.Time
 	CreatedAt      time.Time
+	// LastSeenAt is the last request time (updated opportunistically, at
+	// most hourly). Drives idle-timeout enforcement.
+	LastSeenAt time.Time
 }
 
 // IsActive reports whether the session is usable right now.

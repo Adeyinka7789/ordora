@@ -141,14 +141,14 @@ func (h *PaymentHandler) renderPaymentsFragment(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Load attachments for each payment.
-	byPayment := make(map[uuid.UUID][]*attachment.Attachment, len(list))
+	// Load attachments for all payments in one batched query (best-effort).
+	ids := make([]uuid.UUID, 0, len(list))
 	for _, p := range list {
-		atts, err := h.Attachments.List(r.Context(), scope, attachment.EntityPayment, p.ID)
-		if err != nil {
-			continue
-		}
-		byPayment[p.ID] = atts
+		ids = append(ids, p.ID)
+	}
+	byPayment := make(map[uuid.UUID][]*attachment.Attachment, len(list))
+	if grouped, err := h.Attachments.ListForEntities(r.Context(), scope, attachment.EntityPayment, ids); err == nil {
+		byPayment = grouped
 	}
 
 	data := paymentsFragment{

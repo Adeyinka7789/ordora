@@ -212,7 +212,32 @@ func (h *SettingsHandler) ChangePassword(w http.ResponseWriter, r *http.Request)
 		http.Redirect(w, r, "/profile?error="+msg, http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/profile?notice=Password+changed.", http.StatusSeeOther)
+	// A password change implies possible compromise: end every other session.
+	_ = h.Service.RevokeOtherSessions(r.Context(), s.User.ID, s.Session.ID)
+	http.Redirect(w, r, "/profile?notice=Password+changed.+Other+devices+signed+out.", http.StatusSeeOther)
+}
+
+// RevokeSession handles POST /profile/sessions/{id}/revoke: sign out one
+// other device.
+func (h *SettingsHandler) RevokeSession(w http.ResponseWriter, r *http.Request) {
+	s := middleware.SessionFromContext(r.Context())
+	if s == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	id, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	if err := h.Service.RevokeSession(r.Context(), s.User.ID, id, s.Session.ID); err != nil {
+		msg := "Could+not+sign+out+that+device."
+		if errors.Is(err, app.ErrCannotRevokeCurrent) {
+			msg = "Use+Sign+out+to+end+this+device."
+		}
+		http.Redirect(w, r, "/profile?error="+msg, http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/profile?notice=Device+signed+out.", http.StatusSeeOther)
 }
 
 func (h *SettingsHandler) SignOutEverywhere(w http.ResponseWriter, r *http.Request) {

@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,13 +39,16 @@ func templateFuncs() template.FuncMap {
 			}
 			return t.Format("Jan 2, 2006")
 		},
+		// currency formats minor units as "CODE 1,234,567.89".
+		// Thousands grouping lives here and only here: every money
+		// display in every template flows through this function.
 		"currency": func(minor int64, code string) string {
-			major := minor / 100
-			frac := minor % 100
-			if frac < 0 {
-				frac = -frac
+			sign := ""
+			if minor < 0 {
+				sign = "-"
+				minor = -minor
 			}
-			return fmt.Sprintf("%s %d.%02d", code, major, frac)
+			return fmt.Sprintf("%s %s%s.%02d", code, sign, groupThousands(minor/100), minor%100)
 		},
 		"formatQty": func(scaled int64) string {
 			s := fmt.Sprintf("%.3f", float64(scaled)/1000.0)
@@ -211,4 +215,24 @@ func templateFuncs() template.FuncMap {
 		"dec": func(i int) int { return i - 1 },
 		"sub": func(a, b int) int { return a - b },
 	}
+}
+
+// groupThousands inserts comma separators: 1234567 -> "1,234,567".
+func groupThousands(n int64) string {
+	s := strconv.FormatInt(n, 10)
+	if len(s) <= 3 {
+		return s
+	}
+	// Build from the right in chunks of three.
+	out := make([]byte, 0, len(s)+len(s)/3)
+	first := len(s) % 3
+	if first == 0 {
+		first = 3
+	}
+	out = append(out, s[:first]...)
+	for i := first; i < len(s); i += 3 {
+		out = append(out, ',')
+		out = append(out, s[i:i+3]...)
+	}
+	return string(out)
 }

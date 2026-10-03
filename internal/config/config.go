@@ -15,6 +15,7 @@ type Config struct {
 	BaseURL string
 	// SupportEmail is shown in the app footer for complaints and help.
 	SupportEmail string
+	Sentry       SentryConfig
 	HTTP         HTTPConfig
 	DB      DBConfig
 	Session SessionConfig
@@ -78,6 +79,16 @@ type SessionConfig struct {
 	CookieName     string
 	CSRFCookieName string
 	TTL            time.Duration
+	// IdleTTL caps session lifetime without activity. Zero disables
+	// idle enforcement (absolute TTL still applies).
+	IdleTTL time.Duration
+}
+
+// SentryConfig controls error monitoring. Empty DSN disables Sentry
+// entirely (local dev default): the app runs exactly as before.
+type SentryConfig struct {
+	DSN         string
+	Environment string
 }
 
 type EmailConfig struct {
@@ -104,6 +115,10 @@ func Load() (*Config, error) {
 		Env:          getEnv("ORDORA_ENV", "development"),
 		BaseURL:      getEnv("ORDORA_BASE_URL", "http://localhost:8080"),
 		SupportEmail: getEnv("ORDORA_SUPPORT_EMAIL", "support@ordora.local"),
+		Sentry: SentryConfig{
+			DSN:         getEnv("ORDORA_SENTRY_DSN", ""),
+			Environment: getEnv("ORDORA_SENTRY_ENVIRONMENT", getEnv("ORDORA_ENV", "development")),
+		},
 		HTTP: HTTPConfig{
 			Addr:            getEnv("ORDORA_HTTP_ADDR", ":8080"),
 			ReadTimeout:     15 * time.Second,
@@ -127,6 +142,7 @@ func Load() (*Config, error) {
 			CookieName:     getEnv("ORDORA_SESSION_COOKIE_NAME", "ordora_session"),
 			CSRFCookieName: getEnv("ORDORA_CSRF_COOKIE_NAME", "ordora_csrf"),
 			TTL:            time.Duration(getEnvInt("ORDORA_SESSION_TTL_HOURS", 720)) * time.Hour,
+			IdleTTL:        time.Duration(getEnvInt("ORDORA_SESSION_IDLE_HOURS", 168)) * time.Hour,
 		},
 		Email: EmailConfig{
 			Mode:            getEnv("ORDORA_EMAIL_MODE", "console"),

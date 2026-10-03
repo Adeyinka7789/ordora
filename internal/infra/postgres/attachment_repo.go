@@ -85,6 +85,38 @@ func (r *AttachmentRepo) ListForEntity(ctx context.Context, scope tenant.TenantS
 	return out, err
 }
 
+// ListForEntities returns attachments for many entities of one type in a
+// single query, grouped by entity id (each group newest first). This is
+// the batched replacement for calling ListForEntity in a loop (N+1).
+func (r *AttachmentRepo) ListForEntities(ctx context.Context, scope tenant.TenantScope, entityType attachment.EntityType, entityIDs []uuid.UUID) (map[uuid.UUID][]*attachment.Attachment, error) {
+	out := map[uuid.UUID][]*attachment.Attachment{}
+	if len(entityIDs) == 0 {
+		return out, nil
+	}
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		const q = `
+			SELECT id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, uploaded_by, created_at
+			FROM attachments
+			WHERE entity_type = $1 AND entity_id = ANY($2)
+			ORDER BY created_at DESC
+		`
+		rows, err := tx.Query(ctx, q, string(entityType), entityIDs)
+		if err != nil {
+			return fmt.Errorf("attachment_repo: list batch: %w", Classify(err))
+		}
+		defer rows.Close()
+		for rows.Next() {
+			a, err := scanAttachment(rows)
+			if err != nil {
+				return err
+			}
+			out[a.EntityID] = append(out[a.EntityID], a)
+		}
+		return rows.Err()
+	})
+	return out, err
+}
+
 // Delete removes the metadata row. Bytes in storage must be removed by the
 // caller (they are not transactional).
 func (r *AttachmentRepo) Delete(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {

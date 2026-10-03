@@ -19,6 +19,7 @@ type AttachmentRepoStore interface {
 	Create(ctx context.Context, scope tenant.TenantScope, a *attachment.Attachment) error
 	GetByID(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*attachment.Attachment, error)
 	ListForEntity(ctx context.Context, scope tenant.TenantScope, entityType attachment.EntityType, entityID uuid.UUID) ([]*attachment.Attachment, error)
+	ListForEntities(ctx context.Context, scope tenant.TenantScope, entityType attachment.EntityType, entityIDs []uuid.UUID) (map[uuid.UUID][]*attachment.Attachment, error)
 	Delete(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error
 }
 
@@ -126,6 +127,12 @@ func (s *AttachmentService) Open(ctx context.Context, scope tenant.TenantScope, 
 // List returns attachments for a specific entity.
 func (s *AttachmentService) List(ctx context.Context, scope tenant.TenantScope, entityType attachment.EntityType, entityID uuid.UUID) ([]*attachment.Attachment, error) {
 	return s.repo.ListForEntity(ctx, scope, entityType, entityID)
+}
+
+// ListForEntities returns attachments for many entities of one type in a
+// single query, grouped by entity id. Prefer this over looping List.
+func (s *AttachmentService) ListForEntities(ctx context.Context, scope tenant.TenantScope, entityType attachment.EntityType, entityIDs []uuid.UUID) (map[uuid.UUID][]*attachment.Attachment, error) {
+	return s.repo.ListForEntities(ctx, scope, entityType, entityIDs)
 }
 
 // Delete removes an attachment: metadata first, then bytes. If the bytes

@@ -144,6 +144,7 @@ type CustomerLookup struct {
 	OrganizationID uuid.UUID
 	OrgName        string
 	OrgSlug        string
+	Currency       string
 	Name           string
 	Email          string
 	Phone          string
@@ -179,7 +180,7 @@ func (r *AdminLookupRepo) lookupCustomers(ctx context.Context, where, arg string
 	var out []*CustomerLookup
 	err := r.adminDB.WithTx(ctx, func(tx pgx.Tx) error {
 		q := `
-			SELECT c.id, c.organization_id, o.name, o.slug::text,
+			SELECT c.id, c.organization_id, o.name, o.slug::text, o.currency::text,
 			       c.name, COALESCE(c.email::text,''), COALESCE(c.phone,''),
 			       COALESCE(c.address,''), COALESCE(c.notes,''), c.created_at
 			FROM customers c
@@ -195,7 +196,7 @@ func (r *AdminLookupRepo) lookupCustomers(ctx context.Context, where, arg string
 		defer rows.Close()
 		for rows.Next() {
 			var c CustomerLookup
-			if err := rows.Scan(&c.ID, &c.OrganizationID, &c.OrgName, &c.OrgSlug,
+			if err := rows.Scan(&c.ID, &c.OrganizationID, &c.OrgName, &c.OrgSlug, &c.Currency,
 				&c.Name, &c.Email, &c.Phone, &c.Address, &c.Notes, &c.CreatedAt); err != nil {
 				return err
 			}
@@ -205,32 +206,48 @@ func (r *AdminLookupRepo) lookupCustomers(ctx context.Context, where, arg string
 			return err
 		}
 
-		// For each customer, load orders + totals.
+		// Load recent orders for all customers in one query (newest 20
+		// per customer), then group in Go. Replaces one query per
+		// customer (N+1).
+		ids := make([]uuid.UUID, 0, len(out))
 		for _, c := range out {
-			const oQ = `
-				SELECT id, order_number, title, status::text, total_minor, amount_paid_minor, created_at
+			ids = append(ids, c.ID)
+		}
+		const oQ = `
+			SELECT customer_id, id, order_number, title, status::text,
+			       total_minor, amount_paid_minor, created_at
+			FROM (
+				SELECT customer_id, id, order_number, title, status,
+				       total_minor, amount_paid_minor, created_at,
+				       ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at DESC) AS rn
 				FROM orders
-				WHERE customer_id = $1
-				ORDER BY created_at DESC
-				LIMIT 20
-			`
-			ors, err := tx.Query(ctx, oQ, c.ID)
-			if err != nil {
+				WHERE customer_id = ANY($1)
+			) ranked
+			WHERE rn <= 20
+			ORDER BY customer_id, created_at DESC
+		`
+		ors, err := tx.Query(ctx, oQ, ids)
+		if err != nil {
+			return err
+		}
+		defer ors.Close()
+		byCustomer := make(map[uuid.UUID]*CustomerLookup, len(out))
+		for _, c := range out {
+			byCustomer[c.ID] = c
+		}
+		for ors.Next() {
+			var customerID uuid.UUID
+			var co CustomerLookupOrder
+			if err := ors.Scan(&customerID, &co.ID, &co.OrderNumber, &co.Title, &co.Status, &co.TotalMinor, &co.PaidMinor, &co.CreatedAt); err != nil {
 				return err
 			}
-			for ors.Next() {
-				var co CustomerLookupOrder
-				if err := ors.Scan(&co.ID, &co.OrderNumber, &co.Title, &co.Status, &co.TotalMinor, &co.PaidMinor, &co.CreatedAt); err != nil {
-					ors.Close()
-					return err
-				}
+			if c, ok := byCustomer[customerID]; ok {
 				c.Orders = append(c.Orders, co)
 				c.TotalBilled += co.TotalMinor
 				c.TotalPaid += co.PaidMinor
 			}
-			ors.Close()
 		}
-		return nil
+		return ors.Err()
 	})
 	return out, err
 }

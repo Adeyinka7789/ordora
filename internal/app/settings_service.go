@@ -35,6 +35,8 @@ type UserWriter interface {
 type SessionAdmin interface {
 	ListActiveForUser(ctx context.Context, userID uuid.UUID) ([]*auth.Session, error)
 	RevokeAllForUser(ctx context.Context, userID uuid.UUID, now time.Time) error
+	RevokeOthersForUser(ctx context.Context, userID, exceptSessionID uuid.UUID, now time.Time) error
+	Revoke(ctx context.Context, sessionID uuid.UUID, now time.Time) error
 }
 
 // SettingsService handles org settings and user profile mutations.
@@ -107,6 +109,8 @@ var (
 	ErrUserNameRequired  = errors.New("settings: name is required")
 	ErrWrongPassword     = errors.New("settings: current password is incorrect")
 	ErrNewPasswordWeak   = errors.New("settings: new password does not meet requirements")
+	ErrSessionNotFound   = errors.New("settings: session not found")
+	ErrCannotRevokeCurrent = errors.New("settings: sign out normally to end this session")
 )
 
 // GetOrg loads the current org for the given tenant.
@@ -219,6 +223,30 @@ func (s *SettingsService) ChangePassword(ctx context.Context, in ChangePasswordI
 // RevokeAllSessions signs the user out everywhere.
 func (s *SettingsService) RevokeAllSessions(ctx context.Context, userID uuid.UUID) error {
 	return s.sessions.RevokeAllForUser(ctx, userID, s.now())
+}
+
+// RevokeOtherSessions signs out every device except one. Used after a
+// password change: the current device stays signed in.
+func (s *SettingsService) RevokeOtherSessions(ctx context.Context, userID, exceptSessionID uuid.UUID) error {
+	return s.sessions.RevokeOthersForUser(ctx, userID, exceptSessionID, s.now())
+}
+
+// RevokeSession ends one of the user's other sessions after verifying
+// ownership. The current session can only be ended via logout.
+func (s *SettingsService) RevokeSession(ctx context.Context, userID, sessionID, currentID uuid.UUID) error {
+	if sessionID == currentID {
+		return ErrCannotRevokeCurrent
+	}
+	list, err := s.sessions.ListActiveForUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	for _, sess := range list {
+		if sess.ID == sessionID {
+			return s.sessions.Revoke(ctx, sessionID, s.now())
+		}
+	}
+	return ErrSessionNotFound
 }
 
 // ListSessions returns all active sessions.

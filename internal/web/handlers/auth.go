@@ -105,8 +105,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	in := auth.LoginInput{
-		Email:    r.PostFormValue("email"),
-		Password: r.PostFormValue("password"),
+		Email:     r.PostFormValue("email"),
+		Password:  r.PostFormValue("password"),
+		UserAgent: r.UserAgent(),
+		IP:        middleware.ClientIP(r),
 	}
 	result, err := h.Auth.Login(r.Context(), in)
 	if err != nil {

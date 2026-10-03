@@ -54,6 +54,7 @@ type CustomerLookup struct {
 	OrganizationID uuid.UUID
 	OrgName        string
 	OrgSlug        string
+	Currency       string
 	Name           string
 	Email          string
 	Phone          string

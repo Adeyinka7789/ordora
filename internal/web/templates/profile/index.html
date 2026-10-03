@@ -78,11 +78,20 @@
           <div class="py-space-sm flex items-start justify-between gap-space-sm">
             <div class="flex flex-col min-w-0">
               <span class="font-label-md text-label-md text-on-surface">
-                {{ if .Current }}<span class="text-tertiary font-bold">This device</span>{{ else }}{{ .UserAgent }}{{ end }}
+                {{ if .Current }}<span class="text-tertiary font-bold">This device</span>{{ else }}{{ if .UserAgent }}{{ .UserAgent }}{{ else }}Unknown device{{ end }}{{ end }}
               </span>
-              <span class="font-code-md text-code-md text-on-surface-variant">IP: {{ .IP }} · Created {{ .CreatedAt }}</span>
+              <span class="font-code-md text-code-md text-on-surface-variant">IP: {{ if .IP }}{{ .IP }}{{ else }}unknown{{ end }} · Created {{ .CreatedAt }}</span>
               <span class="font-label-sm text-label-sm text-outline">Expires {{ .ExpiresAt }}</span>
             </div>
+            {{ if not .Current }}
+              <form method="post" action="/profile/sessions/{{ .ID }}/revoke" class="shrink-0"
+                    onsubmit="return confirm('Sign out this device?');">
+                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                <button type="submit" class="h-8 px-3 rounded bg-surface-container-low border border-outline-variant/30 hover:bg-error-container hover:text-on-error-container font-label-sm text-label-sm font-semibold transition-colors">
+                  Sign out
+                </button>
+              </form>
+            {{ end }}
           </div>
         {{ end }}
       </div>

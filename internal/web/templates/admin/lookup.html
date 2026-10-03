@@ -45,9 +45,9 @@
         <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Customer</dt>
         <dd><a href="{{ .Path }}/users/{{ .Order.CustomerID }}" class="text-primary hover:underline">{{ .Order.CustomerName }}</a> · {{ .Order.CustomerEmail }}</dd>
         <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Total</dt>
-        <dd class="font-code-md text-code-md">{{ .Order.Currency }} {{ .Order.TotalMinor }}</dd>
+        <dd class="font-code-md text-code-md">{{ currency .Order.TotalMinor .Order.Currency }}</dd>
         <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Paid</dt>
-        <dd class="font-code-md text-code-md">{{ .Order.Currency }} {{ .Order.PaidMinor }}</dd>
+        <dd class="font-code-md text-code-md">{{ currency .Order.PaidMinor .Order.Currency }}</dd>
         <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Created</dt>
         <dd class="font-code-md text-code-md">{{ .Order.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
       </dl>
@@ -107,22 +107,22 @@
   <!-- Customer results -->
   {{ if .Customers }}
     <div class="flex flex-col gap-space-md">
-      {{ range .Customers }}
+      {{ range $c := .Customers }}
         <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
           <div class="flex items-center justify-between mb-space-sm">
             <div>
-              <div class="font-headline-md text-headline-md font-bold">{{ .Name }}</div>
-              <div class="font-code-md text-code-md text-on-surface-variant">{{ .Email }} · {{ .Phone }}</div>
+              <div class="font-headline-md text-headline-md font-bold">{{ $c.Name }}</div>
+              <div class="font-code-md text-code-md text-on-surface-variant">{{ $c.Email }} · {{ $c.Phone }}</div>
             </div>
             <div class="text-right">
               <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Total billed</div>
-              <div class="font-code-md text-code-md font-bold tabular-nums">{{ .TotalBilled }}</div>
+              <div class="font-code-md text-code-md font-bold tabular-nums">{{ currency $c.TotalBilled $c.Currency }}</div>
               <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider mt-1">Total paid</div>
-              <div class="font-code-md text-code-md font-bold tabular-nums">{{ .TotalPaid }}</div>
+              <div class="font-code-md text-code-md font-bold tabular-nums">{{ currency $c.TotalPaid $c.Currency }}</div>
             </div>
           </div>
-          <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider mb-1">In business: {{ .OrgName }}</div>
-          {{ if .Orders }}
+          <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider mb-1">In business: {{ $c.OrgName }}</div>
+          {{ if $c.Orders }}
             <table class="w-full text-left text-body-md">
               <thead>
                 <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
@@ -134,13 +134,13 @@
                 </tr>
               </thead>
               <tbody>
-                {{ range .Orders }}
+                {{ range $c.Orders }}
                   <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60">
                     <td class="py-2 px-space-sm font-code-md">{{ .OrderNumber }}</td>
                     <td class="py-2 px-space-sm">{{ .Title }}</td>
                     <td class="py-2 px-space-sm font-code-md">{{ .Status }}</td>
-                    <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ .TotalMinor }}</td>
-                    <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ .PaidMinor }}</td>
+                    <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ currency .TotalMinor $c.Currency }}</td>
+                    <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ currency .PaidMinor $c.Currency }}</td>
                   </tr>
                 {{ end }}
               </tbody>
