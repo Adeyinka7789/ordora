@@ -31,24 +31,37 @@
       type: 'bar',
       data: {
         labels: labels,
-        datasets: [
-          {
-            label: 'Invoiced',
-            data: invoiced,
-            backgroundColor: '#4f46e5',
-            borderRadius: 4,
-            barPercentage: 0.7,
-            categoryPercentage: 0.6
-          },
-          {
-            label: 'Settled',
-            data: settled,
-            backgroundColor: '#006e4b',
-            borderRadius: 4,
-            barPercentage: 0.7,
-            categoryPercentage: 0.6
-          }
-        ]
+              datasets: [
+        {
+          label: 'Invoiced',
+          data: invoiced,
+          backgroundColor: '#2e2a6d',
+          borderRadius: 4,
+          barPercentage: 0.7,
+          categoryPercentage: 0.6
+        },
+        {
+          label: 'Settled',
+          data: settled,
+          backgroundColor: '#006e4b',
+          borderRadius: 4,
+          barPercentage: 0.7,
+          categoryPercentage: 0.6
+        },
+        {
+          label: 'Profit',
+          type: 'line',
+          data: (data.profit || []).map(function (p) { return p.profit_minor / 100; }),
+          borderColor: '#d97706',
+          backgroundColor: '#d97706',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: '#d97706',
+          tension: 0.3,
+          fill: false,
+          yAxisID: 'y'
+        }
+      ]
       },
       options: {
         responsive: true,

@@ -19,10 +19,49 @@ type ReportReader interface {
 	StageDurations(ctx context.Context, scope tenant.TenantScope, from, to time.Time) ([]StageDuration, error)
 	TopCustomers(ctx context.Context, scope tenant.TenantScope, from, to time.Time, limit int) ([]TopCustomer, error)
 	Insights(ctx context.Context, scope tenant.TenantScope) ([]Insight, error)
+	ProfitKPIs(ctx context.Context, scope tenant.TenantScope, from, to time.Time) (*CostProfitKPIs, error)
+	CostBreakdown(ctx context.Context, scope tenant.TenantScope, from, to time.Time) ([]CostBreakdownRow, error)
+	ProfitTrend(ctx context.Context, scope tenant.TenantScope, from, to time.Time, bucketDays int) ([]ProfitTrendPoint, error)
+	OrderMargins(ctx context.Context, scope tenant.TenantScope, from, to time.Time, direction string, limit int) ([]OrderMarginRow, error)
 }
 
 // Re-export the types so handlers can use them without importing postgres.
 // KPIs holds the four hero metrics.
+
+type CostProfitKPIs struct {
+	TotalRevenueMinor int64
+	TotalCostsMinor   int64
+	ProfitMinor       int64
+	MarginPercent     float64
+	OrdersWithCosts   int64
+	AvgMarginPercent  float64
+}
+
+type CostBreakdownRow struct {
+	Category   string
+	TotalMinor int64
+	Count      int64
+	Percent    float64
+}
+
+type ProfitTrendPoint struct {
+	BucketStart  time.Time
+	RevenueMinor int64
+	CostsMinor   int64
+	ProfitMinor  int64
+}
+
+type OrderMarginRow struct {
+	OrderID     uuid.UUID
+	OrderNumber string
+	Title       string
+	TotalMinor  int64
+	CostMinor   int64
+	ProfitMinor int64
+	MarginPct   float64
+	Currency    string
+}
+
 type KPIs struct {
 	GrossInvoicedMinor int64
 	CashSettledMinor   int64
@@ -150,14 +189,19 @@ func ResolveRange(key string) ReportRange {
 
 // ReportBundle is everything the reports page needs.
 type ReportBundle struct {
-	Range        ReportRange
-	KPIs         *KPIs
-	Trend        []TrendPoint
-	Categories   []CategoryRow
-	Channels     []ChannelRow
-	Stages       []StageDuration
-	TopCustomers []TopCustomer
-	Insights     []Insight
+	Range         ReportRange
+	KPIs          *KPIs
+	Trend         []TrendPoint
+	Categories    []CategoryRow
+	Channels      []ChannelRow
+	Stages        []StageDuration
+	TopCustomers  []TopCustomer
+	Insights      []Insight
+	Profit        *CostProfitKPIs
+	CostBreakdown []CostBreakdownRow
+	ProfitTrend   []ProfitTrendPoint
+	TopMargin     []OrderMarginRow
+	LowMargin     []OrderMarginRow
 }
 
 // ReportService orchestrates report generation.
@@ -220,6 +264,23 @@ func (s *ReportService) Load(ctx context.Context, scope tenant.TenantScope, rang
 		return nil, err
 	}
 	b.Insights = insights
+
+	// Costs & profit.
+	if profit, err := s.repo.ProfitKPIs(ctx, scope, r.From, r.To); err == nil {
+		b.Profit = profit
+	}
+	if breakdown, err := s.repo.CostBreakdown(ctx, scope, r.From, r.To); err == nil {
+		b.CostBreakdown = breakdown
+	}
+	if trend, err := s.repo.ProfitTrend(ctx, scope, r.From, r.To, r.BucketDays); err == nil {
+		b.ProfitTrend = trend
+	}
+	if top, err := s.repo.OrderMargins(ctx, scope, r.From, r.To, "desc", 5); err == nil {
+		b.TopMargin = top
+	}
+	if low, err := s.repo.OrderMargins(ctx, scope, r.From, r.To, "asc", 5); err == nil {
+		b.LowMargin = low
+	}
 
 	return b, nil
 }

@@ -142,3 +142,73 @@ func (a *ReportAdapter) Insights(ctx context.Context, scope tenant.TenantScope) 
 	}
 	return out, nil
 }
+
+func (a *ReportAdapter) ProfitKPIs(ctx context.Context, scope tenant.TenantScope, from, to time.Time) (*app.CostProfitKPIs, error) {
+	k, err := a.repo.ProfitKPIs(ctx, scope, from, to)
+	if err != nil {
+		return nil, err
+	}
+	return &app.CostProfitKPIs{
+		TotalRevenueMinor: k.TotalRevenueMinor,
+		TotalCostsMinor:   k.TotalCostsMinor,
+		ProfitMinor:       k.ProfitMinor,
+		MarginPercent:     k.MarginPercent,
+		OrdersWithCosts:   k.OrdersWithCosts,
+		AvgMarginPercent:  k.AvgMarginPercent,
+	}, nil
+}
+
+func (a *ReportAdapter) CostBreakdown(ctx context.Context, scope tenant.TenantScope, from, to time.Time) ([]app.CostBreakdownRow, error) {
+	rows, err := a.repo.CostBreakdown(ctx, scope, from, to)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]app.CostBreakdownRow, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, app.CostBreakdownRow{
+			Category:   r.Category,
+			TotalMinor: r.TotalMinor,
+			Count:      r.Count,
+			Percent:    r.Percent,
+		})
+	}
+	return out, nil
+}
+
+func (a *ReportAdapter) ProfitTrend(ctx context.Context, scope tenant.TenantScope, from, to time.Time, bucketDays int) ([]app.ProfitTrendPoint, error) {
+	rows, err := a.repo.ProfitTrend(ctx, scope, from, to, bucketDays)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]app.ProfitTrendPoint, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, app.ProfitTrendPoint{
+			BucketStart:  r.BucketStart,
+			RevenueMinor: r.RevenueMinor,
+			CostsMinor:   r.CostsMinor,
+			ProfitMinor:  r.ProfitMinor,
+		})
+	}
+	return out, nil
+}
+
+func (a *ReportAdapter) OrderMargins(ctx context.Context, scope tenant.TenantScope, from, to time.Time, direction string, limit int) ([]app.OrderMarginRow, error) {
+	rows, err := a.repo.OrderMargins(ctx, scope, from, to, direction, limit)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]app.OrderMarginRow, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, app.OrderMarginRow{
+			OrderID:     r.OrderID,
+			OrderNumber: r.OrderNumber,
+			Title:       r.Title,
+			TotalMinor:  r.TotalMinor,
+			CostMinor:   r.CostMinor,
+			ProfitMinor: r.ProfitMinor,
+			MarginPct:   r.MarginPct,
+			Currency:    r.Currency,
+		})
+	}
+	return out, nil
+}

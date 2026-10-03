@@ -506,3 +506,250 @@ func (r *ReportRepo) Insights(ctx context.Context, scope tenant.TenantScope) ([]
 	})
 	return out, err
 }
+
+// ---- Cost & Profit queries ----
+
+// CostProfitKPIs holds the cost-side summary.
+type CostProfitKPIs struct {
+	TotalRevenueMinor int64
+	TotalCostsMinor   int64
+	ProfitMinor       int64
+	MarginPercent     float64
+	OrdersWithCosts   int64
+	AvgMarginPercent  float64
+}
+
+// ProfitKPIs computes revenue, costs, and profit for a range.
+func (r *ReportRepo) ProfitKPIs(ctx context.Context, scope tenant.TenantScope, from, to time.Time) (*CostProfitKPIs, error) {
+	var k CostProfitKPIs
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		// Revenue from orders in the range.
+		const revQ = `
+			SELECT COALESCE(SUM(total_minor), 0), COUNT(*)
+			FROM orders
+			WHERE organization_id = $1
+			  AND created_at >= $2
+			  AND created_at < $3
+			  AND status <> 'CANCELLED'
+		`
+		if err := tx.QueryRow(ctx, revQ, scope.OrgID, from, to).Scan(&k.TotalRevenueMinor, &k.OrdersWithCosts); err != nil {
+			return err
+		}
+
+		// Costs in the range.
+		const costQ = `
+			SELECT COALESCE(SUM(amount_minor), 0)
+			FROM order_costs
+			WHERE organization_id = $1
+			  AND incurred_on >= $2
+			  AND incurred_on < $3
+		`
+		if err := tx.QueryRow(ctx, costQ, scope.OrgID, from, to).Scan(&k.TotalCostsMinor); err != nil {
+			return err
+		}
+
+		k.ProfitMinor = k.TotalRevenueMinor - k.TotalCostsMinor
+		if k.TotalRevenueMinor > 0 {
+			k.MarginPercent = float64(k.ProfitMinor) * 100 / float64(k.TotalRevenueMinor)
+		}
+
+		// Average margin per order (only orders that have costs).
+		const avgQ = `
+			WITH order_costs_sum AS (
+				SELECT o.id, o.total_minor, COALESCE(SUM(c.amount_minor), 0) AS cost_minor
+				FROM orders o
+				LEFT JOIN order_costs c ON c.order_id = o.id
+				WHERE o.organization_id = $1
+				  AND o.created_at >= $2
+				  AND o.created_at < $3
+				  AND o.status <> 'CANCELLED'
+				GROUP BY o.id, o.total_minor
+				HAVING COALESCE(SUM(c.amount_minor), 0) > 0
+			)
+			SELECT COALESCE(AVG((total_minor - cost_minor)::numeric / NULLIF(total_minor, 0) * 100), 0)
+			FROM order_costs_sum
+			WHERE total_minor > 0
+		`
+		if err := tx.QueryRow(ctx, avgQ, scope.OrgID, from, to).Scan(&k.AvgMarginPercent); err != nil {
+			return err
+		}
+		return nil
+	})
+	return &k, err
+}
+
+// CostBreakdownRow is one category in the cost breakdown.
+type CostBreakdownRow struct {
+	Category   string
+	TotalMinor int64
+	Count      int64
+	Percent    float64
+}
+
+// CostBreakdown returns the sum of costs per category in the range.
+func (r *ReportRepo) CostBreakdown(ctx context.Context, scope tenant.TenantScope, from, to time.Time) ([]CostBreakdownRow, error) {
+	var out []CostBreakdownRow
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		const q = `
+			SELECT category::text, COALESCE(SUM(amount_minor), 0), COUNT(*)
+			FROM order_costs
+			WHERE organization_id = $1
+			  AND incurred_on >= $2
+			  AND incurred_on < $3
+			GROUP BY category
+			ORDER BY 2 DESC
+		`
+		rows, err := tx.Query(ctx, q, scope.OrgID, from, to)
+		if err != nil {
+			return fmt.Errorf("report_repo: cost breakdown: %w", Classify(err))
+		}
+		defer rows.Close()
+		var grand int64
+		for rows.Next() {
+			var r CostBreakdownRow
+			if err := rows.Scan(&r.Category, &r.TotalMinor, &r.Count); err != nil {
+				return err
+			}
+			grand += r.TotalMinor
+			out = append(out, r)
+		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		if grand > 0 {
+			for i := range out {
+				out[i].Percent = float64(out[i].TotalMinor) * 100 / float64(grand)
+			}
+		}
+		return nil
+	})
+	return out, err
+}
+
+// ProfitTrendPoint is one bucket on the profit trend chart.
+type ProfitTrendPoint struct {
+	BucketStart  time.Time
+	RevenueMinor int64
+	CostsMinor   int64
+	ProfitMinor  int64
+}
+
+// ProfitTrend returns revenue, costs, and profit per bucket.
+func (r *ReportRepo) ProfitTrend(ctx context.Context, scope tenant.TenantScope, from, to time.Time, bucketDays int) ([]ProfitTrendPoint, error) {
+	if bucketDays <= 0 {
+		bucketDays = 7
+	}
+	var out []ProfitTrendPoint
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		const q = `
+			WITH buckets AS (
+				SELECT generate_series(
+					date_trunc('day', $2::timestamptz),
+					date_trunc('day', $3::timestamptz),
+					($4::int || ' days')::interval
+				) AS bucket_start
+			),
+			b AS (
+				SELECT bucket_start,
+				       bucket_start + ($4::int || ' days')::interval AS bucket_end
+				FROM buckets
+			)
+			SELECT
+				b.bucket_start,
+				COALESCE((SELECT SUM(total_minor) FROM orders o
+				          WHERE o.organization_id = $1
+				            AND o.created_at >= b.bucket_start
+				            AND o.created_at < b.bucket_end
+				            AND o.status <> 'CANCELLED'), 0) AS revenue,
+				COALESCE((SELECT SUM(amount_minor) FROM order_costs c
+				          WHERE c.organization_id = $1
+				            AND c.incurred_on >= b.bucket_start::date
+				            AND c.incurred_on < b.bucket_end::date), 0) AS costs
+			FROM b
+			ORDER BY b.bucket_start
+		`
+		rows, err := tx.Query(ctx, q, scope.OrgID, from, to, bucketDays)
+		if err != nil {
+			return fmt.Errorf("report_repo: profit trend: %w", Classify(err))
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var p ProfitTrendPoint
+			if err := rows.Scan(&p.BucketStart, &p.RevenueMinor, &p.CostsMinor); err != nil {
+				return err
+			}
+			p.ProfitMinor = p.RevenueMinor - p.CostsMinor
+			out = append(out, p)
+		}
+		return rows.Err()
+	})
+	return out, err
+}
+
+// OrderMarginRow is one order in the top/bottom margin list.
+type OrderMarginRow struct {
+	OrderID     uuid.UUID
+	OrderNumber string
+	Title       string
+	TotalMinor  int64
+	CostMinor   int64
+	ProfitMinor int64
+	MarginPct   float64
+	Currency    string
+}
+
+// OrderMargins returns orders sorted by margin (desc or asc).
+func (r *ReportRepo) OrderMargins(ctx context.Context, scope tenant.TenantScope, from, to time.Time, direction string, limit int) ([]OrderMarginRow, error) {
+	if limit <= 0 || limit > 50 {
+		limit = 5
+	}
+	dir := "DESC"
+	if direction == "asc" {
+		dir = "ASC"
+	}
+	var out []OrderMarginRow
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		q := fmt.Sprintf(`
+			WITH m AS (
+				SELECT
+					o.id, o.order_number, o.title, o.currency::text AS currency,
+					o.total_minor,
+					COALESCE(SUM(c.amount_minor), 0) AS cost_minor
+				FROM orders o
+				LEFT JOIN order_costs c ON c.order_id = o.id
+				WHERE o.organization_id = $1
+				  AND o.created_at >= $2
+				  AND o.created_at < $3
+				  AND o.status <> 'CANCELLED'
+				  AND o.total_minor > 0
+				GROUP BY o.id, o.order_number, o.title, o.currency, o.total_minor
+				HAVING COALESCE(SUM(c.amount_minor), 0) > 0
+			)
+			SELECT id, order_number, title, total_minor, cost_minor,
+			       total_minor - cost_minor AS profit_minor,
+			       ((total_minor - cost_minor)::numeric / total_minor * 100) AS margin_pct,
+			       currency
+			FROM m
+			ORDER BY margin_pct %s
+			LIMIT $4
+		`, dir)
+		rows, err := tx.Query(ctx, q, scope.OrgID, from, to, limit)
+		if err != nil {
+			return fmt.Errorf("report_repo: order margins: %w", Classify(err))
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var r OrderMarginRow
+			var margin *float64
+			if err := rows.Scan(&r.OrderID, &r.OrderNumber, &r.Title, &r.TotalMinor, &r.CostMinor, &r.ProfitMinor, &margin, &r.Currency); err != nil {
+				return err
+			}
+			if margin != nil {
+				r.MarginPct = *margin
+			}
+			out = append(out, r)
+		}
+		return rows.Err()
+	})
+	return out, err
+}

@@ -82,6 +82,34 @@
     </div>
   </div>
 
+    <!-- Profit KPIs -->
+  {{ if $b.Profit }}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
+      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Revenue</div>
+        <div class="text-headline-lg font-bold text-on-surface tabular-nums mt-1">{{ currency $b.Profit.TotalRevenueMinor "NGN" }}</div>
+        <div class="text-label-sm text-on-surface-variant mt-1">{{ $b.Profit.OrdersWithCosts }} orders</div>
+      </div>
+      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Costs</div>
+        <div class="text-headline-lg font-bold text-error tabular-nums mt-1">{{ currency $b.Profit.TotalCostsMinor "NGN" }}</div>
+        <div class="text-label-sm text-on-surface-variant mt-1">Materials, labor, delivery, overhead</div>
+      </div>
+      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm {{ if gt $b.Profit.ProfitMinor 0 }}ring-1 ring-tertiary-container{{ end }}">
+        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Gross profit</div>
+        <div class="text-headline-lg font-bold {{ if gt $b.Profit.ProfitMinor 0 }}text-tertiary{{ else if lt $b.Profit.ProfitMinor 0 }}text-error{{ else }}text-on-surface{{ end }} tabular-nums mt-1">
+          {{ currency $b.Profit.ProfitMinor "NGN" }}
+        </div>
+        <div class="text-label-sm text-on-surface-variant mt-1">{{ printf "%.1f" $b.Profit.MarginPercent }}% margin</div>
+      </div>
+      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Avg margin per order</div>
+        <div class="text-headline-lg font-bold text-on-surface tabular-nums mt-1">{{ printf "%.1f" $b.Profit.AvgMarginPercent }}%</div>
+        <div class="text-label-sm text-on-surface-variant mt-1">Across orders with costs</div>
+      </div>
+    </div>
+  {{ end }}
+
   <!-- Main chart + stages -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
     <div class="lg:col-span-8 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
@@ -206,6 +234,33 @@
         <p class="text-body-sm text-on-surface-variant">No customers with orders in this range.</p>
       {{ end }}
     </div>
+
+        <!-- Cost breakdown -->
+    {{ if $b.CostBreakdown }}
+      <div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+        <div class="flex items-center justify-between">
+          <h3 class="font-headline-md font-bold text-on-surface">Cost breakdown</h3>
+          <span class="text-label-sm text-outline">by category</span>
+        </div>
+        <div class="flex flex-col gap-space-md">
+          {{ range $b.CostBreakdown }}
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between text-label-md">
+                <span class="font-semibold text-on-surface">{{ .Category }}</span>
+                <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .TotalMinor "NGN" }}</span>
+              </div>
+              <div class="flex justify-between text-label-sm text-on-surface-variant">
+                <span>{{ .Count }} entr{{ if ne .Count 1 }}ies{{ else }}y{{ end }}</span>
+                <span>{{ printf "%.1f" .Percent }}%</span>
+              </div>
+              <div class="w-full h-1.5 rounded-full bg-surface-container-low overflow-hidden">
+                <div class="h-full bg-error rounded-full" style="width: {{ printf "%.0f" .Percent }}%;"></div>
+              </div>
+            </div>
+          {{ end }}
+        </div>
+      </div>
+    {{ end }}
   </div>
 
   <!-- Insights -->
