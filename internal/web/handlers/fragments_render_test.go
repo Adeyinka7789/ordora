@@ -66,7 +66,7 @@ func TestFragmentsExecute(t *testing.T) {
 	}
 
 	cases := map[string]any{
-		"payments/index.html": ledgerData,
+		"payments/index.html":  ledgerData,
 		"payments/_table.html": ledgerData,
 		"support/index.html": supportIndexPage{
 			Title:      "Support",

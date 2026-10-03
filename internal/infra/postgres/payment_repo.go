@@ -361,17 +361,17 @@ func buildLedgerWhere(opts LedgerOptions) (string, []any) {
 func scanLedgerRow(row scannable) (LedgerRow, error) {
 	var (
 		id, orgID, orderID   uuid.UUID
-		amountMinor           int64
-		currency, methodStr   string
-		reference             string
-		paidAt                time.Time
-		notes                 string
-		reverses, reversedBy  *uuid.UUID
-		createdBy             uuid.UUID
-		createdAt             time.Time
-		joinedOrderID         uuid.UUID
-		orderNumber           string
-		customerName          string
+		amountMinor          int64
+		currency, methodStr  string
+		reference            string
+		paidAt               time.Time
+		notes                string
+		reverses, reversedBy *uuid.UUID
+		createdBy            uuid.UUID
+		createdAt            time.Time
+		joinedOrderID        uuid.UUID
+		orderNumber          string
+		customerName         string
 	)
 	if err := row.Scan(&id, &orgID, &orderID, &amountMinor, &currency, &methodStr,
 		&reference, &paidAt, &notes, &reverses, &reversedBy, &createdBy, &createdAt,

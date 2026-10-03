@@ -43,11 +43,11 @@ type Shell struct {
 	SupportEmail string
 	OrgID        string
 	OrgName      string
-	OrgSlug     string
-	OrgRole     string
-	OrgCurrency string
-	OrgTimezone string
-	CSRFToken   string
+	OrgSlug      string
+	OrgRole      string
+	OrgCurrency  string
+	OrgTimezone  string
+	CSRFToken    string
 
 	// Impersonation
 	Impersonating        bool

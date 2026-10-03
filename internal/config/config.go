@@ -17,11 +17,11 @@ type Config struct {
 	SupportEmail string
 	Sentry       SentryConfig
 	HTTP         HTTPConfig
-	DB      DBConfig
-	Session SessionConfig
-	Email   EmailConfig
-	Storage StorageConfig
-	Admin   AdminConfig
+	DB           DBConfig
+	Session      SessionConfig
+	Email        EmailConfig
+	Storage      StorageConfig
+	Admin        AdminConfig
 }
 
 type AdminConfig struct {

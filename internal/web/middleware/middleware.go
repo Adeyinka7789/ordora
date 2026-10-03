@@ -63,19 +63,19 @@ func Logger(next http.Handler) http.Handler {
 func Recover(r ErrorPageRenderer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		defer func() {
-			if rec := recover(); rec != nil {
-				reqID := RequestIDFrom(req.Context())
-				slog.Error("http: panic",
-					"panic", rec,
-					"path", req.URL.Path,
-					"req_id", reqID,
-					"stack", string(debug.Stack()),
-				)
-				observe.ReportPanic(req, reqID, rec)
-				r.ServerError(w, req)
-			}
-		}()
+			defer func() {
+				if rec := recover(); rec != nil {
+					reqID := RequestIDFrom(req.Context())
+					slog.Error("http: panic",
+						"panic", rec,
+						"path", req.URL.Path,
+						"req_id", reqID,
+						"stack", string(debug.Stack()),
+					)
+					observe.ReportPanic(req, reqID, rec)
+					r.ServerError(w, req)
+				}
+			}()
 			next.ServeHTTP(w, req)
 		})
 	}

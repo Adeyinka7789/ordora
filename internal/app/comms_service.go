@@ -148,15 +148,15 @@ type CommsService struct {
 // CommsServiceDeps bundles the dependencies. AdminDB/AdminNotifs/
 // AdminComplaints use the BYPASSRLS admin connection for cross-tenant work.
 type CommsServiceDeps struct {
-	DB               CommsTxRunner
-	AdminDB          CommsTxRunner
-	Notifs           NotificationStore
-	Complaints       ComplaintStore
-	AdminNotifs      NotificationStore
-	AdminComplaints  ComplaintStore
-	Audit            AdminAuditWriter
-	IDs              IDGen
-	Now              func() time.Time
+	DB              CommsTxRunner
+	AdminDB         CommsTxRunner
+	Notifs          NotificationStore
+	Complaints      ComplaintStore
+	AdminNotifs     NotificationStore
+	AdminComplaints ComplaintStore
+	Audit           AdminAuditWriter
+	IDs             IDGen
+	Now             func() time.Time
 }
 
 func NewCommsService(d CommsServiceDeps) *CommsService {

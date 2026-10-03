@@ -102,14 +102,14 @@ type ChangePasswordInput struct {
 
 // Errors.
 var (
-	ErrOrgNameRequired   = errors.New("settings: business name is required")
-	ErrOrgSlugInvalid    = errors.New("settings: invalid slug")
-	ErrOrgSlugTaken      = errors.New("settings: slug already taken")
-	ErrOrgCurrencyLocked = errors.New("settings: currency cannot change after orders exist")
-	ErrUserNameRequired  = errors.New("settings: name is required")
-	ErrWrongPassword     = errors.New("settings: current password is incorrect")
-	ErrNewPasswordWeak   = errors.New("settings: new password does not meet requirements")
-	ErrSessionNotFound   = errors.New("settings: session not found")
+	ErrOrgNameRequired     = errors.New("settings: business name is required")
+	ErrOrgSlugInvalid      = errors.New("settings: invalid slug")
+	ErrOrgSlugTaken        = errors.New("settings: slug already taken")
+	ErrOrgCurrencyLocked   = errors.New("settings: currency cannot change after orders exist")
+	ErrUserNameRequired    = errors.New("settings: name is required")
+	ErrWrongPassword       = errors.New("settings: current password is incorrect")
+	ErrNewPasswordWeak     = errors.New("settings: new password does not meet requirements")
+	ErrSessionNotFound     = errors.New("settings: session not found")
 	ErrCannotRevokeCurrent = errors.New("settings: sign out normally to end this session")
 )
 
