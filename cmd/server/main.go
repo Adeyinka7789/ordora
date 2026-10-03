@@ -428,15 +428,16 @@ func run() error {
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	// Home
+	// Home — landing page for visitors; redirect for signed-in users.
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		s := middleware.SessionFromContext(r.Context())
-		if s != nil {
+		if s := middleware.SessionFromContext(r.Context()); s != nil {
 			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 			return
 		}
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		renderer.PagePublic(w, http.StatusOK, "layouts/landing.html", "landing/index.html", map[string]any{
+			"Title": "Order management for growing businesses",
+		})
 	})
-
 	// ---- Public routes (no auth required) ----
 	portalMux := http.NewServeMux()
 	portalMux.HandleFunc("GET /o/{token}", portalH.Show)

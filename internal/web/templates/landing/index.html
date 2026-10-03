@@ -1,0 +1,211 @@
+{{ define "landing/index.html" }}
+<main>
+
+  <!-- Hero -->
+  <section class="max-w-[1200px] mx-auto px-6 pt-20 pb-24 flex flex-col items-center text-center gap-6">
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed text-label-sm font-semibold">
+      <span class="material-symbols-outlined text-[14px]">rocket_launch</span>
+      Now in beta — free for early businesses
+    </span>
+    <h1 class="text-display-lg text-on-surface max-w-4xl tracking-tight">
+      Stop losing orders in WhatsApp.
+    </h1>
+    <p class="text-body-lg text-on-surface-variant max-w-2xl">
+      Ordora is order management for tailors, bakers, printers, furniture makers, and every business
+      that takes custom orders. Track every order, record payments, share tracking links, and let
+      your customers stay updated — without a thousand chats.
+    </p>
+    <div class="flex flex-col sm:flex-row items-center gap-3 mt-4">
+      <a href="/register" class="h-12 px-8 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-body-lg font-semibold flex items-center gap-2 transition-colors shadow-sm">
+        Start free
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </a>
+      <a href="/login" class="h-12 px-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-lg font-semibold flex items-center transition-colors">
+        Sign in
+      </a>
+    </div>
+    <p class="text-body-sm text-on-surface-variant mt-2">No credit card required. Set up in 5 minutes.</p>
+  </section>
+
+  <!-- Problem / Solution -->
+  <section class="max-w-[1200px] mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+    <div class="flex flex-col gap-6">
+      <span class="text-label-md uppercase tracking-wider text-error font-semibold">The problem</span>
+      <h2 class="text-headline-lg text-on-surface">Orders live everywhere and nowhere.</h2>
+      <ul class="flex flex-col gap-3 text-body-md text-on-surface-variant">
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
+          <span>Orders are scattered across WhatsApp, notebooks, and spreadsheets</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
+          <span>Payment balances are unclear and receipts go missing</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
+          <span>Customers keep asking "what's the status of my order?"</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-error text-[18px] mt-0.5">close</span>
+          <span>You can't remember which orders are overdue</span>
+        </li>
+      </ul>
+    </div>
+    <div class="flex flex-col gap-6">
+      <span class="text-label-md uppercase tracking-wider text-tertiary font-semibold">The fix</span>
+      <h2 class="text-headline-lg text-on-surface">One place for every order.</h2>
+      <ul class="flex flex-col gap-3 text-body-md text-on-surface-variant">
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
+          <span>Create orders in seconds, or let customers submit their own</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
+          <span>Track every payment and receipt — balance is always correct</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
+          <span>Share a private link so customers track their own order status</span>
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="material-symbols-outlined text-tertiary text-[18px] mt-0.5">check_circle</span>
+          <span>See what's due, overdue, and unpaid at a glance</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="max-w-[1200px] mx-auto px-6 py-20">
+    <div class="flex flex-col items-center text-center gap-4 mb-12">
+      <h2 class="text-headline-lg text-on-surface">Everything a growing business needs</h2>
+      <p class="text-body-md text-on-surface-variant max-w-2xl">
+        Built for real operations: from the moment you take an order to the moment the customer holds it in their hands.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">receipt_long</span>
+        <h3 class="text-headline-md text-on-surface">Order management</h3>
+        <p class="text-body-sm text-on-surface-variant">Create orders, add line items, set delivery dates, and track status from New to Delivered.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">account_balance_wallet</span>
+        <h3 class="text-headline-md text-on-surface">Payment tracking</h3>
+        <p class="text-body-sm text-on-surface-variant">Record partial payments, upload receipts, and see outstanding balances in real time.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">group</span>
+        <h3 class="text-headline-md text-on-surface">Customer history</h3>
+        <p class="text-body-sm text-on-surface-variant">Every customer has their orders, payments, and notes in one profile.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">link</span>
+        <h3 class="text-headline-md text-on-surface">Public tracking links</h3>
+        <p class="text-body-sm text-on-surface-variant">Every order gets a secure link your customer can open — no login, no app.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">storefront</span>
+        <h3 class="text-headline-md text-on-surface">Public order intake</h3>
+        <p class="text-body-sm text-on-surface-variant">Share a link. Customers describe what they want. You get notified and confirm.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">inventory_2</span>
+        <h3 class="text-headline-md text-on-surface">Product catalog</h3>
+        <p class="text-body-sm text-on-surface-variant">Save your standard items and prices. Create orders in seconds instead of minutes.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">mail</span>
+        <h3 class="text-headline-md text-on-surface">Automatic emails</h3>
+        <p class="text-body-sm text-on-surface-variant">Customers get notified on order creation, payment, and every status change.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">insights</span>
+        <h3 class="text-headline-md text-on-surface">Dashboard</h3>
+        <p class="text-body-sm text-on-surface-variant">See pending orders, due today, overdue, and outstanding balances at a glance.</p>
+      </div>
+      <div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
+        <span class="material-symbols-outlined text-primary text-[28px]">install_mobile</span>
+        <h3 class="text-headline-md text-on-surface">Works on any phone</h3>
+        <p class="text-body-sm text-on-surface-variant">Installable as an app. Add it to your home screen and it just works.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="max-w-[1200px] mx-auto px-6 py-20">
+    <div class="flex flex-col items-center text-center gap-4 mb-12">
+      <h2 class="text-headline-lg text-on-surface">How it works</h2>
+      <p class="text-body-md text-on-surface-variant max-w-2xl">Set up in five minutes. Take your first order in ten.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="flex flex-col gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">1</div>
+        <h3 class="text-headline-md text-on-surface">Create your account</h3>
+        <p class="text-body-sm text-on-surface-variant">Register your business in a minute. No credit card needed.</p>
+      </div>
+      <div class="flex flex-col gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">2</div>
+        <h3 class="text-headline-md text-on-surface">Add your customers</h3>
+        <p class="text-body-sm text-on-surface-variant">Import or add them one by one. Names and phone numbers are enough.</p>
+      </div>
+      <div class="flex flex-col gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">3</div>
+        <h3 class="text-headline-md text-on-surface">Take an order</h3>
+        <p class="text-body-sm text-on-surface-variant">Create it yourself, or share your public intake link so customers can order directly.</p>
+      </div>
+      <div class="flex flex-col gap-3">
+        <div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center text-headline-md font-bold">4</div>
+        <h3 class="text-headline-md text-on-surface">Deliver and get paid</h3>
+        <p class="text-body-sm text-on-surface-variant">Track payments, upload receipts, and let the customer follow along.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="max-w-[1200px] mx-auto px-6 py-20">
+    <div class="flex flex-col items-center text-center gap-4 mb-12">
+      <h2 class="text-headline-lg text-on-surface">Free during beta</h2>
+      <p class="text-body-md text-on-surface-variant max-w-2xl">
+        We're onboarding early businesses. Everything is free while we polish the product.
+        When we start charging, you'll be grandfathered in.
+      </p>
+    </div>
+
+    <div class="max-w-md mx-auto p-8 rounded-2xl bg-surface-container-lowest border-2 border-primary-container flex flex-col gap-6">
+      <div class="flex flex-col gap-1">
+        <span class="text-label-md uppercase tracking-wider text-primary font-bold">Beta</span>
+        <div class="flex items-baseline gap-1">
+          <span class="text-[48px] font-bold text-on-surface">Free</span>
+          <span class="text-body-md text-on-surface-variant">forever during beta</span>
+        </div>
+      </div>
+      <ul class="flex flex-col gap-2 text-body-sm text-on-surface-variant">
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Unlimited orders</li>
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Unlimited customers</li>
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Public tracking links</li>
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Email notifications</li>
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check</span>Mobile PWA</li>
+      </ul>
+      <a href="/register" class="h-12 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-body-lg font-semibold flex items-center justify-center transition-colors">
+        Start free
+      </a>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="max-w-[1200px] mx-auto px-6 py-20">
+    <div class="p-12 rounded-2xl bg-primary text-on-primary flex flex-col items-center text-center gap-6">
+      <h2 class="text-headline-lg">Ready to get organized?</h2>
+      <p class="text-body-lg opacity-90 max-w-2xl">Take your first order in ten minutes. Free during beta.</p>
+      <a href="/register" class="h-12 px-8 rounded-lg bg-on-primary text-primary text-body-lg font-semibold flex items-center gap-2">
+        Create your account
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </a>
+    </div>
+  </section>
+
+</main>
+{{ end }}
