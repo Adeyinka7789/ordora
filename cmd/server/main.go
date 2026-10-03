@@ -287,6 +287,16 @@ func run() error {
 		Cfg:      cfg,
 	}
 
+	adminOpsRepo := postgres.NewAdminOpsRepo(adminDB, db)
+	adminOpsSvc := app.NewAdminOpsService(app.AdminOpsServiceDeps{
+		Repo: postgres.NewAdminOpsAdapter(adminOpsRepo, adminAuditRepo),
+	})
+	adminOpsH := &adminhandlers.OpsHandler{
+		Service:  adminOpsSvc,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+
 	// Impersonation: build a synthetic ResolvedSession for a target org.
 	// Used by the business session middleware when the impersonation cookie
 	// is present. The synthetic session makes the admin appear as the org's
@@ -401,6 +411,18 @@ func run() error {
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminLookupH.Index))))
 	mux.Handle("POST "+adminPath+"/lookup/jobs/{id}/resend",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminLookupH.ResendJob))))
+	mux.Handle("GET "+adminPath+"/ops",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOpsH.Ops))))
+	mux.Handle("GET "+adminPath+"/audit",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOpsH.Audit))))
+
+	mux.Handle("POST "+adminPath+"/orgs/{id}/suspend",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Suspend))))
+	mux.Handle("POST "+adminPath+"/orgs/{id}/unsuspend",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Unsuspend))))
+	mux.Handle("POST "+adminPath+"/orgs/{id}/delete",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Delete))))
+
 	// Static
 	staticDir := filepath.Join("internal", "web", "static")
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))

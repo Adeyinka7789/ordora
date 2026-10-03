@@ -26,18 +26,20 @@ func NewAdminOrgRepo(adminDB *DB) *AdminOrgRepo {
 
 // OrgRow is a summary row for the list page.
 type OrgRow struct {
-	ID             uuid.UUID
-	Name           string
-	Slug           string
-	Currency       string
-	Email          string
-	Phone          string
-	MemberCount    int
-	CustomerCount  int
-	OrderCount     int
-	TotalOrdersGMV int64 // sum of orders.total_minor
-	OutstandingGMV int64 // sum of (total - paid)
-	CreatedAt      time.Time
+	ID              uuid.UUID
+	Name            string
+	Slug            string
+	Currency        string
+	Email           string
+	Phone           string
+	MemberCount     int
+	CustomerCount   int
+	OrderCount      int
+	TotalOrdersGMV  int64 // sum of orders.total_minor
+	OutstandingGMV  int64 // sum of (total - paid)
+	CreatedAt       time.Time
+	SuspendedAt     *time.Time
+	SuspendedReason string
 }
 
 // ListOrgs returns all orgs with pagination, sorted by created_at DESC.
@@ -117,24 +119,27 @@ func (r *AdminOrgRepo) GetOrg(ctx context.Context, id uuid.UUID) (*org.Organizat
 		const orgQ = `
 			SELECT id, name, slug::text, COALESCE(logo_key,''), COALESCE(email::text,''),
 			       COALESCE(phone,''), COALESCE(address,''), currency::text, timezone,
-			       created_at, updated_at
+			       created_at, updated_at, suspended_at, COALESCE(suspended_reason,'')
 			FROM organizations WHERE id = $1
 		`
 		var (
-			oid       uuid.UUID
-			name      string
-			slugStr   string
-			logoKey   string
-			email     string
-			phone     string
-			address   string
-			currency  string
-			timezone  string
-			createdAt time.Time
-			updatedAt time.Time
+			oid             uuid.UUID
+			name            string
+			slugStr         string
+			logoKey         string
+			email           string
+			phone           string
+			address         string
+			currency        string
+			timezone        string
+			createdAt       time.Time
+			updatedAt       time.Time
+			suspendedAt     *time.Time
+			suspendedReason string
 		)
 		if err := tx.QueryRow(ctx, orgQ, id).Scan(&oid, &name, &slugStr, &logoKey, &email,
-			&phone, &address, &currency, &timezone, &createdAt, &updatedAt); err != nil {
+			&phone, &address, &currency, &timezone, &createdAt, &updatedAt,
+			&suspendedAt, &suspendedReason); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return org.ErrNotFound
 			}
@@ -160,6 +165,8 @@ func (r *AdminOrgRepo) GetOrg(ctx context.Context, id uuid.UUID) (*org.Organizat
 		r2 := &OrgRow{
 			ID: o.ID, Name: o.Name, Slug: slugStr, Currency: currency,
 			Email: email, Phone: phone, CreatedAt: createdAt,
+			SuspendedAt:     suspendedAt,
+			SuspendedReason: suspendedReason,
 		}
 		if err := tx.QueryRow(ctx, statsQ, id).Scan(
 			&r2.MemberCount, &r2.CustomerCount, &r2.OrderCount,
@@ -215,4 +222,50 @@ type AdminMemberRow struct {
 	Name          string
 	EmailVerified bool
 	CreatedAt     time.Time
+}
+
+// SuspendOrg marks an org as suspended with a reason.
+func (r *AdminOrgRepo) SuspendOrg(ctx context.Context, orgID uuid.UUID, reason string) error {
+	return r.adminDB.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `UPDATE organizations SET suspended_at = now(), suspended_reason = $2, updated_at = now() WHERE id = $1`
+		ct, err := tx.Exec(ctx, q, orgID, reason)
+		if err != nil {
+			return err
+		}
+		if ct.RowsAffected() == 0 {
+			return org.ErrNotFound
+		}
+		return nil
+	})
+}
+
+// UnsuspendOrg clears suspension.
+func (r *AdminOrgRepo) UnsuspendOrg(ctx context.Context, orgID uuid.UUID) error {
+	return r.adminDB.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `UPDATE organizations SET suspended_at = NULL, suspended_reason = NULL, updated_at = now() WHERE id = $1`
+		ct, err := tx.Exec(ctx, q, orgID)
+		if err != nil {
+			return err
+		}
+		if ct.RowsAffected() == 0 {
+			return org.ErrNotFound
+		}
+		return nil
+	})
+}
+
+// DeleteOrg permanently removes an org and every cascading row.
+// This is destructive. Caller must confirm.
+func (r *AdminOrgRepo) DeleteOrg(ctx context.Context, orgID uuid.UUID) error {
+	return r.adminDB.WithTx(ctx, func(tx pgx.Tx) error {
+		// RLS is off for adminDB, so this works. Cascading FKs handle the rest.
+		ct, err := tx.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
+		if err != nil {
+			return err
+		}
+		if ct.RowsAffected() == 0 {
+			return org.ErrNotFound
+		}
+		return nil
+	})
 }

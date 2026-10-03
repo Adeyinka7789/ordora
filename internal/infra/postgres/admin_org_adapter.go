@@ -84,3 +84,15 @@ func (a *AdminOrgAdapter) ListMembersForOrg(ctx context.Context, orgID uuid.UUID
 	}
 	return out, nil
 }
+
+func (a *AdminOrgAdapter) SuspendOrg(ctx context.Context, orgID uuid.UUID, reason string) error {
+	return a.repo.SuspendOrg(ctx, orgID, reason)
+}
+
+func (a *AdminOrgAdapter) UnsuspendOrg(ctx context.Context, orgID uuid.UUID) error {
+	return a.repo.UnsuspendOrg(ctx, orgID)
+}
+
+func (a *AdminOrgAdapter) DeleteOrg(ctx context.Context, orgID uuid.UUID) error {
+	return a.repo.DeleteOrg(ctx, orgID)
+}

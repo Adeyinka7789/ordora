@@ -1,0 +1,64 @@
+{{ define "admin/ops.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Ops dashboard</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Live system state.</p>
+  </div>
+
+  <!-- Row 1: Health -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-space-md">
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">DB Status</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 {{ if .Health.DBOK }}text-tertiary{{ else }}text-error{{ end }}">
+        {{ if .Health.DBOK }}● Online{{ else }}● Offline{{ end }}
+      </div>
+      <div class="font-code-md text-code-md text-on-surface-variant mt-1">{{ .Health.DBPingMs }} ms</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">App pool</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums">{{ .Health.AppPoolAcquired }} / {{ .Health.AppPoolTotal }}</div>
+      <div class="font-code-md text-code-md text-on-surface-variant mt-1">Max {{ .Health.AppPoolMaxConns }}</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Outbox pending</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums {{ if gt .Outbox.Pending 0 }}text-error{{ end }}">{{ .Outbox.Pending }}</div>
+      <div class="font-code-md text-code-md text-on-surface-variant mt-1">{{ .Outbox.Dispatched }} dispatched</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Jobs pending</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums">{{ .Notifs.Pending }}</div>
+      <div class="font-code-md text-code-md text-on-surface-variant mt-1">{{ .Notifs.Sent }} sent · {{ .Notifs.Dead }} dead</div>
+    </div>
+  </div>
+
+  <!-- Row 2: Platform totals -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+    <h2 class="font-headline-md text-headline-md font-bold mb-space-sm">Platform totals</h2>
+    <dl class="grid grid-cols-2 md:grid-cols-4 gap-x-space-lg gap-y-space-md">
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Businesses</dt><dd class="font-headline-md font-bold tabular-nums mt-1">{{ .Health.Organizations }}</dd></div>
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Users</dt><dd class="font-headline-md font-bold tabular-nums mt-1">{{ .Health.Users }}</dd></div>
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Customers</dt><dd class="font-headline-md font-bold tabular-nums mt-1">{{ .Health.Customers }}</dd></div>
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Orders</dt><dd class="font-headline-md font-bold tabular-nums mt-1">{{ .Health.Orders }}</dd></div>
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Payments</dt><dd class="font-headline-md font-bold tabular-nums mt-1">{{ .Health.Payments }}</dd></div>
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">GMV (minor)</dt><dd class="font-headline-md font-bold tabular-nums mt-1">{{ .Health.TotalGMVMinor }}</dd></div>
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Collected (minor)</dt><dd class="font-headline-md font-bold tabular-nums mt-1">{{ .Health.TotalPaidMinor }}</dd></div>
+      <div><dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Outstanding</dt><dd class="font-headline-md font-bold tabular-nums mt-1 text-error">{{ sub .Health.TotalGMVMinor .Health.TotalPaidMinor }}</dd></div>
+    </dl>
+  </div>
+
+  <!-- Row 3: Notification job breakdown -->
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+    <h2 class="font-headline-md text-headline-md font-bold mb-space-sm">Notification jobs</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-space-md">
+      <div><div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Pending</div><div class="font-headline-md font-bold tabular-nums">{{ .Notifs.Pending }}</div></div>
+      <div><div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Sent</div><div class="font-headline-md font-bold tabular-nums text-tertiary">{{ .Notifs.Sent }}</div></div>
+      <div><div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Failed</div><div class="font-headline-md font-bold tabular-nums">{{ .Notifs.Failed }}</div></div>
+      <div><div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Dead letter</div><div class="font-headline-md font-bold tabular-nums {{ if gt .Notifs.Dead 0 }}text-error{{ end }}">{{ .Notifs.Dead }}</div></div>
+    </div>
+    {{ if gt .Notifs.Dead 0 }}
+      <a href="{{ .Path }}/lookup?mode=jobs" class="inline-flex items-center gap-1 mt-space-md text-primary text-label-sm font-label-sm font-semibold hover:underline">View and retry dead jobs →</a>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

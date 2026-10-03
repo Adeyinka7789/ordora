@@ -194,5 +194,6 @@ func templateFuncs() template.FuncMap {
 		},
 		"inc": func(i int) int { return i + 1 },
 		"dec": func(i int) int { return i - 1 },
+		"sub": func(a, b int64) int64 { return a - b },
 	}
 }

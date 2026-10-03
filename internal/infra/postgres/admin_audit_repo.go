@@ -89,3 +89,73 @@ func (r *AdminAuditRepo) Recent(ctx context.Context, limit int) ([]AdminAuditEnt
 	})
 	return out, err
 }
+
+// AdminAuditFilter narrows the audit query.
+type AdminAuditFilter struct {
+	Action     string // exact match
+	TargetType string // exact match
+	Limit      int
+	Offset     int
+}
+
+// ListFiltered returns paginated audit entries with an optional filter.
+func (r *AdminAuditRepo) ListFiltered(ctx context.Context, f AdminAuditFilter) ([]AdminAuditEntry, int, error) {
+	if f.Limit <= 0 || f.Limit > 200 {
+		f.Limit = 50
+	}
+	if f.Offset < 0 {
+		f.Offset = 0
+	}
+
+	var out []AdminAuditEntry
+	var total int
+
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		where := "TRUE"
+		args := []any{}
+		if f.Action != "" {
+			args = append(args, f.Action)
+			where = fmt.Sprintf("%s AND action = $%d", where, len(args))
+		}
+		if f.TargetType != "" {
+			args = append(args, f.TargetType)
+			where = fmt.Sprintf("%s AND target_type = $%d", where, len(args))
+		}
+
+		countSQL := "SELECT count(*) FROM admin_audit_logs WHERE " + where
+		if err := tx.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+			return err
+		}
+
+		listArgs := append([]any{}, args...)
+		listArgs = append(listArgs, f.Limit, f.Offset)
+		listSQL := fmt.Sprintf(`
+			SELECT id, admin_id, action, COALESCE(target_type,''), target_id,
+			       metadata, COALESCE(ip::text,''), created_at
+			FROM admin_audit_logs
+			WHERE %s
+			ORDER BY created_at DESC
+			LIMIT $%d OFFSET $%d
+		`, where, len(args)+1, len(args)+2)
+
+		rows, err := tx.Query(ctx, listSQL, listArgs...)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var e AdminAuditEntry
+			var meta []byte
+			if err := rows.Scan(&e.ID, &e.AdminID, &e.Action, &e.TargetType, &e.TargetID,
+				&meta, &e.IP, &e.CreatedAt); err != nil {
+				return err
+			}
+			if len(meta) > 0 {
+				_ = json.Unmarshal(meta, &e.Metadata)
+			}
+			out = append(out, e)
+		}
+		return rows.Err()
+	})
+	return out, total, err
+}

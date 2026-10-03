@@ -9,17 +9,73 @@
       </div>
       <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Created {{ .Org.CreatedAt.Format "Jan 2, 2006" }}</p>
     </div>
-    <div class="flex items-center gap-space-sm">
+        <div class="flex items-center gap-space-sm flex-wrap">
       <form method="post" action="{{ .Path }}/impersonate/{{ .Org.ID }}" class="inline">
         <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-        <button type="submit" class="h-9 px-space-md rounded bg-error text-on-error font-label-md text-label-md font-semibold">Impersonate this business</button>
+        <button type="submit" class="h-9 px-space-md rounded bg-error text-on-error font-label-md text-label-md font-semibold">Impersonate</button>
       </form>
+
+      {{ if .Org.SuspendedAt }}
+        <form method="post" action="{{ .Path }}/orgs/{{ .Org.ID }}/unsuspend" class="inline">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <button type="submit" class="h-9 px-space-md rounded bg-tertiary text-on-tertiary font-label-md text-label-md font-semibold">Unsuspend</button>
+        </form>
+      {{ else }}
+        <details class="relative inline-block">
+          <summary class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold cursor-pointer flex items-center">
+            Suspend…
+          </summary>
+          <form method="post" action="{{ .Path }}/orgs/{{ .Org.ID }}/suspend"
+                class="absolute right-0 mt-1 z-40 w-72 p-space-md rounded-lg bg-surface-container-lowest border border-outline-variant/30 shadow-lg flex flex-col gap-space-sm">
+            <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+            <label class="flex flex-col gap-1">
+              <span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Reason</span>
+              <textarea name="reason" rows="2" maxlength="500"
+                        class="p-2 rounded bg-surface-container-low text-on-surface text-body-sm border border-outline-variant/30 focus:outline-none focus:border-primary-container resize-none"
+                        placeholder="Why is this business being suspended?"></textarea>
+            </label>
+            <button type="submit" class="h-8 px-space-md rounded bg-error text-on-error font-label-sm text-label-sm font-semibold">Suspend business</button>
+          </form>
+        </details>
+      {{ end }}
+
+      <details class="relative inline-block">
+        <summary class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold cursor-pointer flex items-center">
+          Delete…
+        </summary>
+        <form method="post" action="{{ .Path }}/orgs/{{ .Org.ID }}/delete"
+              class="absolute right-0 mt-1 z-40 w-80 p-space-md rounded-lg bg-surface-container-lowest border border-error-container shadow-lg flex flex-col gap-space-sm">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <div class="flex items-center gap-2 text-error">
+            <span class="material-symbols-outlined text-[20px]">warning</span>
+            <span class="font-label-md font-bold">Delete this business permanently</span>
+          </div>
+          <p class="text-body-sm text-on-surface-variant">
+            This will delete the business, its users' memberships, customers, orders, payments, and attachments. This cannot be undone.
+          </p>
+          <label class="flex flex-col gap-1">
+            <span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Type the slug to confirm: <code class="font-code-md">{{ .Org.Slug }}</code></span>
+            <input type="text" name="confirm_slug" required autocomplete="off"
+                   class="h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md border border-outline-variant/30 focus:outline-none focus:border-error">
+          </label>
+          <button type="submit" class="h-8 px-space-md rounded bg-error text-on-error font-label-sm text-label-sm font-semibold">Permanently delete</button>
+        </form>
+      </details>
+
       <a href="{{ .Path }}/orgs" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">← All tenants</a>
     </div>
   </div>
 
   {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
-
+    {{ if .Org.SuspendedAt }}
+    <div class="p-space-md rounded-lg bg-error-container text-on-error-container flex items-start gap-space-sm">
+      <span class="material-symbols-outlined text-[22px]">block</span>
+      <div class="flex flex-col">
+        <span class="font-label-md font-bold">This business is suspended</span>
+        <span class="text-body-sm">Suspended {{ .Org.SuspendedAt.Format "Jan 2, 2006 at 15:04" }}{{ if .Org.SuspendedReason }} · Reason: {{ .Org.SuspendedReason }}{{ end }}</span>
+      </div>
+    </div>
+  {{ end }}
   <div class="grid grid-cols-1 md:grid-cols-4 gap-space-md">
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
       <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Members</div>

@@ -18,6 +18,9 @@ type AdminOrgReader interface {
 	ListOrgs(ctx context.Context, query string, limit, offset int) ([]AdminOrgRow, int, error)
 	GetOrg(ctx context.Context, id uuid.UUID) (*AdminOrgDetail, error)
 	ListMembersForOrg(ctx context.Context, orgID uuid.UUID) ([]AdminMemberRow, error)
+	SuspendOrg(ctx context.Context, orgID uuid.UUID, reason string) error
+	UnsuspendOrg(ctx context.Context, orgID uuid.UUID) error
+	DeleteOrg(ctx context.Context, orgID uuid.UUID) error
 }
 
 // AdminUserReader reads users across tenants.
@@ -37,37 +40,41 @@ type AdminImpersonationStore interface {
 
 // AdminOrgRow mirrors postgres.AdminOrgRepo.OrgRow but as a domain type.
 type AdminOrgRow struct {
-	ID             uuid.UUID
-	Name           string
-	Slug           string
-	Currency       string
-	Email          string
-	Phone          string
-	MemberCount    int
-	CustomerCount  int
-	OrderCount     int
-	TotalOrdersGMV int64
-	OutstandingGMV int64
-	CreatedAt      time.Time
+	ID              uuid.UUID
+	Name            string
+	Slug            string
+	Currency        string
+	Email           string
+	Phone           string
+	MemberCount     int
+	CustomerCount   int
+	OrderCount      int
+	TotalOrdersGMV  int64
+	OutstandingGMV  int64
+	CreatedAt       time.Time
+	SuspendedAt     *time.Time
+	SuspendedReason string
 }
 
 // AdminOrgDetail bundles the org plus its members.
 type AdminOrgDetail struct {
-	ID             uuid.UUID
-	Name           string
-	Slug           string
-	Currency       string
-	Timezone       string
-	Email          string
-	Phone          string
-	Address        string
-	MemberCount    int
-	CustomerCount  int
-	OrderCount     int
-	TotalOrdersGMV int64
-	OutstandingGMV int64
-	CreatedAt      time.Time
-	Members        []AdminMemberRow
+	ID              uuid.UUID
+	Name            string
+	Slug            string
+	Currency        string
+	Timezone        string
+	Email           string
+	Phone           string
+	Address         string
+	MemberCount     int
+	CustomerCount   int
+	OrderCount      int
+	TotalOrdersGMV  int64
+	OutstandingGMV  int64
+	CreatedAt       time.Time
+	Members         []AdminMemberRow
+	SuspendedAt     *time.Time
+	SuspendedReason string
 }
 
 type AdminMemberRow struct {
@@ -262,4 +269,35 @@ func generateAdminToken() (raw string, hash []byte, err error) {
 	raw = base64.RawURLEncoding.EncodeToString(b)
 	sum := sha256.Sum256([]byte(raw))
 	return raw, sum[:], nil
+}
+
+func (s *AdminService) SuspendOrg(ctx context.Context, adminID uuid.UUID, orgID uuid.UUID, reason string, ip string) error {
+	if err := s.orgs.SuspendOrg(ctx, orgID, reason); err != nil {
+		return err
+	}
+	if s.audit != nil {
+		_ = s.audit.Record(ctx, adminID, "org.suspend", "ORGANIZATION", orgID,
+			map[string]any{"reason": reason}, ip)
+	}
+	return nil
+}
+
+func (s *AdminService) UnsuspendOrg(ctx context.Context, adminID uuid.UUID, orgID uuid.UUID, ip string) error {
+	if err := s.orgs.UnsuspendOrg(ctx, orgID); err != nil {
+		return err
+	}
+	if s.audit != nil {
+		_ = s.audit.Record(ctx, adminID, "org.unsuspend", "ORGANIZATION", orgID, nil, ip)
+	}
+	return nil
+}
+
+func (s *AdminService) DeleteOrg(ctx context.Context, adminID uuid.UUID, orgID uuid.UUID, ip string) error {
+	if err := s.orgs.DeleteOrg(ctx, orgID); err != nil {
+		return err
+	}
+	if s.audit != nil {
+		_ = s.audit.Record(ctx, adminID, "org.delete", "ORGANIZATION", orgID, nil, ip)
+	}
+	return nil
 }

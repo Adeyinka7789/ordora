@@ -1,0 +1,71 @@
+{{ define "admin/audit_list.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Audit log</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .Total }} admin actions recorded.</p>
+    </div>
+    <form method="get" action="{{ .Path }}/audit" class="flex items-end gap-space-sm">
+      <label class="flex flex-col gap-1">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Action</span>
+        <input type="text" name="action" value="{{ .Action }}" placeholder="e.g. org.impersonate_start"
+               class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-code-md text-code-md w-72">
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Target</span>
+        <input type="text" name="target_type" value="{{ .TargetType }}" placeholder="ORGANIZATION"
+               class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-code-md text-code-md w-40">
+      </label>
+      <button type="submit" class="h-9 px-space-md rounded bg-error text-on-error font-label-md text-label-md font-semibold">Filter</button>
+    </form>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    {{ if .Entries }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-md">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant font-label-sm uppercase tracking-wider">
+              <th class="py-2.5 px-space-md font-semibold">When</th>
+              <th class="py-2.5 px-space-md font-semibold">Admin</th>
+              <th class="py-2.5 px-space-md font-semibold">Action</th>
+              <th class="py-2.5 px-space-md font-semibold">Target</th>
+              <th class="py-2.5 px-space-md font-semibold">IP</th>
+              <th class="py-2.5 px-space-md font-semibold">Metadata</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Entries }}
+              <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60 align-top">
+                <td class="py-2 px-space-md font-code-md whitespace-nowrap">{{ .CreatedAt.Format "Jan 2 15:04:05" }}</td>
+                <td class="py-2 px-space-md font-code-md">
+                  {{ if .AdminID }}{{ .AdminID }}{{ else }}<span class="text-outline">—</span>{{ end }}
+                </td>
+                <td class="py-2 px-space-md font-code-md font-bold">{{ .Action }}</td>
+                <td class="py-2 px-space-md font-code-md">{{ .TargetType }}{{ if .TargetID }}:{{ .TargetID }}{{ end }}</td>
+                <td class="py-2 px-space-md font-code-md">{{ if .IP }}{{ .IP }}{{ else }}—{{ end }}</td>
+                <td class="py-2 px-space-md font-code-md text-on-surface-variant truncate max-w-md">
+                  {{ if .Metadata }}{{ range $k, $v := .Metadata }}{{ $k }}={{ $v }} {{ end }}{{ else }}—{{ end }}
+                </td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+
+      {{ if or .HasPrev .HasNext }}
+        <nav class="p-space-md flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant border-t border-outline-variant/20">
+          <span>Page {{ .Page }} · {{ len .Entries }} shown of {{ .Total }}</span>
+          <div class="flex gap-1">
+            {{ if .HasPrev }}<a href="{{ .Path }}/audit?action={{ .Action }}&target_type={{ .TargetType }}&page={{ dec .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Prev</a>{{ end }}
+            {{ if .HasNext }}<a href="{{ .Path }}/audit?action={{ .Action }}&target_type={{ .TargetType }}&page={{ inc .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Next</a>{{ end }}
+          </div>
+        </nav>
+      {{ end }}
+    {{ else }}
+      <div class="p-space-xl text-center"><p class="text-on-surface-variant">No audit entries yet.</p></div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

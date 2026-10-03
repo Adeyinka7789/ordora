@@ -127,3 +127,80 @@ func atoiOr(s string, fallback int) int {
 	}
 	return n
 }
+
+// Suspend handles POST {admin}/orgs/{id}/suspend.
+func (h *OrgHandler) Suspend(w http.ResponseWriter, r *http.Request) {
+	s := middleware.AdminFromContext(r.Context())
+	if s == nil {
+		http.Redirect(w, r, h.Cfg.Admin.Path+"/login", http.StatusSeeOther)
+		return
+	}
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	reason := r.PostFormValue("reason")
+	if err := h.Service.SuspendOrg(r.Context(), s.Admin.ID, id, reason, clientIP(r)); err != nil {
+		http.Redirect(w, r, h.Cfg.Admin.Path+"/orgs/"+id.String()+"?flash=Could+not+suspend", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, h.Cfg.Admin.Path+"/orgs/"+id.String()+"?flash=Business+suspended", http.StatusSeeOther)
+}
+
+// Unsuspend handles POST {admin}/orgs/{id}/unsuspend.
+func (h *OrgHandler) Unsuspend(w http.ResponseWriter, r *http.Request) {
+	s := middleware.AdminFromContext(r.Context())
+	if s == nil {
+		http.Redirect(w, r, h.Cfg.Admin.Path+"/login", http.StatusSeeOther)
+		return
+	}
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if err := h.Service.UnsuspendOrg(r.Context(), s.Admin.ID, id, clientIP(r)); err != nil {
+		http.Redirect(w, r, h.Cfg.Admin.Path+"/orgs/"+id.String()+"?flash=Could+not+unsuspend", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, h.Cfg.Admin.Path+"/orgs/"+id.String()+"?flash=Business+unsuspended", http.StatusSeeOther)
+}
+
+// Delete handles POST {admin}/orgs/{id}/delete. Irreversible.
+func (h *OrgHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	s := middleware.AdminFromContext(r.Context())
+	if s == nil {
+		http.Redirect(w, r, h.Cfg.Admin.Path+"/login", http.StatusSeeOther)
+		return
+	}
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	// Require the admin to type the org slug to confirm.
+	confirm := r.PostFormValue("confirm_slug")
+	detail, err := h.Service.GetOrg(r.Context(), id)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if confirm != detail.Slug {
+		http.Redirect(w, r, h.Cfg.Admin.Path+"/orgs/"+id.String()+"?flash=Confirmation+did+not+match", http.StatusSeeOther)
+		return
+	}
+	if err := h.Service.DeleteOrg(r.Context(), s.Admin.ID, id, clientIP(r)); err != nil {
+		http.Redirect(w, r, h.Cfg.Admin.Path+"/orgs/"+id.String()+"?flash=Delete+failed", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, h.Cfg.Admin.Path+"/orgs?flash=Business+deleted", http.StatusSeeOther)
+}
