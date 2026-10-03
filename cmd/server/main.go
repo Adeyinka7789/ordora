@@ -172,6 +172,10 @@ func run() error {
 		Attachments: attachService,
 		Renderer:    renderer,
 	}
+	ledgerH := &handlers.LedgerHandler{
+		Repo:     paymentRepo,
+		Renderer: renderer,
+	}
 
 	// ---- Costs ----
 	costRepo := postgres.NewCostRepo(db)
@@ -550,7 +554,8 @@ func run() error {
 	mux.Handle("GET /reports/export.csv", middleware.RequireTenant(http.HandlerFunc(reportH.ExportCSV)))
 
 	// ---- Stub pages (nav links that are on the roadmap) ----
-	mux.Handle("GET /payments", middleware.RequireTenant(http.HandlerFunc(stubH.Payments)))
+	mux.Handle("GET /payments", middleware.RequireTenant(http.HandlerFunc(ledgerH.Index)))
+	mux.Handle("GET /payments/export.csv", middleware.RequireTenant(http.HandlerFunc(ledgerH.ExportCSV)))
 	mux.Handle("GET /storefront", middleware.RequireTenant(http.HandlerFunc(stubH.Storefront)))
 
 	// ---- Settings + profile ----

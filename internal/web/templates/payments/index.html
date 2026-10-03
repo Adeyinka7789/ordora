@@ -1,0 +1,84 @@
+{{ define "payments/index.html" }}
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Payments &amp; Ledger</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Every payment recorded across all orders. Recording happens on the order page.</p>
+    </div>
+    <a href="/payments/export.csv?q={{ .Query }}&method={{ .Method }}&from={{ .From }}&to={{ .To }}{{ if .HideReversed }}&hide=1{{ end }}"
+       class="h-9 px-space-md rounded bg-surface-container-lowest border border-outline-variant/30 hover:bg-surface-container-low text-on-surface font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
+      <span class="material-symbols-outlined text-[18px]">download</span>
+      <span>Export CSV</span>
+    </a>
+  </div>
+
+  {{ with .Totals }}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-space-sm">
+      <div class="bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">Total collected</span>
+        <span class="font-headline-lg text-headline-lg font-bold text-on-surface tabular-nums">{{ currency .TotalMinor $.Currency }}</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Active payments only</span>
+      </div>
+      <div class="bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">Payments</span>
+        <span class="font-headline-lg text-headline-lg font-bold text-on-surface tabular-nums">{{ .Count }}</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Active payments only</span>
+      </div>
+      <div class="col-span-2 bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-2">
+        <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">By method</span>
+        {{ if .ByMethod }}
+          {{ range .ByMethod }}
+            <div class="flex items-center justify-between font-body-md text-body-md">
+              <span class="text-on-surface">{{ .Method.Label }}</span>
+              <span class="tabular-nums font-code-md text-code-md font-semibold text-on-surface">{{ currency .TotalMinor $.Currency }} <span class="text-on-surface-variant font-normal">· {{ .Count }}</span></span>
+            </div>
+          {{ end }}
+        {{ else }}
+          <span class="font-body-md text-body-md text-on-surface-variant">No payments yet.</span>
+        {{ end }}
+      </div>
+    </div>
+  {{ end }}
+
+  <form class="flex flex-col lg:flex-row lg:items-center gap-space-sm"
+        hx-get="/payments"
+        hx-trigger="input changed delay:300ms from:input[name='q'], change from:select[name='method'], change from:input[name='from'], change from:input[name='to'], change from:input[name='hide'], submit"
+        hx-target="#ledger-table"
+        hx-swap="outerHTML"
+        hx-push-url="true">
+    <div class="relative w-full max-w-md flex items-center">
+      <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+      <input type="search" name="q" value="{{ .Query }}" placeholder="Search by order #, customer, or reference…" autocomplete="off"
+             class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
+    </div>
+    <select name="method"
+            class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary-container">
+      <option value="">All methods</option>
+      <option value="CASH"          {{ if eq .Method "CASH" }}selected{{ end }}>Cash</option>
+      <option value="BANK_TRANSFER" {{ if eq .Method "BANK_TRANSFER" }}selected{{ end }}>Bank transfer</option>
+      <option value="CARD"          {{ if eq .Method "CARD" }}selected{{ end }}>Card</option>
+      <option value="POS"           {{ if eq .Method "POS" }}selected{{ end }}>POS</option>
+      <option value="OTHER"         {{ if eq .Method "OTHER" }}selected{{ end }}>Other</option>
+    </select>
+    <div class="flex items-center gap-space-sm">
+      <label class="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
+        <span>From</span>
+        <input type="date" name="from" value="{{ .From }}"
+               class="h-9 px-2 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary-container">
+      </label>
+      <label class="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
+        <span>To</span>
+        <input type="date" name="to" value="{{ .To }}"
+               class="h-9 px-2 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md text-on-surface focus:outline-none focus:border-primary-container">
+      </label>
+    </div>
+    <label class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant cursor-pointer select-none">
+      <input type="checkbox" name="hide" value="1" {{ if .HideReversed }}checked{{ end }} class="h-4 w-4 accent-primary-container">
+      <span>Hide reversed</span>
+    </label>
+  </form>
+
+  {{ template "payments/_table.html" . }}
+</div>
+{{ end }}

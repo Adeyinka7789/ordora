@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -167,6 +168,239 @@ func (r *PaymentRepo) MarkReversedTx(ctx context.Context, tx pgx.Tx, originalID,
 		return payment.ErrNotFound
 	}
 	return nil
+}
+
+// -----------------------------------------------------------------------------
+// Ledger: cross-order listing with filters and pagination
+// -----------------------------------------------------------------------------
+
+// LedgerOptions controls filtering and pagination for the ledger view.
+type LedgerOptions struct {
+	Query        string // free-text: order number, customer name, reference
+	Method       string // payment method, empty = all
+	PaidFrom     *time.Time
+	PaidBefore   *time.Time // exclusive upper bound on paid_at
+	HideReversed bool       // exclude reversed payments and reversals
+	Limit        int
+	Offset       int
+}
+
+// LedgerRow is one row of the ledger: the payment plus display fields
+// joined from orders and customers.
+type LedgerRow struct {
+	Payment      *payment.Payment
+	OrderID      uuid.UUID
+	OrderNumber  string
+	CustomerName string
+}
+
+// LedgerResult carries the page and total count.
+type LedgerResult struct {
+	Rows   []LedgerRow
+	Total  int
+	Limit  int
+	Offset int
+}
+
+// LedgerMethodTotal aggregates one payment method.
+type LedgerMethodTotal struct {
+	Method     payment.Method
+	Count      int
+	TotalMinor int64
+}
+
+// LedgerTotals aggregates active (non-reversed, non-reversal) payments
+// matching the same filters.
+type LedgerTotals struct {
+	Count      int
+	TotalMinor int64
+	ByMethod   []LedgerMethodTotal
+}
+
+// Ledger returns a page of payments across all orders, newest first.
+func (r *PaymentRepo) Ledger(ctx context.Context, scope tenant.TenantScope, opts LedgerOptions) (*LedgerResult, error) {
+	if opts.Limit <= 0 || opts.Limit > 5000 {
+		opts.Limit = 20
+	}
+	if opts.Offset < 0 {
+		opts.Offset = 0
+	}
+
+	var out *LedgerResult
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		where, args := buildLedgerWhere(opts)
+
+		var total int
+		countSQL := fmt.Sprintf(`
+			SELECT count(*)
+			FROM payments p
+			JOIN orders o ON o.id = p.order_id
+			JOIN customers c ON c.id = o.customer_id
+			WHERE %s`, where)
+		if err := tx.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
+			return fmt.Errorf("payment_repo: ledger count: %w", Classify(err))
+		}
+
+		pageArgs := append([]any{}, args...)
+		pageArgs = append(pageArgs, opts.Limit, opts.Offset)
+		listSQL := fmt.Sprintf(`
+			SELECT
+				p.id, p.organization_id, p.order_id, p.amount_minor, p.currency, p.method,
+				COALESCE(p.reference,''), p.paid_at, COALESCE(p.notes,''),
+				p.reverses, p.reversed_by, p.created_by, p.created_at,
+				o.id, o.order_number, c.name
+			FROM payments p
+			JOIN orders o ON o.id = p.order_id
+			JOIN customers c ON c.id = o.customer_id
+			WHERE %s
+			ORDER BY p.paid_at DESC, p.created_at DESC
+			LIMIT $%d OFFSET $%d
+		`, where, len(args)+1, len(args)+2)
+
+		rows, err := tx.Query(ctx, listSQL, pageArgs...)
+		if err != nil {
+			return fmt.Errorf("payment_repo: ledger list: %w", Classify(err))
+		}
+		defer rows.Close()
+
+		var outRows []LedgerRow
+		for rows.Next() {
+			row, err := scanLedgerRow(rows)
+			if err != nil {
+				return err
+			}
+			outRows = append(outRows, row)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("payment_repo: ledger rows: %w", err)
+		}
+
+		out = &LedgerResult{Rows: outRows, Total: total, Limit: opts.Limit, Offset: opts.Offset}
+		return nil
+	})
+	return out, err
+}
+
+// LedgerTotals aggregates active payments matching the same filters.
+func (r *PaymentRepo) LedgerTotals(ctx context.Context, scope tenant.TenantScope, opts LedgerOptions) (*LedgerTotals, error) {
+	tot := &LedgerTotals{}
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		where, args := buildLedgerWhere(opts)
+		activeWhere := where + ` AND p.reverses IS NULL AND p.reversed_by IS NULL`
+
+		grandSQL := fmt.Sprintf(`
+			SELECT count(*), COALESCE(SUM(p.amount_minor), 0)
+			FROM payments p
+			JOIN orders o ON o.id = p.order_id
+			JOIN customers c ON c.id = o.customer_id
+			WHERE %s`, activeWhere)
+		if err := tx.QueryRow(ctx, grandSQL, args...).Scan(&tot.Count, &tot.TotalMinor); err != nil {
+			return fmt.Errorf("payment_repo: ledger totals: %w", Classify(err))
+		}
+
+		byMethodSQL := fmt.Sprintf(`
+			SELECT p.method, count(*), COALESCE(SUM(p.amount_minor), 0)
+			FROM payments p
+			JOIN orders o ON o.id = p.order_id
+			JOIN customers c ON c.id = o.customer_id
+			WHERE %s
+			GROUP BY p.method
+			ORDER BY SUM(p.amount_minor) DESC`, activeWhere)
+		rows, err := tx.Query(ctx, byMethodSQL, args...)
+		if err != nil {
+			return fmt.Errorf("payment_repo: ledger by-method: %w", Classify(err))
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var m LedgerMethodTotal
+			var methodStr string
+			if err := rows.Scan(&methodStr, &m.Count, &m.TotalMinor); err != nil {
+				return fmt.Errorf("payment_repo: ledger by-method scan: %w", err)
+			}
+			m.Method = payment.Method(methodStr)
+			tot.ByMethod = append(tot.ByMethod, m)
+		}
+		return rows.Err()
+	})
+	return tot, err
+}
+
+// buildLedgerWhere returns the WHERE clause and positional args.
+// All user input goes through args; only our own structure is interpolated.
+func buildLedgerWhere(opts LedgerOptions) (string, []any) {
+	clauses := []string{"TRUE"}
+	var args []any
+
+	q := strings.TrimSpace(opts.Query)
+	if q != "" {
+		args = append(args, "%"+q+"%")
+		n := len(args)
+		clauses = append(clauses, fmt.Sprintf(
+			`(o.order_number ILIKE $%d OR c.name ILIKE $%d OR COALESCE(p.reference,'') ILIKE $%d)`,
+			n, n, n,
+		))
+	}
+	if opts.Method != "" {
+		args = append(args, opts.Method)
+		clauses = append(clauses, fmt.Sprintf(`p.method = $%d`, len(args)))
+	}
+	if opts.PaidFrom != nil {
+		args = append(args, *opts.PaidFrom)
+		clauses = append(clauses, fmt.Sprintf(`p.paid_at >= $%d`, len(args)))
+	}
+	if opts.PaidBefore != nil {
+		args = append(args, *opts.PaidBefore)
+		clauses = append(clauses, fmt.Sprintf(`p.paid_at < $%d`, len(args)))
+	}
+	if opts.HideReversed {
+		clauses = append(clauses, `p.reverses IS NULL AND p.reversed_by IS NULL`)
+	}
+	return strings.Join(clauses, " AND "), args
+}
+
+func scanLedgerRow(row scannable) (LedgerRow, error) {
+	var (
+		id, orgID, orderID   uuid.UUID
+		amountMinor           int64
+		currency, methodStr   string
+		reference             string
+		paidAt                time.Time
+		notes                 string
+		reverses, reversedBy  *uuid.UUID
+		createdBy             uuid.UUID
+		createdAt             time.Time
+		joinedOrderID         uuid.UUID
+		orderNumber           string
+		customerName          string
+	)
+	if err := row.Scan(&id, &orgID, &orderID, &amountMinor, &currency, &methodStr,
+		&reference, &paidAt, &notes, &reverses, &reversedBy, &createdBy, &createdAt,
+		&joinedOrderID, &orderNumber, &customerName); err != nil {
+		return LedgerRow{}, fmt.Errorf("payment_repo: scan ledger: %w", err)
+	}
+	amt, err := money.New(amountMinor, currency)
+	if err != nil {
+		return LedgerRow{}, fmt.Errorf("payment_repo: bad amount: %w", err)
+	}
+	return LedgerRow{
+		Payment: &payment.Payment{
+			ID:             id,
+			OrganizationID: orgID,
+			OrderID:        orderID,
+			Amount:         amt,
+			Method:         payment.Method(methodStr),
+			Reference:      reference,
+			PaidAt:         paidAt,
+			Notes:          notes,
+			Reverses:       reverses,
+			ReversedBy:     reversedBy,
+			CreatedBy:      createdBy,
+			CreatedAt:      createdAt,
+		},
+		OrderID:      joinedOrderID,
+		OrderNumber:  orderNumber,
+		CustomerName: customerName,
+	}, nil
 }
 
 // -----------------------------------------------------------------------------
