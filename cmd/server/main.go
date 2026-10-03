@@ -54,6 +54,15 @@ func run() error {
 	defer db.Close()
 	slog.Info("db connected", "host", cfg.DB.Host, "name", cfg.DB.Name, "user", cfg.DB.User)
 
+	// ---- Admin database pool ----
+	// A separate pool for admin queries. Connects as ordora_admin (BYPASSRLS)
+	// so cross-tenant queries work. Never used by business requests.
+	adminDB, err := postgres.Open(ctx, cfg.DB.AdminDSN())
+	if err != nil {
+		return fmt.Errorf("admin db: %w", err)
+	}
+	defer adminDB.Close()
+
 	// ---- Email ----
 	mailer, err := email.NewFromConfig(cfg.Email)
 	if err != nil {
@@ -221,6 +230,36 @@ func run() error {
 		Cfg:      cfg,
 	}
 
+	// ---- Admin service + extended handlers ----
+	adminOrgRepo := postgres.NewAdminOrgRepo(adminDB)
+	adminUserRepo := postgres.NewAdminUserRepo(adminDB)
+	adminImpersonationRepo := postgres.NewAdminImpersonationRepo(adminDB)
+	adminAuditRepo := postgres.NewAdminAuditRepo(adminDB)
+
+	adminSvc := app.NewAdminService(app.AdminServiceDeps{
+		Orgs:           postgres.NewAdminOrgAdapter(adminOrgRepo),
+		Users:          postgres.NewAdminUserAdapter(adminUserRepo),
+		Impersonations: adminImpersonationRepo,
+		Audit:          postgres.NewAdminAuditAdapter(adminAuditRepo),
+		IDs:            id.Generator{},
+	})
+
+	adminOrgH := &adminhandlers.OrgHandler{
+		Service:  adminSvc,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+	adminUserH := &adminhandlers.UserHandler{
+		Service:  adminSvc,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+	adminImpersonateH := &adminhandlers.ImpersonateHandler{
+		Service:  adminSvc,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+
 	// ---- Public portal ----
 	portalRepo := postgres.NewPortalRepo(db)
 	portalService := app.NewPortalService(app.PortalServiceDeps{
@@ -264,6 +303,21 @@ func run() error {
 
 	mux.Handle("GET "+adminPath+"/dashboard",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminDashH.Index))))
+
+	mux.Handle("GET "+adminPath+"/orgs",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Index))))
+	mux.Handle("GET "+adminPath+"/orgs/{id}",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Show))))
+	mux.Handle("GET "+adminPath+"/users",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.Index))))
+	mux.Handle("GET "+adminPath+"/users/{id}",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.Show))))
+	mux.Handle("POST "+adminPath+"/users/{id}/logout",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.ForceLogout))))
+
+	mux.Handle("POST "+adminPath+"/impersonate/{orgID}",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminImpersonateH.Start))))
+	mux.Handle("POST /impersonate/exit", http.HandlerFunc(adminImpersonateH.Stop))
 
 	// Static
 	staticDir := filepath.Join("internal", "web", "static")

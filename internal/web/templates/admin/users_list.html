@@ -1,0 +1,60 @@
+{{ define "admin/users_list.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Users</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .Total }} users across all businesses.</p>
+    </div>
+    <form method="get" action="{{ .Path }}/users" class="relative">
+      <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+      <input type="search" name="q" value="{{ .Query }}" placeholder="Search by name or email…" autocomplete="off"
+             class="h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm focus:outline-none focus:border-primary-container w-72">
+    </form>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    {{ if .Users }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-md">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+              <th class="py-2.5 px-space-md font-semibold">User</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Orgs</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Sessions</th>
+              <th class="py-2.5 px-space-md font-semibold">Verified</th>
+              <th class="py-2.5 px-space-md font-semibold">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Users }}
+              <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60">
+                <td class="py-3 px-space-md">
+                  <a href="{{ $.Path }}/users/{{ .ID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
+                  <div class="font-code-md text-code-md text-on-surface-variant">{{ .Email }}</div>
+                </td>
+                <td class="py-3 px-space-md text-right tabular-nums">{{ .MembershipCount }}</td>
+                <td class="py-3 px-space-md text-right tabular-nums">{{ .SessionCount }}</td>
+                <td class="py-3 px-space-md">{{ if .EmailVerified }}<span class="text-tertiary">✓</span>{{ else }}<span class="text-outline">—</span>{{ end }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006" }}</td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+
+      {{ if or .HasPrev .HasNext }}
+        <nav class="p-space-md flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant border-t border-outline-variant/20">
+          <span>Page {{ .Page }} · {{ len .Users }} shown of {{ .Total }}</span>
+          <div class="flex gap-1">
+            {{ if .HasPrev }}<a href="{{ .Path }}/users?q={{ .Query }}&page={{ dec .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Prev</a>{{ end }}
+            {{ if .HasNext }}<a href="{{ .Path }}/users?q={{ .Query }}&page={{ inc .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Next</a>{{ end }}
+          </div>
+        </nav>
+      {{ end }}
+    {{ else }}
+      <div class="p-space-xl text-center"><p class="text-on-surface-variant">No users found.</p></div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

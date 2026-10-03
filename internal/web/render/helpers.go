@@ -192,5 +192,7 @@ func templateFuncs() template.FuncMap {
 			}
 			return s
 		},
+		"inc": func(i int) int { return i + 1 },
+		"dec": func(i int) int { return i - 1 },
 	}
 }

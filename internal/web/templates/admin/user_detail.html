@@ -1,0 +1,93 @@
+{{ define "admin/user_detail.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">{{ .User.Name }}</h1>
+      <p class="font-code-md text-code-md text-on-surface-variant mt-0.5">{{ .User.Email }}</p>
+    </div>
+    <div class="flex items-center gap-space-sm">
+      <form method="post" action="{{ .Path }}/users/{{ .User.ID }}/logout"
+            onsubmit="return confirm('Force-logout this user from all devices?');">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold">Force logout</button>
+      </form>
+      <a href="{{ .Path }}/users" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">← All users</a>
+    </div>
+  </div>
+
+  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+    <dl class="grid grid-cols-[160px_1fr] gap-x-space-md gap-y-space-sm">
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Email verified</dt>
+      <dd>{{ if .User.EmailVerified }}<span class="text-tertiary font-semibold">✓ Verified</span>{{ else }}<span class="text-error font-semibold">Not verified</span>{{ end }}</dd>
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Created</dt>
+      <dd class="font-code-md text-code-md">{{ .User.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Updated</dt>
+      <dd class="font-code-md text-code-md">{{ .User.UpdatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+    </dl>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    <div class="p-space-md border-b border-outline-variant/20">
+      <h2 class="font-headline-md text-headline-md font-bold">Org memberships</h2>
+    </div>
+    {{ if .User.Memberships }}
+      <table class="w-full text-left font-body-md">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+            <th class="py-2.5 px-space-md font-semibold">Organization</th>
+            <th class="py-2.5 px-space-md font-semibold">Role</th>
+            <th class="py-2.5 px-space-md font-semibold">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .User.Memberships }}
+            <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60">
+              <td class="py-3 px-space-md">
+                <a href="{{ $.Path }}/orgs/{{ .OrganizationID }}" class="font-label-md text-label-md font-semibold hover:text-primary">{{ .OrganizationName }}</a>
+                <div class="font-code-md text-code-md text-on-surface-variant">{{ .OrganizationSlug }}</div>
+              </td>
+              <td class="py-3 px-space-md font-code-md text-code-md">{{ .Role }}</td>
+              <td class="py-3 px-space-md font-code-md text-code-md">{{ .Status }}</td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    {{ else }}
+      <div class="p-space-xl text-center"><p class="text-on-surface-variant">No memberships.</p></div>
+    {{ end }}
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    <div class="p-space-md border-b border-outline-variant/20">
+      <h2 class="font-headline-md text-headline-md font-bold">Active sessions</h2>
+    </div>
+    {{ if .User.Sessions }}
+      <table class="w-full text-left font-body-md">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+            <th class="py-2.5 px-space-md font-semibold">User agent</th>
+            <th class="py-2.5 px-space-md font-semibold">IP</th>
+            <th class="py-2.5 px-space-md font-semibold">Created</th>
+            <th class="py-2.5 px-space-md font-semibold">Expires</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .User.Sessions }}
+            <tr class="border-b border-outline-variant/20">
+              <td class="py-3 px-space-md font-body-sm text-body-sm truncate max-w-md">{{ .UserAgent }}</td>
+              <td class="py-3 px-space-md font-code-md text-code-md">{{ if .IP }}{{ .IP }}{{ else }}—{{ end }}</td>
+              <td class="py-3 px-space-md font-code-md text-code-md">{{ .CreatedAt.Format "Jan 2, 15:04" }}</td>
+              <td class="py-3 px-space-md font-code-md text-code-md">{{ .ExpiresAt.Format "Jan 2, 15:04" }}</td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    {{ else }}
+      <div class="p-space-xl text-center"><p class="text-on-surface-variant">No active sessions.</p></div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

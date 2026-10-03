@@ -1,0 +1,73 @@
+{{ define "admin/orgs_list.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Tenants</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .Total }} businesses on the platform.</p>
+    </div>
+    <form method="get" action="{{ .Path }}/orgs" class="relative">
+      <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+      <input type="search" name="q" value="{{ .Query }}" placeholder="Search by name or slug…" autocomplete="off"
+             class="h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm focus:outline-none focus:border-primary-container w-72">
+    </form>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    {{ if .Orgs }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-md text-body-md">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-2.5 px-space-md font-semibold">Business</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Members</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Customers</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Orders</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">GMV</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Outstanding</th>
+              <th class="py-2.5 px-space-md font-semibold">Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Orgs }}
+              <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+                <td class="py-3 px-space-md">
+                  <a href="{{ $.Path }}/orgs/{{ .ID }}" class="font-label-md text-label-md font-bold text-on-surface hover:text-primary">{{ .Name }}</a>
+                  <div class="font-code-md text-code-md text-on-surface-variant">{{ .Slug }}</div>
+                </td>
+                <td class="py-3 px-space-md text-right tabular-nums">{{ .MemberCount }}</td>
+                <td class="py-3 px-space-md text-right tabular-nums">{{ .CustomerCount }}</td>
+                <td class="py-3 px-space-md text-right tabular-nums">{{ .OrderCount }}</td>
+                <td class="py-3 px-space-md text-right font-code-md text-code-md tabular-nums">{{ .Currency }} {{ .TotalOrdersGMV }}</td>
+                <td class="py-3 px-space-md text-right font-code-md text-code-md tabular-nums {{ if gt .OutstandingGMV 0 }}text-error{{ end }}">{{ .Currency }} {{ .OutstandingGMV }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006" }}</td>
+                <td class="py-3 px-space-md text-right">
+                  <form method="post" action="{{ $.Path }}/impersonate/{{ .ID }}" class="inline">
+                    <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                    <button type="submit" class="h-7 px-2 rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error text-label-sm font-label-sm font-semibold">Impersonate</button>
+                  </form>
+                </td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+
+      {{ if or .HasPrev .HasNext }}
+        <nav class="p-space-md flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant border-t border-outline-variant/20">
+          <span>Page {{ .Page }} · {{ len .Orgs }} shown of {{ .Total }}</span>
+          <div class="flex gap-1">
+            {{ if .HasPrev }}<a href="{{ .Path }}/orgs?q={{ .Query }}&page={{ dec .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Prev</a>{{ end }}
+            {{ if .HasNext }}<a href="{{ .Path }}/orgs?q={{ .Query }}&page={{ inc .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Next</a>{{ end }}
+          </div>
+        </nav>
+      {{ end }}
+    {{ else }}
+      <div class="p-space-xl text-center">
+        <p class="font-body-md text-body-md text-on-surface-variant">No businesses found.</p>
+      </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

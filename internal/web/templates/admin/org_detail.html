@@ -1,0 +1,97 @@
+{{ define "admin/org_detail.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">{{ .Org.Name }}</h1>
+        <span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">{{ .Org.Slug }}</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Created {{ .Org.CreatedAt.Format "Jan 2, 2006" }}</p>
+    </div>
+    <div class="flex items-center gap-space-sm">
+      <form method="post" action="{{ .Path }}/impersonate/{{ .Org.ID }}" class="inline">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="h-9 px-space-md rounded bg-error text-on-error font-label-md text-label-md font-semibold">Impersonate this business</button>
+      </form>
+      <a href="{{ .Path }}/orgs" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">← All tenants</a>
+    </div>
+  </div>
+
+  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-space-md">
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Members</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums">{{ .Org.MemberCount }}</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Customers</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums">{{ .Org.CustomerCount }}</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Orders</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums">{{ .Org.OrderCount }}</div>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md">
+      <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Outstanding</div>
+      <div class="font-headline-lg text-headline-lg font-bold mt-1 tabular-nums {{ if gt .Org.OutstandingGMV 0 }}text-error{{ end }}">{{ .Org.Currency }} {{ .Org.OutstandingGMV }}</div>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+    <h2 class="font-headline-md text-headline-md font-bold mb-space-sm">Profile</h2>
+    <dl class="grid grid-cols-[160px_1fr] gap-x-space-md gap-y-space-sm">
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Currency</dt>
+      <dd class="font-code-md text-code-md">{{ .Org.Currency }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Timezone</dt>
+      <dd class="font-code-md text-code-md">{{ .Org.Timezone }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Email</dt>
+      <dd class="font-code-md text-code-md">{{ if .Org.Email }}{{ .Org.Email }}{{ else }}—{{ end }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Phone</dt>
+      <dd class="font-code-md text-code-md">{{ if .Org.Phone }}{{ .Org.Phone }}{{ else }}—{{ end }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Address</dt>
+      <dd class="font-body-md text-body-md">{{ if .Org.Address }}{{ .Org.Address }}{{ else }}—{{ end }}</dd>
+    </dl>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    <div class="p-space-md border-b border-outline-variant/20">
+      <h2 class="font-headline-md text-headline-md font-bold">Members</h2>
+    </div>
+    {{ if .Org.Members }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-md">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+              <th class="py-2.5 px-space-md font-semibold">User</th>
+              <th class="py-2.5 px-space-md font-semibold">Role</th>
+              <th class="py-2.5 px-space-md font-semibold">Status</th>
+              <th class="py-2.5 px-space-md font-semibold">Verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Org.Members }}
+              <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60">
+                <td class="py-3 px-space-md">
+                  <a href="{{ $.Path }}/users/{{ .UserID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
+                  <div class="font-code-md text-code-md text-on-surface-variant">{{ .Email }}</div>
+                </td>
+                <td class="py-3 px-space-md font-code-md text-code-md">{{ .Role }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md">{{ .Status }}</td>
+                <td class="py-3 px-space-md">{{ if .EmailVerified }}<span class="text-tertiary">✓</span>{{ else }}<span class="text-outline">—</span>{{ end }}</td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+    {{ else }}
+      <div class="p-space-xl text-center"><p class="text-on-surface-variant">No members.</p></div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

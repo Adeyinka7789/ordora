@@ -1,0 +1,16 @@
+{{ define "partials/admin_nav.html" }}
+<nav class="w-full bg-surface-container-lowest border-b border-outline-variant/30 px-space-lg">
+  <div class="max-w-[1440px] mx-auto flex items-center gap-1 py-2">
+    <a href="/" class="flex items-center gap-1.5 px-3 py-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface text-label-md font-label-md transition-colors">
+      <img src="/static/logo.svg" alt="Ordora" class="w-5 h-5">
+      <span class="font-bold">Ordora</span>
+    </a>
+    <span class="text-outline-variant">/</span>
+    <a href="{{ .Data.Path }}/dashboard" class="px-3 py-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface text-label-md font-label-md transition-colors">Admin</a>
+    <span class="text-outline-variant">/</span>
+    <a href="{{ .Data.Path }}/orgs" class="px-3 py-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface text-label-md font-label-md transition-colors">Tenants</a>
+    <a href="{{ .Data.Path }}/users" class="px-3 py-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface text-label-md font-label-md transition-colors">Users</a>
+    <a href="{{ .Data.Path }}/dashboard" class="px-3 py-1.5 rounded hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface text-label-md font-label-md transition-colors">Dashboard</a>
+  </div>
+</nav>
+{{ end }}
