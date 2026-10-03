@@ -35,7 +35,7 @@
         {
           label: 'Invoiced',
           data: invoiced,
-          backgroundColor: '#2e2a6d',
+          backgroundColor: '#005f6b',
           borderRadius: 4,
           barPercentage: 0.7,
           categoryPercentage: 0.6
@@ -71,16 +71,16 @@
           legend: {
             position: 'bottom',
             labels: {
-              color: '#464555',
+              color: '#455556',
               font: { family: 'Inter', size: 12 },
               boxWidth: 10,
               usePointStyle: true
             }
           },
           tooltip: {
-            backgroundColor: '#213145',
-            titleColor: '#eaf1ff',
-            bodyColor: '#eaf1ff',
+            backgroundColor: '#102e33',
+            titleColor: '#e6f0f0',
+            bodyColor: '#e6f0f0',
             padding: 10,
             callbacks: {
               label: function (ctx) {
@@ -93,13 +93,13 @@
         scales: {
           x: {
             grid: { display: false },
-            ticks: { color: '#464555', font: { family: 'Inter', size: 11 } }
+            ticks: { color: '#455556', font: { family: 'Inter', size: 11 } }
           },
           y: {
             beginAtZero: true,
-            grid: { color: '#e5eeff' },
+            grid: { color: '#e0ebeb' },
             ticks: {
-              color: '#464555',
+              color: '#455556',
               font: { family: 'Inter', size: 11 },
               callback: function (v) { return '₦' + v.toLocaleString(); }
             }

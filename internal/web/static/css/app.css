@@ -11,8 +11,8 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #a09db6; }
+::-webkit-scrollbar-thumb { background: #b9cdd0; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #93adb1; }
 
 /* Details/summary for reverse-payment UI */
 details > summary {
