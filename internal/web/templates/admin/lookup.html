@@ -1,0 +1,195 @@
+{{ define "admin/lookup.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Support lookup</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Find orders, customers, and stuck jobs.</p>
+  </div>
+
+  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .Error }}</div>{{ end }}
+
+  <!-- Search form -->
+  <form method="get" action="{{ .Path }}/lookup" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col md:flex-row md:items-end gap-space-md">
+    <label class="flex flex-col gap-1 flex-1">
+      <span class="text-label-md font-label-md text-on-surface">Lookup mode</span>
+      <select name="mode" class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="order" {{ if eq .Mode "order" }}selected{{ end }}>Find order by number</option>
+        <option value="email" {{ if eq .Mode "email" }}selected{{ end }}>Find customer by email</option>
+        <option value="phone" {{ if eq .Mode "phone" }}selected{{ end }}>Find customer by phone</option>
+        <option value="jobs"  {{ if eq .Mode "jobs" }}selected{{ end }}>Recent notification jobs</option>
+      </select>
+    </label>
+    <label class="flex flex-col gap-1 flex-1">
+      <span class="text-label-md font-label-md text-on-surface">Query</span>
+      <input type="text" name="q" value="{{ .Query }}" placeholder="ORD-2026-000123 or name@example.com"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+    <button type="submit" class="h-9 px-space-md rounded bg-error text-on-error font-label-md text-label-md font-semibold">Search</button>
+  </form>
+
+  <!-- Order result -->
+  {{ if .Order }}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-code-md text-code-md text-primary font-bold">{{ .Order.OrderNumber }}</div>
+          <div class="font-headline-md text-headline-md font-bold mt-1">{{ .Order.Title }}</div>
+        </div>
+        <span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">{{ .Order.Status }}</span>
+      </div>
+
+      <dl class="grid grid-cols-[160px_1fr] gap-x-space-md gap-y-space-sm">
+        <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Business</dt>
+        <dd><a href="{{ .Path }}/orgs/{{ .Order.OrganizationID }}" class="text-primary hover:underline font-label-md">{{ .Order.OrgName }}</a> ({{ .Order.OrgSlug }})</dd>
+        <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Customer</dt>
+        <dd><a href="{{ .Path }}/users/{{ .Order.CustomerID }}" class="text-primary hover:underline">{{ .Order.CustomerName }}</a> · {{ .Order.CustomerEmail }}</dd>
+        <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Total</dt>
+        <dd class="font-code-md text-code-md">{{ .Order.Currency }} {{ .Order.TotalMinor }}</dd>
+        <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Paid</dt>
+        <dd class="font-code-md text-code-md">{{ .Order.Currency }} {{ .Order.PaidMinor }}</dd>
+        <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Created</dt>
+        <dd class="font-code-md text-code-md">{{ .Order.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      </dl>
+
+      {{ if .Order.Items }}
+        <div>
+          <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider mb-1">Items</div>
+          <table class="w-full text-left text-body-md">
+            <thead>
+              <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+                <th class="py-2 px-space-sm font-semibold">Description</th>
+                <th class="py-2 px-space-sm font-semibold text-right">Qty</th>
+                <th class="py-2 px-space-sm font-semibold text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{ range .Order.Items }}
+                <tr class="border-b border-outline-variant/20">
+                  <td class="py-2 px-space-sm">{{ .Description }}</td>
+                  <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ printf "%.2f" .Quantity }}</td>
+                  <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ .SubtotalMinor }}</td>
+                </tr>
+              {{ end }}
+            </tbody>
+          </table>
+        </div>
+      {{ end }}
+
+      {{ if .Order.Payments }}
+        <div>
+          <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider mb-1">Payments</div>
+          <table class="w-full text-left text-body-md">
+            <thead>
+              <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+                <th class="py-2 px-space-sm font-semibold">Date</th>
+                <th class="py-2 px-space-sm font-semibold">Method</th>
+                <th class="py-2 px-space-sm font-semibold">Reference</th>
+                <th class="py-2 px-space-sm font-semibold text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{ range .Order.Payments }}
+                <tr class="border-b border-outline-variant/20">
+                  <td class="py-2 px-space-sm font-code-md">{{ .PaidAt.Format "Jan 2, 2006" }}</td>
+                  <td class="py-2 px-space-sm font-code-md">{{ .Method }}</td>
+                  <td class="py-2 px-space-sm font-code-md">{{ if .Reference }}{{ .Reference }}{{ else }}—{{ end }}</td>
+                  <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ .AmountMinor }}</td>
+                </tr>
+              {{ end }}
+            </tbody>
+          </table>
+        </div>
+      {{ end }}
+    </div>
+  {{ end }}
+
+  <!-- Customer results -->
+  {{ if .Customers }}
+    <div class="flex flex-col gap-space-md">
+      {{ range .Customers }}
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+          <div class="flex items-center justify-between mb-space-sm">
+            <div>
+              <div class="font-headline-md text-headline-md font-bold">{{ .Name }}</div>
+              <div class="font-code-md text-code-md text-on-surface-variant">{{ .Email }} · {{ .Phone }}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Total billed</div>
+              <div class="font-code-md text-code-md font-bold tabular-nums">{{ .TotalBilled }}</div>
+              <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider mt-1">Total paid</div>
+              <div class="font-code-md text-code-md font-bold tabular-nums">{{ .TotalPaid }}</div>
+            </div>
+          </div>
+          <div class="text-label-sm font-label-sm text-outline uppercase tracking-wider mb-1">In business: {{ .OrgName }}</div>
+          {{ if .Orders }}
+            <table class="w-full text-left text-body-md">
+              <thead>
+                <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+                  <th class="py-2 px-space-sm font-semibold">Order</th>
+                  <th class="py-2 px-space-sm font-semibold">Title</th>
+                  <th class="py-2 px-space-sm font-semibold">Status</th>
+                  <th class="py-2 px-space-sm font-semibold text-right">Total</th>
+                  <th class="py-2 px-space-sm font-semibold text-right">Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{ range .Orders }}
+                  <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60">
+                    <td class="py-2 px-space-sm font-code-md">{{ .OrderNumber }}</td>
+                    <td class="py-2 px-space-sm">{{ .Title }}</td>
+                    <td class="py-2 px-space-sm font-code-md">{{ .Status }}</td>
+                    <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ .TotalMinor }}</td>
+                    <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ .PaidMinor }}</td>
+                  </tr>
+                {{ end }}
+              </tbody>
+            </table>
+          {{ else }}
+            <p class="text-on-surface-variant text-body-sm">No orders.</p>
+          {{ end }}
+        </div>
+      {{ end }}
+    </div>
+  {{ end }}
+
+  <!-- Jobs list -->
+  {{ if .Jobs }}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+      <table class="w-full text-left font-body-md">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
+            <th class="py-2.5 px-space-md font-semibold">Kind</th>
+            <th class="py-2.5 px-space-md font-semibold">Recipient</th>
+            <th class="py-2.5 px-space-md font-semibold">Status</th>
+            <th class="py-2.5 px-space-md font-semibold text-right">Attempts</th>
+            <th class="py-2.5 px-space-md font-semibold">Error</th>
+            <th class="py-2.5 px-space-md font-semibold">Next attempt</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Jobs }}
+            <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60">
+              <td class="py-2 px-space-md font-code-md">{{ .Kind }}</td>
+              <td class="py-2 px-space-md font-code-md">{{ .Recipient }}</td>
+              <td class="py-2 px-space-md font-code-md font-bold {{ if eq .Status "DEAD" }}text-error{{ else if eq .Status "SENT" }}text-tertiary{{ end }}">{{ .Status }}</td>
+              <td class="py-2 px-space-md text-right tabular-nums">{{ .Attempts }}</td>
+              <td class="py-2 px-space-md font-code-md text-on-surface-variant truncate max-w-xs">{{ .LastError }}</td>
+              <td class="py-2 px-space-md font-code-md">{{ .NextAt.Format "Jan 2, 15:04" }}</td>
+              <td class="py-2 px-space-md">
+                {{ if ne .Status "SENT" }}
+                  <form method="post" action="{{ $.Path }}/lookup/jobs/{{ .ID }}/resend" class="inline">
+                    <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                    <button type="submit" class="h-7 px-2 rounded bg-surface-container hover:bg-surface-container-high text-on-surface text-label-sm font-label-sm font-semibold">Resend</button>
+                  </form>
+                {{ end }}
+              </td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+  {{ end }}
+</div>
+{{ end }}

@@ -276,6 +276,17 @@ func run() error {
 		Cfg:      cfg,
 	}
 
+	adminLookupRepo := postgres.NewAdminLookupRepo(adminDB)
+	adminLookupSvc := app.NewAdminLookupService(app.AdminLookupServiceDeps{
+		Repo:  postgres.NewAdminLookupAdapter(adminLookupRepo),
+		Audit: postgres.NewAdminAuditAdapter(adminAuditRepo),
+	})
+	adminLookupH := &adminhandlers.LookupHandler{
+		Service:  adminLookupSvc,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+
 	// Impersonation: build a synthetic ResolvedSession for a target org.
 	// Used by the business session middleware when the impersonation cookie
 	// is present. The synthetic session makes the admin appear as the org's
@@ -386,6 +397,10 @@ func run() error {
 	mux.Handle("GET "+adminPath+"/data/{table}",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminDataH.Rows))))
 
+	mux.Handle("GET "+adminPath+"/lookup",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminLookupH.Index))))
+	mux.Handle("POST "+adminPath+"/lookup/jobs/{id}/resend",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminLookupH.ResendJob))))
 	// Static
 	staticDir := filepath.Join("internal", "web", "static")
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
