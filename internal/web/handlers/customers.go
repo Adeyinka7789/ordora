@@ -222,7 +222,7 @@ func (h *CustomerHandler) Show(w http.ResponseWriter, r *http.Request) {
 		Customer:  c,
 		Orders:    orders,
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "customers/show.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "customers/show.html", page)
 }
 
 // -----------------------------------------------------------------------------

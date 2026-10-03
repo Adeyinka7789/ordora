@@ -168,7 +168,7 @@ func (h *OrderHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 func (h *OrderHandler) renderIndex(w http.ResponseWriter, r *http.Request, page ordersIndexPage) {
 	page.CSRFToken = csrfFromCtx(r)
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/index.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "orders/index.html", page)
 }
 
 // -----------------------------------------------------------------------------
@@ -199,7 +199,7 @@ func (h *OrderHandler) New(w http.ResponseWriter, r *http.Request) {
 	if len(customers.Customers) == 0 {
 		page.Error = "You need to create a customer before you can create an order."
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/new.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "orders/new.html", page)
 }
 
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -328,7 +328,7 @@ func (h *OrderHandler) Edit(w http.ResponseWriter, r *http.Request) {
 	if len(page.FormItems) == 0 {
 		page.FormItems = []orderFormItem{{}}
 	}
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/edit.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "orders/edit.html", page)
 }
 
 // Update handles POST /orders/{id}.
@@ -382,7 +382,7 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		if len(page.FormItems) == 0 {
 			page.FormItems = []orderFormItem{{}}
 		}
-		h.Renderer.Page(w, http.StatusBadRequest, "layouts/app.html", "orders/edit.html", page)
+		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "orders/edit.html", page)
 		return
 	}
 
@@ -524,7 +524,7 @@ func (h *OrderHandler) respondCreateError(w http.ResponseWriter, r *http.Request
 	if len(page.FormItems) == 0 {
 		page.FormItems = []orderFormItem{{}}
 	}
-	h.Renderer.Page(w, http.StatusBadRequest, "layouts/app.html", "orders/new.html", page)
+	renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "orders/new.html", page)
 }
 
 // -----------------------------------------------------------------------------
@@ -617,7 +617,7 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 		page.PaidPercent = int(o.Paid.Amount() * 100 / o.Total.Amount())
 	}
 
-	h.Renderer.Page(w, http.StatusOK, "layouts/app.html", "orders/show.html", page)
+	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "orders/show.html", page)
 }
 
 // -----------------------------------------------------------------------------

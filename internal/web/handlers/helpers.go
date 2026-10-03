@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -98,6 +99,7 @@ func newPagination(total, limit, offset int) Pagination {
 // shellFromRequest builds the render.Shell from the current request's session
 // and CSRF token. Used when rendering a full authenticated page.
 func shellFromRequest(r *http.Request) render.Shell {
+	slog.Info("shell_debug", "path", r.URL.Path, "impersonating", middleware.IsImpersonating(r.Context()))
 	s := middleware.SessionFromContext(r.Context())
 	sh := render.Shell{
 		CSRFToken: middleware.CSRFTokenFrom(r.Context()),
