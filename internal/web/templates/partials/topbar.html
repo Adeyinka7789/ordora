@@ -1,5 +1,9 @@
 {{ define "partials/topbar.html" }}
-<header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg">
+<header id="topbar" class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center gap-space-sm px-space-lg">
+
+  <button id="sidebar-toggler" type="button" class="p-2 -ml-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors shrink-0" aria-label="Toggle sidebar" aria-expanded="true" title="Open / close sidebar">
+    <span class="material-symbols-outlined text-[22px]">menu</span>
+  </button>
 
   <!-- Global search -->
   <div class="relative flex-1 max-w-lg">

@@ -1,5 +1,5 @@
 {{ define "partials/sidebar.html" }}
-<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col">
+<aside id="app-sidebar" class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col">
 
   <div class="flex flex-col flex-1 overflow-y-auto">
     <!-- Brand -->
@@ -8,7 +8,12 @@
         <img alt="Ordora" class="h-8 w-8 object-contain" src="/static/logo.svg">
         <span class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Ordora</span>
       </a>
-      <span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-medium">v2.4</span>
+      <div class="flex items-center gap-1">
+        <span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-medium">v2.4</span>
+        <button id="sidebar-collapse-btn" type="button" class="p-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors" aria-label="Close sidebar" title="Close sidebar">
+          <span class="material-symbols-outlined text-[20px]">menu</span>
+        </button>
+      </div>
     </div>
 
     <!-- Org switcher -->

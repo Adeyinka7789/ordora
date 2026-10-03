@@ -137,8 +137,43 @@
     ::-webkit-scrollbar-thumb { background: #c7c4d8; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #a09db6; }
   </style>
+
+  <style>
+    #app-sidebar, #content-wrapper, #topbar {
+      transition: transform .3s ease, padding-left .3s ease, left .3s ease;
+    }
+    /* Desktop: sidebar pushes content by default, overlays nothing. */
+    @media (min-width: 768px) {
+      #app-sidebar { transform: translateX(0); }
+      body.sidebar-collapsed #app-sidebar { transform: translateX(-100%); }
+      #content-wrapper { padding-left: 16rem; }
+      body.sidebar-collapsed #content-wrapper { padding-left: 0; }
+      #topbar { left: 16rem; }
+      body.sidebar-collapsed #topbar { left: 0; }
+      #sidebar-backdrop { display: none !important; }
+    }
+    /* Mobile: sidebar is an overlay drawer, content is full width. */
+    @media (max-width: 767.98px) {
+      #app-sidebar { transform: translateX(-100%); }
+      body.sidebar-open #app-sidebar { transform: translateX(0); }
+      #content-wrapper { padding-left: 0 !important; }
+      #topbar { left: 0 !important; }
+      #sidebar-backdrop { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+      body.sidebar-open #sidebar-backdrop { opacity: 1; pointer-events: auto; }
+    }
+  </style>
 </head>
 <body class="bg-surface font-body-md text-on-surface antialiased">
+  <script>
+    // Apply the saved desktop sidebar state as early as possible to avoid a flicker.
+    (function () {
+      try {
+        if (window.matchMedia('(min-width: 768px)').matches && localStorage.getItem('ordora-sidebar') === 'collapsed') {
+          document.body.classList.add('sidebar-collapsed');
+        }
+      } catch (e) {}
+    })();
+  </script>
 
   {{ if .Shell.Impersonating }}
     <div class="fixed top-0 left-0 right-0 z-[60] bg-error text-on-error px-space-md py-2 flex items-center justify-between text-label-md font-label-md">
@@ -156,7 +191,9 @@
 
   {{ template "partials/sidebar.html" . }}
 
-  <div class="pl-64 flex flex-col min-h-screen {{ if .Shell.Impersonating }}pt-10{{ end }}">
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-black/40 z-[45]"></div>
+
+  <div id="content-wrapper" class="flex flex-col min-h-screen {{ if .Shell.Impersonating }}pt-10{{ end }}">
     {{ template "partials/topbar.html" . }}
     <main class="w-full pt-16 flex-1 bg-surface">
       {{ .Content }}
@@ -179,6 +216,73 @@
   </div>
 
   <script src="/static/js/pwa.js" defer></script>
+
+  <script>
+    (function () {
+      var toggler = document.getElementById('sidebar-toggler');
+      var collapseBtn = document.getElementById('sidebar-collapse-btn');
+      var backdrop = document.getElementById('sidebar-backdrop');
+
+      function isMobile() { return window.matchMedia('(max-width: 767.98px)').matches; }
+
+      function syncAria(open) {
+        var v = open ? 'true' : 'false';
+        if (toggler) toggler.setAttribute('aria-expanded', v);
+        if (collapseBtn) collapseBtn.setAttribute('aria-expanded', v);
+      }
+
+      function isOpen() {
+        if (isMobile()) return document.body.classList.contains('sidebar-open');
+        return !document.body.classList.contains('sidebar-collapsed');
+      }
+
+      function openSidebar() {
+        if (isMobile()) {
+          document.body.classList.add('sidebar-open');
+        } else {
+          document.body.classList.remove('sidebar-collapsed');
+          try { localStorage.setItem('ordora-sidebar', 'open'); } catch (e) {}
+        }
+        syncAria(true);
+      }
+
+      function closeSidebar() {
+        if (isMobile()) {
+          document.body.classList.remove('sidebar-open');
+        } else {
+          document.body.classList.add('sidebar-collapsed');
+          try { localStorage.setItem('ordora-sidebar', 'collapsed'); } catch (e) {}
+        }
+        syncAria(false);
+      }
+
+      function toggleSidebar() {
+        if (isMobile()) {
+          document.body.classList.contains('sidebar-open') ? closeSidebar() : openSidebar();
+        } else {
+          document.body.classList.contains('sidebar-collapsed') ? openSidebar() : closeSidebar();
+        }
+      }
+
+      if (toggler) {
+        toggler.addEventListener('click', function (e) { e.stopPropagation(); toggleSidebar(); });
+      }
+      if (collapseBtn) {
+        collapseBtn.addEventListener('click', function (e) { e.stopPropagation(); closeSidebar(); });
+      }
+      if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
+      }
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && isMobile() && document.body.classList.contains('sidebar-open')) closeSidebar();
+      });
+      window.addEventListener('resize', function () {
+        if (!isMobile()) document.body.classList.remove('sidebar-open');
+      });
+
+      syncAria(isOpen());
+    })();
+  </script>
 </body>
 </html>
 {{ end }}
