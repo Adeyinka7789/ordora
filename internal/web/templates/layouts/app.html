@@ -140,16 +140,24 @@
 
   <style>
     #app-sidebar, #content-wrapper, #topbar {
-      transition: transform .3s ease, padding-left .3s ease, left .3s ease;
+      transition: transform .3s ease, width .3s ease, padding-left .3s ease, left .3s ease;
     }
-    /* Desktop: sidebar pushes content by default, overlays nothing. */
+    /* Desktop: full sidebar by default; collapsed becomes a slim icon rail. */
     @media (min-width: 768px) {
-      #app-sidebar { transform: translateX(0); }
-      body.sidebar-collapsed #app-sidebar { transform: translateX(-100%); }
+      #app-sidebar { transform: translateX(0); width: 16rem; }
+      body.sidebar-collapsed #app-sidebar { transform: translateX(0); width: 4.5rem; }
+      body.sidebar-collapsed #app-sidebar .sidebar-label,
+      body.sidebar-collapsed #app-sidebar .sidebar-extra,
+      body.sidebar-collapsed #app-sidebar .sidebar-heading,
+      body.sidebar-collapsed #app-sidebar .sidebar-trailing,
+      body.sidebar-collapsed #sidebar-org,
+      body.sidebar-collapsed #sidebar-footer { display: none; }
+      body.sidebar-collapsed #sidebar-brandrow { justify-content: center; padding-left: 0; padding-right: 0; }
+      body.sidebar-collapsed #app-sidebar .sidebar-link { justify-content: center; padding-left: 0; padding-right: 0; }
       #content-wrapper { padding-left: 16rem; }
-      body.sidebar-collapsed #content-wrapper { padding-left: 0; }
+      body.sidebar-collapsed #content-wrapper { padding-left: 4.5rem; }
       #topbar { left: 16rem; }
-      body.sidebar-collapsed #topbar { left: 0; }
+      body.sidebar-collapsed #topbar { left: 4.5rem; }
       #sidebar-backdrop { display: none !important; }
     }
     /* Mobile: sidebar is an overlay drawer, content is full width. */

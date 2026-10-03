@@ -28,35 +28,29 @@
     <div id="search-results" class="absolute top-full left-0 right-0 mt-1 z-50"></div>
   </div>
 
-  <!-- Actions -->
-  <div class="flex items-center gap-space-md">
-    <a href="/orders/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors shadow-sm">
-      <span class="material-symbols-outlined text-[18px]">add</span>
-      <span>New Order</span>
-    </a>
-    <div class="h-5 w-px bg-outline-variant/40"></div>
-    <button class="relative p-2 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors" aria-label="Notifications">
+  <!-- Account cluster (pinned far right): notifications, avatar + name/role, sign out -->
+  <div class="ml-auto flex items-center gap-space-xs">
+    <button class="relative p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors" aria-label="Notifications" title="Notifications">
       <span class="material-symbols-outlined text-[20px]">notifications</span>
     </button>
-    <div class="flex items-center gap-space-sm pl-space-xs">
-      <a href="/profile" class="flex items-center gap-space-sm hover:opacity-80 transition-opacity" title="Your profile">
-        <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md font-bold">
-          {{ if .Shell.UserName }}{{ initials .Shell.UserName }}{{ else }}U{{ end }}
+    <div class="h-6 w-px bg-outline-variant/40"></div>
+    <a href="/profile" class="flex items-center gap-space-sm rounded-full py-1 pl-1 pr-2 hover:bg-surface-container-low transition-colors" title="Your profile">
+      <div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md font-bold shrink-0">
+        {{ if .Shell.UserName }}{{ initials .Shell.UserName }}{{ else }}U{{ end }}
+      </div>
+      {{ if .Shell.UserName }}
+        <div class="hidden sm:flex flex-col text-left leading-tight">
+          <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .Shell.UserName }}</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{ if .Shell.OrgRole }}{{ .Shell.OrgRole }}{{ else }}Owner{{ end }}</span>
         </div>
-        {{ if .Shell.UserName }}
-          <div class="hidden xl:flex flex-col text-left">
-            <span class="font-label-md font-semibold text-on-surface leading-tight">{{ .Shell.UserName }}</span>
-            <span class="font-label-sm text-on-surface-variant leading-tight">{{ if .Shell.OrgRole }}{{ .Shell.OrgRole }}{{ else }}Owner{{ end }}</span>
-          </div>
-        {{ end }}
-      </a>
-      <form method="post" action="/logout" class="inline">
-        <input type="hidden" name="_csrf" value="{{ .Shell.CSRFToken }}">
-        <button type="submit" class="p-1 rounded hover:bg-surface-container-low text-on-surface-variant transition-colors" title="Sign out">
-          <span class="material-symbols-outlined text-[18px]">logout</span>
-        </button>
-      </form>
-    </div>
+      {{ end }}
+    </a>
+    <form method="post" action="/logout" class="inline-flex">
+      <input type="hidden" name="_csrf" value="{{ .Shell.CSRFToken }}">
+      <button type="submit" class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors" title="Sign out" aria-label="Sign out">
+        <span class="material-symbols-outlined text-[20px]">logout</span>
+      </button>
+    </form>
   </div>
 </header>
 
