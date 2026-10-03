@@ -22,6 +22,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/config"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/domain/user"
+	"github.com/Adeyinka7789/ordora/internal/flags"
 	"github.com/Adeyinka7789/ordora/internal/infra/email"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
@@ -112,6 +113,19 @@ func run() error {
 	}
 	render.SupportEmail = cfg.SupportEmail
 
+	// ---- Feature flags (Waffle-style) ----
+	// Fail-closed in-memory snapshot, refreshed every 30s; admin writes
+	// bust the cache immediately in-process.
+	flagRepo := postgres.NewFlagRepo(db)
+	flagProvider := flags.NewProvider(func(ctx context.Context) ([]flags.Flag, error) {
+		return flagRepo.List(ctx)
+	}, 30*time.Second)
+	if err := flagProvider.Refresh(ctx); err != nil {
+		slog.Warn("flags: initial load failed; flags evaluate closed until refresh succeeds", "err", err)
+	}
+	go flagProvider.Start(ctx)
+	render.Flags = flagProvider
+
 	// ---- Handlers ----
 	authH := &handlers.AuthHandler{
 		Auth:     authService,
@@ -175,6 +189,7 @@ func run() error {
 	}
 	ledgerH := &handlers.LedgerHandler{
 		Repo:     paymentRepo,
+		Flags:    flagProvider,
 		Renderer: renderer,
 	}
 
@@ -354,10 +369,18 @@ func run() error {
 	}
 	supportH := &handlers.SupportHandler{
 		Service:  commsService,
+		Flags:    flagProvider,
 		Renderer: renderer,
 	}
 	adminCommsH := &adminhandlers.CommsHandler{
 		Service:  commsService,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+	flagAdminH := &adminhandlers.FlagHandler{
+		Flags:    postgres.NewFlagRepo(adminDB),
+		Audit:    postgres.NewAdminAuditAdapter(adminAuditRepo),
+		Provider: flagProvider,
 		Renderer: renderer,
 		Cfg:      cfg,
 	}
@@ -428,6 +451,12 @@ func run() error {
 	// ---- Router ----
 	mux := http.NewServeMux()
 
+	// gated wraps a tenant route with a feature-flag check. Disabled
+	// modules 404 as if they don't exist.
+	gated := func(flag string, h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireFlag(flagProvider, flag)(h))
+	}
+
 	// Offline fallback page for the PWA service worker.
 	mux.HandleFunc("GET /offline", func(w http.ResponseWriter, r *http.Request) {
 		renderer.RenderFragment(w, http.StatusOK, "errors/offline.html", nil)
@@ -496,6 +525,14 @@ func run() error {
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.BroadcastsIndex))))
 	mux.Handle("POST "+adminPath+"/broadcasts",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.BroadcastCreate))))
+
+	// ---- Admin feature flags ----
+	mux.Handle("GET "+adminPath+"/flags",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(flagAdminH.Index))))
+	mux.Handle("POST "+adminPath+"/flags/{key}/toggle",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(flagAdminH.Toggle))))
+	mux.Handle("POST "+adminPath+"/flags/{key}",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(flagAdminH.Update))))
 
 	mux.Handle("POST "+adminPath+"/orgs/{id}/suspend",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Suspend))))
@@ -585,17 +622,17 @@ func run() error {
 	mux.Handle("GET /dashboard", middleware.RequireAuth(http.HandlerFunc(dashH.Index)))
 
 	// ---- Customers (requires auth + tenant) ----
-	mux.Handle("GET /customers", middleware.RequireTenant(http.HandlerFunc(customerH.Index)))
-	mux.Handle("GET /customers/new", middleware.RequireTenant(http.HandlerFunc(customerH.New)))
-	mux.Handle("POST /customers", middleware.RequireTenant(http.HandlerFunc(customerH.Create)))
-	mux.Handle("GET /customers/{id}", middleware.RequireTenant(http.HandlerFunc(customerH.Show)))
-	mux.Handle("GET /customers/{id}/edit", middleware.RequireTenant(http.HandlerFunc(customerH.Edit)))
-	mux.Handle("POST /customers/{id}", middleware.RequireTenant(http.HandlerFunc(customerH.Update)))
-	mux.Handle("POST /customers/{id}/delete", middleware.RequireTenant(http.HandlerFunc(customerH.Delete)))
+	mux.Handle("GET /customers", gated("customers", http.HandlerFunc(customerH.Index)))
+	mux.Handle("GET /customers/new", gated("customers", http.HandlerFunc(customerH.New)))
+	mux.Handle("POST /customers", gated("customers", http.HandlerFunc(customerH.Create)))
+	mux.Handle("GET /customers/{id}", gated("customers", http.HandlerFunc(customerH.Show)))
+	mux.Handle("GET /customers/{id}/edit", gated("customers", http.HandlerFunc(customerH.Edit)))
+	mux.Handle("POST /customers/{id}", gated("customers", http.HandlerFunc(customerH.Update)))
+	mux.Handle("POST /customers/{id}/delete", gated("customers", http.HandlerFunc(customerH.Delete)))
 
 	// ---- Search  ----
-	mux.Handle("GET /reports", middleware.RequireTenant(http.HandlerFunc(reportH.Index)))
-	mux.Handle("GET /reports/export.csv", middleware.RequireTenant(http.HandlerFunc(reportH.ExportCSV)))
+	mux.Handle("GET /reports", gated("reports", http.HandlerFunc(reportH.Index)))
+	mux.Handle("GET /reports/export.csv", gated("reports", http.HandlerFunc(reportH.ExportCSV)))
 
 	// ---- Notifications + support desk (requires auth + tenant) ----
 	mux.Handle("GET /notifications", middleware.RequireTenant(http.HandlerFunc(notifH.Index)))
@@ -608,8 +645,8 @@ func run() error {
 	mux.Handle("POST /support/{id}/reply", middleware.RequireTenant(http.HandlerFunc(supportH.Reply)))
 
 	// ---- Stub pages (nav links that are on the roadmap) ----
-	mux.Handle("GET /payments", middleware.RequireTenant(http.HandlerFunc(ledgerH.Index)))
-	mux.Handle("GET /payments/export.csv", middleware.RequireTenant(http.HandlerFunc(ledgerH.ExportCSV)))
+	mux.Handle("GET /payments", gated("ledger", http.HandlerFunc(ledgerH.Index)))
+	mux.Handle("GET /payments/export.csv", gated("ledger", http.HandlerFunc(ledgerH.ExportCSV)))
 	mux.Handle("GET /storefront", middleware.RequireTenant(http.HandlerFunc(stubH.Storefront)))
 
 	// ---- Settings + profile ----
@@ -622,39 +659,39 @@ func run() error {
 
 	// ---- Middleware chain ----
 	// ---- Products ----
-	mux.Handle("GET /products", middleware.RequireTenant(http.HandlerFunc(productH.Index)))
-	mux.Handle("GET /products/new", middleware.RequireTenant(http.HandlerFunc(productH.New)))
-	mux.Handle("POST /products", middleware.RequireTenant(http.HandlerFunc(productH.Create)))
-	mux.Handle("GET /products/picker", middleware.RequireTenant(http.HandlerFunc(productH.Picker)))
-	mux.Handle("GET /products/{id}", middleware.RequireTenant(http.HandlerFunc(productH.Show)))
-	mux.Handle("GET /products/{id}/edit", middleware.RequireTenant(http.HandlerFunc(productH.Edit)))
-	mux.Handle("POST /products/{id}", middleware.RequireTenant(http.HandlerFunc(productH.Update)))
-	mux.Handle("POST /products/{id}/archive", middleware.RequireTenant(http.HandlerFunc(productH.Archive)))
+	mux.Handle("GET /products", gated("products", http.HandlerFunc(productH.Index)))
+	mux.Handle("GET /products/new", gated("products", http.HandlerFunc(productH.New)))
+	mux.Handle("POST /products", gated("products", http.HandlerFunc(productH.Create)))
+	mux.Handle("GET /products/picker", gated("products", http.HandlerFunc(productH.Picker)))
+	mux.Handle("GET /products/{id}", gated("products", http.HandlerFunc(productH.Show)))
+	mux.Handle("GET /products/{id}/edit", gated("products", http.HandlerFunc(productH.Edit)))
+	mux.Handle("POST /products/{id}", gated("products", http.HandlerFunc(productH.Update)))
+	mux.Handle("POST /products/{id}/archive", gated("products", http.HandlerFunc(productH.Archive)))
 	//
 	// Order (outermost to innermost):
 	//   Recover -> RequestID -> Logger -> Session -> CSRF -> mux
 
 	// ---- Orders (requires auth + tenant) ----
-	mux.Handle("GET /orders", middleware.RequireTenant(http.HandlerFunc(orderH.Index)))
-	mux.Handle("GET /orders/new", middleware.RequireTenant(http.HandlerFunc(orderH.New)))
-	mux.Handle("POST /orders", middleware.RequireTenant(http.HandlerFunc(orderH.Create)))
-	mux.Handle("GET /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Show)))
-	mux.Handle("GET /orders/{id}/edit", middleware.RequireTenant(http.HandlerFunc(orderH.Edit)))
-	mux.Handle("POST /orders/{id}", middleware.RequireTenant(http.HandlerFunc(orderH.Update)))
-	mux.Handle("POST /orders/{id}/status", middleware.RequireTenant(http.HandlerFunc(orderH.ChangeStatus)))
-	mux.Handle("POST /orders/{id}/public-token/regenerate", middleware.RequireTenant(http.HandlerFunc(orderH.RegenerateToken)))
+	mux.Handle("GET /orders", gated("orders", http.HandlerFunc(orderH.Index)))
+	mux.Handle("GET /orders/new", gated("orders", http.HandlerFunc(orderH.New)))
+	mux.Handle("POST /orders", gated("orders", http.HandlerFunc(orderH.Create)))
+	mux.Handle("GET /orders/{id}", gated("orders", http.HandlerFunc(orderH.Show)))
+	mux.Handle("GET /orders/{id}/edit", gated("orders", http.HandlerFunc(orderH.Edit)))
+	mux.Handle("POST /orders/{id}", gated("orders", http.HandlerFunc(orderH.Update)))
+	mux.Handle("POST /orders/{id}/status", gated("orders", http.HandlerFunc(orderH.ChangeStatus)))
+	mux.Handle("POST /orders/{id}/public-token/regenerate", gated("orders", http.HandlerFunc(orderH.RegenerateToken)))
 	//
 	// ---- Payments ----
-	mux.Handle("POST /orders/{id}/payments", middleware.RequireTenant(http.HandlerFunc(paymentH.Record)))
-	mux.Handle("POST /payments/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToPayment)))
-	mux.Handle("POST /payments/{id}/reverse", middleware.RequireTenant(http.HandlerFunc(paymentH.Reverse)))
+	mux.Handle("POST /orders/{id}/payments", gated("orders", http.HandlerFunc(paymentH.Record)))
+	mux.Handle("POST /payments/{id}/attachments", gated("orders", http.HandlerFunc(attachH.UploadToPayment)))
+	mux.Handle("POST /payments/{id}/reverse", gated("orders", http.HandlerFunc(paymentH.Reverse)))
 
-	mux.Handle("POST /orders/{id}/costs", middleware.RequireTenant(http.HandlerFunc(costH.Add)))
-	mux.Handle("POST /costs/{id}", middleware.RequireTenant(http.HandlerFunc(costH.Update)))
-	mux.Handle("POST /costs/{id}/delete", middleware.RequireTenant(http.HandlerFunc(costH.Delete)))
+	mux.Handle("POST /orders/{id}/costs", gated("orders", http.HandlerFunc(costH.Add)))
+	mux.Handle("POST /costs/{id}", gated("orders", http.HandlerFunc(costH.Update)))
+	mux.Handle("POST /costs/{id}/delete", gated("orders", http.HandlerFunc(costH.Delete)))
 	// ---- Attachments ----
-	mux.Handle("POST /orders/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToOrder)))
-	mux.Handle("GET /attachments/{id}", middleware.RequireTenant(http.HandlerFunc(attachH.Download)))
+	mux.Handle("POST /orders/{id}/attachments", gated("orders", http.HandlerFunc(attachH.UploadToOrder)))
+	mux.Handle("GET /attachments/{id}", gated("orders", http.HandlerFunc(attachH.Download)))
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.
 	handler := chain(mux,

@@ -35,30 +35,38 @@
           <span class="sidebar-label">Dashboard</span>
         </div>
       </a>
-      <a href="/orders" title="Orders" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
-        <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">receipt_long</span>
-          <span class="sidebar-label">Orders</span>
-        </div>
-      </a>
-      <a href="/customers" title="Customers" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
-        <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">group</span>
-          <span class="sidebar-label">Customers</span>
-        </div>
-      </a>
-      <a href="/products" title="Products" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
-        <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">inventory_2</span>
-          <span class="sidebar-label">Products</span>
-        </div>
-      </a>
-      <a href="/payments" title="Payments and ledger" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
-        <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
-          <span class="sidebar-label">Payments &amp; Ledger</span>
-        </div>
-      </a>
+      {{ if flag "orders" .Shell.OrgID }}
+        <a href="/orders" title="Orders" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+            <span class="sidebar-label">Orders</span>
+          </div>
+        </a>
+      {{ end }}
+      {{ if flag "customers" .Shell.OrgID }}
+        <a href="/customers" title="Customers" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">group</span>
+            <span class="sidebar-label">Customers</span>
+          </div>
+        </a>
+      {{ end }}
+      {{ if flag "products" .Shell.OrgID }}
+        <a href="/products" title="Products" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+            <span class="sidebar-label">Products</span>
+          </div>
+        </a>
+      {{ end }}
+      {{ if flag "ledger" .Shell.OrgID }}
+        <a href="/payments" title="Payments and ledger" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+            <span class="sidebar-label">Payments &amp; Ledger</span>
+          </div>
+        </a>
+      {{ end }}
     </nav>
 
     <!-- Channels & Tools -->
@@ -73,12 +81,14 @@
         </div>
         <span class="sidebar-trailing material-symbols-outlined text-[16px] text-outline">open_in_new</span>
       </a>
-      <a href="/reports" title="Reports and Analytics" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
-        <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">query_stats</span>
-          <span class="sidebar-label">Reports &amp; Analytics</span>
-        </div>
-      </a>
+      {{ if flag "reports" .Shell.OrgID }}
+        <a href="/reports" title="Reports and Analytics" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">query_stats</span>
+            <span class="sidebar-label">Reports &amp; Analytics</span>
+          </div>
+        </a>
+      {{ end }}
       <a href="/settings" title="Settings" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
         <div class="flex items-center gap-space-sm">
           <span class="material-symbols-outlined text-[18px]">settings</span>
@@ -91,12 +101,14 @@
           <span class="sidebar-label">Profile</span>
         </div>
       </a>
-      <a href="/support" title="Support" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
-        <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">support_agent</span>
-          <span class="sidebar-label">Support</span>
-        </div>
-      </a>
+      {{ if flag "support_desk" .Shell.OrgID }}
+        <a href="/support" title="Support" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">support_agent</span>
+            <span class="sidebar-label">Support</span>
+          </div>
+        </a>
+      {{ end }}
     </nav>
   </div>
 

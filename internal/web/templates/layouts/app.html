@@ -210,7 +210,7 @@
     <footer class="w-full border-t border-outline-variant/30 bg-surface-container-lowest">
       <div class="max-w-[1440px] mx-auto px-space-lg py-3 flex flex-col sm:flex-row items-center justify-between gap-1 font-label-sm text-label-sm text-on-surface-variant">
         <span>© 2026 Ordora · Order Management</span>
-        <span>Need help? {{ if .Shell.SupportEmail }}<a href="mailto:{{ .Shell.SupportEmail }}" class="text-primary hover:underline font-medium">{{ .Shell.SupportEmail }}</a> · {{ end }}<a href="/support" class="text-primary hover:underline font-medium">Support center</a></span>
+        <span>Need help? {{ if .Shell.SupportEmail }}<a href="mailto:{{ .Shell.SupportEmail }}" class="text-primary hover:underline font-medium">{{ .Shell.SupportEmail }}</a>{{ end }}{{ if flag "support_desk" .Shell.OrgID }} · <a href="/support" class="text-primary hover:underline font-medium">Support center</a>{{ end }}</span>
       </div>
     </footer>
   </div>

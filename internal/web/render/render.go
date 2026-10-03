@@ -13,6 +13,8 @@ import (
 	"strings"
 	texttemplate "text/template"
 
+	"github.com/google/uuid"
+
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 )
 
@@ -27,11 +29,19 @@ type Renderer struct {
 // Set once at startup from config (main.go). Empty means "don't display".
 var SupportEmail string
 
+// Flags evaluates feature flags inside templates via the "flag" function.
+// Set once at startup (main.go). A nil provider means "all flags on"
+// so pages render sanely in contexts without flag wiring (tests).
+var Flags interface {
+	Enabled(orgID uuid.UUID, key string) bool
+}
+
 // Shell carries values needed by the application layout.
 type Shell struct {
 	UserName     string
 	UserEmail    string
 	SupportEmail string
+	OrgID        string
 	OrgName      string
 	OrgSlug     string
 	OrgRole     string

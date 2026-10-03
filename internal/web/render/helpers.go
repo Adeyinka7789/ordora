@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func readFile(path string) (string, error) {
@@ -77,6 +79,19 @@ func templateFuncs() template.FuncMap {
 			default:
 				return "step"
 			}
+		},
+		// flag reports whether a feature flag is on for the given org id
+		// string. Usage: {{ if flag "ledger_export" .Shell.OrgID }}.
+		// Unparseable org ids evaluate as the zero org (stable per flag).
+		"flag": func(key, orgID string) bool {
+			if Flags == nil {
+				return true
+			}
+			id, err := uuid.Parse(orgID)
+			if err != nil {
+				id = uuid.Nil
+			}
+			return Flags.Enabled(id, key)
 		},
 		"csrfToken": func(data any) string {
 			if data == nil {

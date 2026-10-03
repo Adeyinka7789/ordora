@@ -8,18 +8,30 @@ import (
 	"time"
 
 	"github.com/Adeyinka7789/ordora/internal/domain/payment"
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
+	"github.com/Adeyinka7789/ordora/internal/flags"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
-// LedgerHandler serves the consolidated payments ledger: every payment
-// recorded across all orders, with filters and CSV export.
+// LedgerHandler serves the consolidated payments ledger:
+// every payment across all orders, with filters and CSV export.
 //
 // Recording and reversing payments still happens on the order page;
 // this handler is read-only.
 type LedgerHandler struct {
 	Repo     *postgres.PaymentRepo
+	Flags    *flags.Provider
 	Renderer *render.Renderer
+}
+
+// exportEnabled reports whether the ledger_export flag is on for the org.
+// A nil provider means "allow" (unwired contexts such as tests).
+func (h *LedgerHandler) exportEnabled(scope tenant.TenantScope) bool {
+	if h.Flags == nil {
+		return true
+	}
+	return h.Flags.Enabled(scope.OrgID, "ledger_export")
 }
 
 type ledgerIndexPage struct {
@@ -33,7 +45,11 @@ type ledgerIndexPage struct {
 	Rows         []postgres.LedgerRow
 	Totals       *postgres.LedgerTotals
 	Currency     string
-	Pagination   Pagination
+	// ExportAllowed precomputes the ledger_export flag: page fragments
+	// only receive page data (no .Shell), so the template can't call
+	// the flag function itself.
+	ExportAllowed bool
+	Pagination    Pagination
 }
 
 // parseLedgerFilters reads the shared filter params from the query string.
@@ -82,17 +98,18 @@ func (h *LedgerHandler) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := ledgerIndexPage{
-		Title:        "Payments & Ledger",
-		CSRFToken:    csrfFromCtx(r),
-		Query:        opts.Query,
-		Method:       opts.Method,
-		From:         fromStr,
-		To:           toStr,
-		HideReversed: opts.HideReversed,
-		Rows:         res.Rows,
-		Totals:       totals,
-		Currency:     currencyFromRequest(r),
-		Pagination:   newPagination(res.Total, res.Limit, res.Offset),
+		Title:         "Payments & Ledger",
+		CSRFToken:     csrfFromCtx(r),
+		Query:         opts.Query,
+		Method:        opts.Method,
+		From:          fromStr,
+		To:            toStr,
+		HideReversed:  opts.HideReversed,
+		Rows:          res.Rows,
+		Totals:        totals,
+		Currency:      currencyFromRequest(r),
+		ExportAllowed: h.exportEnabled(scope),
+		Pagination:    newPagination(res.Total, res.Limit, res.Offset),
 	}
 
 	if isHTMX(r) {
@@ -107,6 +124,10 @@ func (h *LedgerHandler) Index(w http.ResponseWriter, r *http.Request) {
 func (h *LedgerHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	scope, ok := requireScope(w, r)
 	if !ok {
+		return
+	}
+	if !h.exportEnabled(scope) {
+		http.NotFound(w, r)
 		return
 	}
 	opts, _, _ := parseLedgerFilters(r)

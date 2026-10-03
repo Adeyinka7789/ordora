@@ -1,0 +1,70 @@
+{{ define "admin/flags.html" }}
+<div class="max-w-[1100px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Feature Flags</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Kill switches with optional per-org rollout. Changes apply within ~30 seconds on every instance, immediately on this one.</p>
+  </div>
+
+  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .FormError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FormError }}</div>{{ end }}
+
+  {{ if not .Flags }}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center">
+      <p class="font-body-md text-body-md text-on-surface-variant">No flags yet. Add rows to the feature_flags table via migration.</p>
+    </div>
+  {{ else }}
+    <div class="flex flex-col gap-space-sm">
+      {{ range .Flags }}
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm">
+          <div class="flex items-center justify-between gap-space-sm flex-wrap">
+            <div class="flex items-center gap-2 min-w-0">
+              <code class="font-code-md text-code-md font-bold text-on-surface bg-surface-container-low px-2 py-0.5 rounded">{{ .Key }}</code>
+              {{ if .Enabled }}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">On</span>
+              {{ else }}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container text-on-surface-variant">Off</span>
+              {{ end }}
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ .RolloutPercent }}% rollout</span>
+            </div>
+            <form method="post" action="{{ $.Path }}/flags/{{ .Key }}/toggle" class="inline">
+              <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+              {{ if .Enabled }}
+                <button type="submit" class="h-8 px-3 rounded bg-surface-container-low border border-outline-variant/30 hover:bg-surface-container font-label-md text-label-md font-semibold">Turn off</button>
+              {{ else }}
+                <button type="submit" class="h-8 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Turn on</button>
+              {{ end }}
+            </form>
+          </div>
+          <form method="post" action="{{ $.Path }}/flags/{{ .Key }}" class="grid grid-cols-1 md:grid-cols-12 gap-space-sm items-end">
+            <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+            <label class="md:col-span-3 flex flex-col gap-1">
+              <span class="font-label-md text-label-md font-semibold text-on-surface">Name</span>
+              <input type="text" name="name" value="{{ .Name }}" maxlength="200" required
+                     class="h-9 px-3 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary-container">
+            </label>
+            <label class="md:col-span-5 flex flex-col gap-1">
+              <span class="font-label-md text-label-md font-semibold text-on-surface">Description</span>
+              <input type="text" name="description" value="{{ .Description }}" maxlength="500"
+                     class="h-9 px-3 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary-container">
+            </label>
+            <label class="md:col-span-2 flex flex-col gap-1">
+              <span class="font-label-md text-label-md font-semibold text-on-surface">Rollout %</span>
+              <input type="number" name="rollout_percent" value="{{ .RolloutPercent }}" min="0" max="100" required
+                     class="h-9 px-3 rounded bg-surface-container-low border border-outline-variant/30 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary-container">
+            </label>
+            <div class="md:col-span-2 flex items-center gap-space-sm">
+              <label class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface cursor-pointer select-none">
+                <input type="checkbox" name="enabled" value="1" {{ if .Enabled }}checked{{ end }} class="h-4 w-4 accent-primary-container">
+                <span>Enabled</span>
+              </label>
+              <button type="submit" class="h-9 px-3 rounded bg-surface-container-low border border-outline-variant/30 hover:bg-surface-container font-label-md text-label-md font-semibold">Save</button>
+            </div>
+          </form>
+          <span class="font-code-md text-code-md text-on-surface-variant">Updated {{ .UpdatedAt.Format "Jan 2, 2006 · 15:04" }} · gate with <code>flags.Enabled(orgID, "{{ .Key }}")</code> in Go or <code>{{ "{{" }} if flag "{{ .Key }}" .Shell.OrgID {{ "}}" }}</code> in templates</span>
+        </div>
+      {{ end }}
+    </div>
+  {{ end }}
+</div>
+{{ end }}

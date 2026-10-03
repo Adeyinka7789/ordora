@@ -6,6 +6,7 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
+	"github.com/Adeyinka7789/ordora/internal/flags"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
@@ -13,7 +14,17 @@ import (
 // follow the thread, and read admin replies.
 type SupportHandler struct {
 	Service  *app.CommsService
+	Flags    *flags.Provider
 	Renderer *render.Renderer
+}
+
+// deskEnabled reports whether the support_desk flag is on for the org.
+// A nil provider means "allow" (unwired contexts such as tests).
+func (h *SupportHandler) deskEnabled(scope tenant.TenantScope) bool {
+	if h.Flags == nil {
+		return true
+	}
+	return h.Flags.Enabled(scope.OrgID, "support_desk")
 }
 
 type supportIndexPage struct {
@@ -31,6 +42,10 @@ type supportIndexPage struct {
 func (h *SupportHandler) Index(w http.ResponseWriter, r *http.Request) {
 	scope, ok := requireScope(w, r)
 	if !ok {
+		return
+	}
+	if !h.deskEnabled(scope) {
+		http.NotFound(w, r)
 		return
 	}
 	rows, total, err := h.Service.ListComplaints(r.Context(), scope, 50, 0)
@@ -54,6 +69,10 @@ func (h *SupportHandler) Index(w http.ResponseWriter, r *http.Request) {
 func (h *SupportHandler) Create(w http.ResponseWriter, r *http.Request) {
 	scope, ok := requireScope(w, r)
 	if !ok {
+		return
+	}
+	if !h.deskEnabled(scope) {
+		http.NotFound(w, r)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
@@ -102,6 +121,10 @@ func (h *SupportHandler) Show(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !h.deskEnabled(scope) {
+		http.NotFound(w, r)
+		return
+	}
 	thread, err := h.Service.GetComplaintThread(r.Context(), scope, id)
 	if err != nil {
 		if errors.Is(err, app.ErrComplaintNotFound) {
@@ -134,6 +157,10 @@ func (h *SupportHandler) Reply(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	if !h.deskEnabled(scope) {
+		http.NotFound(w, r)
 		return
 	}
 	if err := h.Service.ReplyToComplaint(r.Context(), scope, id, formValue(r, "body")); err != nil {
