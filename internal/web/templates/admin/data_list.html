@@ -1,0 +1,21 @@
+{{ define "admin/data_list.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Data browser</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Read-only view of every table. Actions are audit-logged.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md">
+    {{ range .Tables }}
+      <a href="{{ $.Path }}/data/{{ .TableName }}" class="block bg-surface-container-lowest rounded-xl shadow-sm p-space-md hover:ring-1 hover:ring-primary-container/30 transition-all">
+        <div class="flex items-center gap-2 mb-space-xs">
+          <span class="material-symbols-outlined text-primary text-[20px]">table_chart</span>
+          <span class="font-headline-md text-headline-md font-bold">{{ .DisplayName }}</span>
+        </div>
+        <code class="font-code-md text-code-md text-on-surface-variant">{{ .TableName }}</code>
+      </a>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

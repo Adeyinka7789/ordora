@@ -265,6 +265,17 @@ func run() error {
 		Cfg:      cfg,
 	}
 
+	adminDataRepo := postgres.NewAdminDataRepo(adminDB)
+	adminDataSvc := app.NewAdminDataService(app.AdminDataServiceDeps{
+		Repo:  postgres.NewAdminDataAdapter(adminDataRepo),
+		Audit: postgres.NewAdminAuditAdapter(adminAuditRepo),
+	})
+	adminDataH := &adminhandlers.DataHandler{
+		Service:  adminDataSvc,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+
 	// Impersonation: build a synthetic ResolvedSession for a target org.
 	// Used by the business session middleware when the impersonation cookie
 	// is present. The synthetic session makes the admin appear as the org's
@@ -369,6 +380,11 @@ func run() error {
 	mux.Handle("POST "+adminPath+"/impersonate/{orgID}",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminImpersonateH.Start))))
 	mux.Handle("POST /impersonate/exit", http.HandlerFunc(adminImpersonateH.Stop))
+
+	mux.Handle("GET "+adminPath+"/data",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminDataH.Tables))))
+	mux.Handle("GET "+adminPath+"/data/{table}",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminDataH.Rows))))
 
 	// Static
 	staticDir := filepath.Join("internal", "web", "static")

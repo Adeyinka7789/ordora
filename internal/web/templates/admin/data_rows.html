@@ -1,0 +1,62 @@
+{{ define "admin/data_rows.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">{{ .Table.DisplayName }}</h1>
+        <span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant">{{ .Table.TableName }}</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .Rows.Total }} rows</p>
+    </div>
+    <div class="flex items-center gap-space-sm">
+      <form method="get" action="{{ .Path }}/data/{{ .Table.TableName }}" class="relative">
+        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+        <input type="search" name="q" value="{{ .Search }}" placeholder="Search…" autocomplete="off"
+               class="h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm focus:outline-none focus:border-primary-container w-72">
+      </form>
+      <a href="{{ .Path }}/data" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">← All tables</a>
+    </div>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    {{ if .Rows.Rows }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-sm">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant font-label-sm uppercase tracking-wider">
+              {{ range .Rows.Columns }}
+                <th class="py-2.5 px-space-sm font-semibold whitespace-nowrap">{{ . }}</th>
+              {{ end }}
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Rows.Rows }}
+              <tr class="border-b border-outline-variant/20 hover:bg-surface-container-low/60 align-top">
+                {{ range . }}
+                  <td class="py-2 px-space-sm font-code-md text-code-md whitespace-nowrap max-w-[300px] truncate">
+                    {{ if eq (printf "%T" .) "<nil>" }}<span class="text-outline">—</span>
+                    {{ else }}{{ . }}{{ end }}
+                  </td>
+                {{ end }}
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+
+      {{ if or .HasPrev .HasNext }}
+        <nav class="p-space-md flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant border-t border-outline-variant/20">
+          <span>Page {{ .Page }} · {{ len .Rows.Rows }} shown of {{ .Rows.Total }}</span>
+          <div class="flex gap-1">
+            {{ if .HasPrev }}<a href="{{ .Path }}/data/{{ .Table.TableName }}?q={{ .Search }}&page={{ dec .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Prev</a>{{ end }}
+            {{ if .HasNext }}<a href="{{ .Path }}/data/{{ .Table.TableName }}?q={{ .Search }}&page={{ inc .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Next</a>{{ end }}
+          </div>
+        </nav>
+      {{ end }}
+    {{ else }}
+      <div class="p-space-xl text-center"><p class="text-on-surface-variant">No rows.</p></div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}
