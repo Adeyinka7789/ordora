@@ -1,0 +1,82 @@
+{{ define "admin/complaints_list.html" }}
+<div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Complaints</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .Total }} support requests across all tenants.</p>
+    </div>
+    <form method="get" action="{{ .Path }}/complaints" class="flex items-center gap-2">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+        <input type="search" name="q" value="{{ .Query }}" placeholder="Search subject, user, business…" autocomplete="off"
+               class="h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm focus:outline-none focus:border-primary-container w-64">
+      </div>
+      <select name="status" onchange="this.form.submit()"
+              class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md focus:outline-none focus:border-primary-container">
+        <option value="">All statuses</option>
+        <option value="OPEN" {{ if eq .Status "OPEN" }}selected{{ end }}>Open</option>
+        <option value="RESOLVED" {{ if eq .Status "RESOLVED" }}selected{{ end }}>Resolved</option>
+      </select>
+    </form>
+  </div>
+
+  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+    {{ if .Rows }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-md text-body-md">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-2.5 px-space-md font-semibold">Subject</th>
+              <th class="py-2.5 px-space-md font-semibold">User</th>
+              <th class="py-2.5 px-space-md font-semibold">Business</th>
+              <th class="py-2.5 px-space-md font-semibold">Status</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Replies</th>
+              <th class="py-2.5 px-space-md font-semibold">Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Rows }}
+              <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+                <td class="py-3 px-space-md">
+                  <a href="{{ $.Path }}/complaints/{{ .Complaint.ID }}" class="font-label-md text-label-md font-bold text-on-surface hover:text-primary">{{ .Complaint.Subject }}</a>
+                </td>
+                <td class="py-3 px-space-md">
+                  <div class="font-label-md text-label-md font-semibold text-on-surface">{{ .UserName }}</div>
+                  <div class="font-code-md text-code-md text-on-surface-variant">{{ .UserEmail }}</div>
+                </td>
+                <td class="py-3 px-space-md font-label-md text-label-md text-on-surface">{{ .OrgName }}</td>
+                <td class="py-3 px-space-md">
+                  {{ if eq .Complaint.Status "OPEN" }}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-amber-100 text-amber-900">Open</span>
+                  {{ else }}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">Resolved</span>
+                  {{ end }}
+                </td>
+                <td class="py-3 px-space-md text-right tabular-nums">{{ .ReplyCount }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">{{ .Complaint.UpdatedAt.Format "Jan 2, 2006" }}</td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+
+      {{ if or .HasPrev .HasNext }}
+        <nav class="p-space-md flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant border-t border-outline-variant/20">
+          <span>Page {{ .Page }} · {{ len .Rows }} shown of {{ .Total }}</span>
+          <div class="flex gap-1">
+            {{ if .HasPrev }}<a href="{{ .Path }}/complaints?q={{ .Query }}&status={{ .Status }}&page={{ dec .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Prev</a>{{ end }}
+            {{ if .HasNext }}<a href="{{ .Path }}/complaints?q={{ .Query }}&status={{ .Status }}&page={{ inc .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Next</a>{{ end }}
+          </div>
+        </nav>
+      {{ end }}
+    {{ else }}
+      <div class="p-space-xl text-center">
+        <p class="font-body-md text-body-md text-on-surface-variant">No complaints found.</p>
+      </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

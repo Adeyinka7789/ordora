@@ -1,0 +1,79 @@
+{{ define "notifications/index.html" }}
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[900px] mx-auto">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Notifications</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Support replies, resolutions, and announcements from Ordora.</p>
+    </div>
+    {{ if .Rows }}
+      <form method="post" action="/notifications/read-all" class="inline">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="h-9 px-space-md rounded bg-surface-container-lowest border border-outline-variant/30 hover:bg-surface-container-low text-on-surface font-label-md text-label-md font-semibold transition-colors">
+          Mark all as read
+        </button>
+      </form>
+    {{ end }}
+  </div>
+
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+
+  {{ if not .Rows }}
+    <div class="bg-surface-container-lowest rounded shadow-sm p-space-xl text-center">
+      <span class="material-symbols-outlined text-outline text-[40px]">notifications_off</span>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-2">You're all caught up. Nothing here yet.</p>
+    </div>
+  {{ else }}
+    <div class="flex flex-col gap-space-sm">
+      {{ range .Rows }}
+        <div class="rounded shadow-sm p-space-md flex gap-space-sm {{ if .IsRead }}bg-surface-container-lowest{{ else }}bg-primary-fixed/40 border border-primary-fixed-dim/50{{ end }}">
+          <div class="flex-1 min-w-0 flex flex-col gap-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              {{ if eq .Kind "broadcast" }}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-primary-fixed text-on-primary-fixed">Announcement</span>
+              {{ else }}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-tertiary-fixed text-on-tertiary-fixed">Support</span>
+              {{ end }}
+              <span class="font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+              {{ if not .IsRead }}
+                <span class="w-2 h-2 rounded-full bg-primary-container"></span>
+              {{ end }}
+            </div>
+            {{ if .Link }}
+              <a href="{{ .Link }}" class="font-headline-md text-headline-md font-bold text-on-surface hover:text-primary leading-snug">{{ .Title }}</a>
+            {{ else }}
+              <span class="font-headline-md text-headline-md font-bold text-on-surface leading-snug">{{ .Title }}</span>
+            {{ end }}
+            {{ if .Body }}<p class="font-body-md text-body-md text-on-surface-variant">{{ .Body }}</p>{{ end }}
+          </div>
+          {{ if not .IsRead }}
+            <form method="post" action="/notifications/{{ .ID }}/read" class="shrink-0 self-start">
+              <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+              <button type="submit" title="Mark as read"
+                      class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors">
+                <span class="material-symbols-outlined text-[18px]">check</span>
+              </button>
+            </form>
+          {{ end }}
+        </div>
+      {{ end }}
+    </div>
+
+    {{ if gt .Pagination.TotalPages 1 }}
+      <nav class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+        <span>Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
+        <div class="flex gap-1">
+          {{ if .Pagination.HasPrev }}
+            <a href="/notifications?offset={{ .Pagination.PrevOffset }}"
+               class="h-7 px-2 rounded bg-surface-container-lowest border border-outline-variant/30 hover:bg-surface-container-low">Prev</a>
+          {{ end }}
+          {{ if .Pagination.HasNext }}
+            <a href="/notifications?offset={{ .Pagination.NextOffset }}"
+               class="h-7 px-2 rounded bg-surface-container-lowest border border-outline-variant/30 hover:bg-surface-container-low">Next</a>
+          {{ end }}
+        </div>
+      </nav>
+    {{ end }}
+  {{ end }}
+</div>
+{{ end }}

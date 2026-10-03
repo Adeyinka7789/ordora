@@ -23,11 +23,16 @@ type Renderer struct {
 	layoutDir string
 }
 
+// SupportEmail is the help/complaints address shown in the app footer.
+// Set once at startup from config (main.go). Empty means "don't display".
+var SupportEmail string
+
 // Shell carries values needed by the application layout.
 type Shell struct {
-	UserName    string
-	UserEmail   string
-	OrgName     string
+	UserName     string
+	UserEmail    string
+	SupportEmail string
+	OrgName      string
 	OrgSlug     string
 	OrgRole     string
 	OrgCurrency string

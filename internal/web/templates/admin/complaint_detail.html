@@ -1,0 +1,68 @@
+{{ define "admin/complaint_detail.html" }}
+<div class="max-w-[900px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-md">
+
+  <a href="{{ .Path }}/complaints" class="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:underline w-fit">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+    <span>All complaints</span>
+  </a>
+
+  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-2">
+    <div class="flex items-center justify-between gap-space-sm flex-wrap">
+      <h1 class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">{{ .Thread.Row.Complaint.Subject }}</h1>
+      {{ if eq .Thread.Row.Complaint.Status "OPEN" }}
+        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-amber-100 text-amber-900">Open</span>
+      {{ else }}
+        <span class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">Resolved</span>
+      {{ end }}
+    </div>
+    <div class="flex flex-wrap gap-x-6 gap-y-1 font-body-sm text-body-sm text-on-surface-variant">
+      <span>User: <strong class="text-on-surface">{{ .Thread.Row.UserName }}</strong> ({{ .Thread.Row.UserEmail }})</span>
+      <span>Business: <strong class="text-on-surface">{{ .Thread.Row.OrgName }}</strong></span>
+      <span>Opened {{ .Thread.Row.Complaint.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+    </div>
+    <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap pt-1">{{ .Thread.Row.Complaint.Message }}</p>
+    <div class="flex gap-2 pt-1">
+      {{ if eq .Thread.Row.Complaint.Status "OPEN" }}
+        <form method="post" action="{{ .Path }}/complaints/{{ .Thread.Row.Complaint.ID }}/resolve" class="inline">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <button type="submit" class="h-9 px-space-md rounded bg-tertiary text-on-tertiary font-label-md text-label-md font-semibold hover:opacity-90">Mark resolved</button>
+        </form>
+      {{ else }}
+        <form method="post" action="{{ .Path }}/complaints/{{ .Thread.Row.Complaint.ID }}/reopen" class="inline">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <button type="submit" class="h-9 px-space-md rounded bg-surface-container-low border border-outline-variant/30 hover:bg-surface-container font-label-md text-label-md font-semibold">Reopen</button>
+        </form>
+      {{ end }}
+    </div>
+  </div>
+
+  {{ range .Thread.Replies }}
+    <div class="rounded-xl shadow-sm p-space-md flex flex-col gap-1 {{ if .IsAdmin }}bg-primary-fixed/40 border border-primary-fixed-dim/50{{ else }}bg-surface-container-lowest{{ end }}">
+      <div class="flex items-center gap-2">
+        <span class="font-label-md text-label-md font-bold {{ if .IsAdmin }}text-primary{{ else }}text-on-surface{{ end }}">{{ .AuthorName }}</span>
+        {{ if .IsAdmin }}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-primary-fixed text-on-primary-fixed">Admin</span>
+        {{ end }}
+        <span class="font-code-md text-code-md text-on-surface-variant">{{ .Reply.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Reply.Body }}</p>
+    </div>
+  {{ end }}
+
+  <form method="post" action="{{ .Path }}/complaints/{{ .Thread.Row.Complaint.ID }}/reply" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md font-semibold text-on-surface">Reply as {{ .AdminName }} — the user gets an in-app notification</span>
+      <textarea name="body" rows="4" maxlength="4000" required placeholder="Write your reply…"
+                class="px-3 py-2 rounded bg-surface-container-low border border-outline-variant/30 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors"></textarea>
+    </label>
+    <div>
+      <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors shadow-sm">
+        Send reply
+      </button>
+    </div>
+  </form>
+</div>
+{{ end }}

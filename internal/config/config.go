@@ -13,7 +13,9 @@ import (
 type Config struct {
 	Env     string
 	BaseURL string
-	HTTP    HTTPConfig
+	// SupportEmail is shown in the app footer for complaints and help.
+	SupportEmail string
+	HTTP         HTTPConfig
 	DB      DBConfig
 	Session SessionConfig
 	Email   EmailConfig
@@ -99,8 +101,9 @@ type StorageConfig struct {
 // It fails fast on any missing or invalid required value.
 func Load() (*Config, error) {
 	c := &Config{
-		Env:     getEnv("ORDORA_ENV", "development"),
-		BaseURL: getEnv("ORDORA_BASE_URL", "http://localhost:8080"),
+		Env:          getEnv("ORDORA_ENV", "development"),
+		BaseURL:      getEnv("ORDORA_BASE_URL", "http://localhost:8080"),
+		SupportEmail: getEnv("ORDORA_SUPPORT_EMAIL", "support@ordora.local"),
 		HTTP: HTTPConfig{
 			Addr:            getEnv("ORDORA_HTTP_ADDR", ":8080"),
 			ReadTimeout:     15 * time.Second,

@@ -1,0 +1,58 @@
+{{ define "support/show.html" }}
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-md max-w-[900px] mx-auto">
+
+  <a href="/support" class="inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:underline w-fit">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+    <span>All requests</span>
+  </a>
+
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  <div class="bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-2">
+    <div class="flex items-center justify-between gap-space-sm flex-wrap">
+      <h1 class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">{{ .Thread.Complaint.Subject }}</h1>
+      {{ if eq .Thread.Complaint.Status "OPEN" }}
+        <span class="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-amber-100 text-amber-900">Open</span>
+      {{ else }}
+        <span class="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">Resolved</span>
+      {{ end }}
+    </div>
+    <span class="font-code-md text-code-md text-on-surface-variant">Opened {{ .Thread.Complaint.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+    <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Thread.Complaint.Message }}</p>
+  </div>
+
+  {{ range .Thread.Replies }}
+    <div class="rounded shadow-sm p-space-md flex flex-col gap-1 {{ if .IsAdmin }}bg-primary-fixed/40 border border-primary-fixed-dim/50{{ else }}bg-surface-container-lowest{{ end }}">
+      <div class="flex items-center gap-2">
+        <span class="font-label-md text-label-md font-bold {{ if .IsAdmin }}text-primary{{ else }}text-on-surface{{ end }}">{{ .AuthorName }}</span>
+        {{ if .IsAdmin }}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-primary-fixed text-on-primary-fixed">Ordora team</span>
+        {{ end }}
+        <span class="font-code-md text-code-md text-on-surface-variant">{{ .Reply.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+      </div>
+      <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Reply.Body }}</p>
+    </div>
+  {{ end }}
+
+  {{ if eq .Thread.Complaint.Status "OPEN" }}
+    <form method="post" action="/support/{{ .Thread.Complaint.ID }}/reply" class="bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-space-sm">
+      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md font-semibold text-on-surface">Add a follow-up</span>
+        <textarea name="body" rows="3" maxlength="4000" required placeholder="Anything to add?"
+                  class="px-3 py-2 rounded bg-surface-container-low border border-outline-variant/30 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors"></textarea>
+      </label>
+      <div>
+        <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors shadow-sm">
+          Send reply
+        </button>
+      </div>
+    </form>
+  {{ else }}
+    <div class="bg-surface-container-low rounded p-space-md text-center">
+      <p class="font-body-md text-body-md text-on-surface-variant">This request is resolved. If the issue persists, <a href="/support" class="text-primary hover:underline font-semibold">open a new request</a>.</p>
+    </div>
+  {{ end }}
+</div>
+{{ end }}

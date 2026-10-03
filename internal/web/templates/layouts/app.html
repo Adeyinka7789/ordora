@@ -136,6 +136,7 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #b9cdd0; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #93adb1; }
+    #notif-badge:empty { display: none; }
   </style>
 
   <style>
@@ -206,6 +207,12 @@
     <main class="w-full pt-16 flex-1 bg-surface">
       {{ .Content }}
     </main>
+    <footer class="w-full border-t border-outline-variant/30 bg-surface-container-lowest">
+      <div class="max-w-[1440px] mx-auto px-space-lg py-3 flex flex-col sm:flex-row items-center justify-between gap-1 font-label-sm text-label-sm text-on-surface-variant">
+        <span>© 2026 Ordora · Order Management</span>
+        <span>Need help? {{ if .Shell.SupportEmail }}<a href="mailto:{{ .Shell.SupportEmail }}" class="text-primary hover:underline font-medium">{{ .Shell.SupportEmail }}</a> · {{ end }}<a href="/support" class="text-primary hover:underline font-medium">Support center</a></span>
+      </div>
+    </footer>
   </div>
 
     <!-- PWA install banner (hidden by default; shown if the browser offers install) -->

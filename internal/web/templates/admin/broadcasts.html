@@ -1,0 +1,66 @@
+{{ define "admin/broadcasts.html" }}
+<div class="max-w-[900px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+
+  <div class="flex flex-col">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Broadcasts</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Send an in-app announcement to every tenant. It lands in each user's notification feed.</p>
+  </div>
+
+  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .FormError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FormError }}</div>{{ end }}
+
+  <form method="post" action="{{ .Path }}/broadcasts" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <h2 class="font-headline-md text-headline-md font-bold text-on-surface">New broadcast</h2>
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md font-semibold text-on-surface">Title</span>
+      <input type="text" name="title" value="{{ .FormTitle }}" maxlength="160" required placeholder="e.g. Scheduled maintenance on Sunday"
+             class="h-10 px-3 rounded bg-surface-container-low border border-outline-variant/30 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md font-semibold text-on-surface">Message</span>
+      <textarea name="body" rows="4" maxlength="2000" placeholder="Details, dates, what users should do… (optional)"
+                class="px-3 py-2 rounded bg-surface-container-low border border-outline-variant/30 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">{{ .FormBody }}</textarea>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md font-semibold text-on-surface">Link <span class="font-normal text-on-surface-variant">(optional, e.g. /reports)</span></span>
+      <input type="text" name="link" value="{{ .FormLink }}" maxlength="500" placeholder="/notifications"
+             class="h-10 px-3 rounded bg-surface-container-low border border-outline-variant/30 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
+    </label>
+    <div>
+      <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors shadow-sm">
+        Send to all tenants
+      </button>
+    </div>
+  </form>
+
+  <div class="flex flex-col gap-space-sm">
+    <h2 class="font-headline-md text-headline-md font-bold text-on-surface">Sent ({{ .Total }})</h2>
+    {{ if not .Rows }}
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center">
+        <p class="font-body-md text-body-md text-on-surface-variant">No broadcasts sent yet.</p>
+      </div>
+    {{ else }}
+      {{ range .Rows }}
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-1">
+          <div class="flex items-center justify-between gap-space-sm flex-wrap">
+            <span class="font-label-md text-label-md font-bold text-on-surface">{{ .Title }}</span>
+            <span class="font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006 · 15:04" }} · {{ .Recipients }} recipients</span>
+          </div>
+          {{ if .Body }}<p class="font-body-md text-body-md text-on-surface-variant">{{ .Body }}</p>{{ end }}
+          {{ if .Link }}<span class="font-code-md text-code-md text-primary">{{ .Link }}</span>{{ end }}
+        </div>
+      {{ end }}
+      {{ if or .HasPrev .HasNext }}
+        <nav class="flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant">
+          <span>Page {{ .Page }} · {{ len .Rows }} shown of {{ .Total }}</span>
+          <div class="flex gap-1">
+            {{ if .HasPrev }}<a href="{{ .Path }}/broadcasts?page={{ dec .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Prev</a>{{ end }}
+            {{ if .HasNext }}<a href="{{ .Path }}/broadcasts?page={{ inc .Page }}" class="h-7 px-2 rounded bg-surface-container-low hover:bg-surface-container">Next</a>{{ end }}
+          </div>
+        </nav>
+      {{ end }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}

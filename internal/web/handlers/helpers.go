@@ -102,7 +102,8 @@ func shellFromRequest(r *http.Request) render.Shell {
 	slog.Info("shell_debug", "path", r.URL.Path, "impersonating", middleware.IsImpersonating(r.Context()))
 	s := middleware.SessionFromContext(r.Context())
 	sh := render.Shell{
-		CSRFToken: middleware.CSRFTokenFrom(r.Context()),
+		CSRFToken:    middleware.CSRFTokenFrom(r.Context()),
+		SupportEmail: render.SupportEmail,
 	}
 	if s != nil {
 		sh.UserName = s.User.Name

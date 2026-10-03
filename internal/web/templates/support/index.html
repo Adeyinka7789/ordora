@@ -1,0 +1,55 @@
+{{ define "support/index.html" }}
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[900px] mx-auto">
+
+  <div class="flex flex-col">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Support</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">File a complaint or ask for help. Our team replies here — you'll also get a notification.</p>
+  </div>
+
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  <form method="post" action="/support" class="bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-space-sm">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <h2 class="font-headline-md text-headline-md font-bold text-on-surface">New request</h2>
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md font-semibold text-on-surface">Subject</span>
+      <input type="text" name="subject" value="{{ .FormSubject }}" maxlength="160" required placeholder="e.g. Payment not reflecting on order ORD-2026-00128"
+             class="h-10 px-3 rounded bg-surface-container-low border border-outline-variant/30 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md font-semibold text-on-surface">What happened?</span>
+      <textarea name="message" rows="4" maxlength="4000" required placeholder="Describe the issue in detail…"
+                class="px-3 py-2 rounded bg-surface-container-low border border-outline-variant/30 font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">{{ .FormMessage }}</textarea>
+    </label>
+    <div>
+      <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors shadow-sm">
+        Send request
+      </button>
+    </div>
+  </form>
+
+  <div class="flex flex-col gap-space-sm">
+    <h2 class="font-headline-md text-headline-md font-bold text-on-surface">Your requests ({{ .Total }})</h2>
+    {{ if not .Complaints }}
+      <div class="bg-surface-container-lowest rounded shadow-sm p-space-xl text-center">
+        <p class="font-body-md text-body-md text-on-surface-variant">No requests yet.</p>
+      </div>
+    {{ else }}
+      {{ range .Complaints }}
+        <a href="/support/{{ .ID }}" class="bg-surface-container-lowest rounded shadow-sm p-space-md flex items-center justify-between gap-space-sm hover:bg-surface-container-low/60 transition-colors">
+          <div class="flex flex-col gap-0.5 min-w-0">
+            <span class="font-label-md text-label-md font-bold text-on-surface truncate">{{ .Subject }}</span>
+            <span class="font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006" }}</span>
+          </div>
+          {{ if eq .Status "OPEN" }}
+            <span class="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-amber-100 text-amber-900">Open</span>
+          {{ else }}
+            <span class="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">Resolved</span>
+          {{ end }}
+        </a>
+      {{ end }}
+    {{ end }}
+  </div>
+</div>
+{{ end }}

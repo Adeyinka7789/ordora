@@ -110,6 +110,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("renderer: %w", err)
 	}
+	render.SupportEmail = cfg.SupportEmail
 
 	// ---- Handlers ----
 	authH := &handlers.AuthHandler{
@@ -334,6 +335,33 @@ func run() error {
 		Cfg:      cfg,
 	}
 
+	// ---- In-app notifications + support desk ----
+	// Tenant reads/writes go through the tenant DB (RLS); admin
+	// cross-tenant work goes through the admin DB (BYPASSRLS).
+	commsService := app.NewCommsService(app.CommsServiceDeps{
+		DB:              db,
+		AdminDB:         adminDB,
+		Notifs:          postgres.NewNotificationRepo(db),
+		Complaints:      postgres.NewComplaintRepo(db),
+		AdminNotifs:     postgres.NewNotificationRepo(adminDB),
+		AdminComplaints: postgres.NewComplaintRepo(adminDB),
+		Audit:           postgres.NewAdminAuditAdapter(adminAuditRepo),
+		IDs:             id.Generator{},
+	})
+	notifH := &handlers.NotificationHandler{
+		Service:  commsService,
+		Renderer: renderer,
+	}
+	supportH := &handlers.SupportHandler{
+		Service:  commsService,
+		Renderer: renderer,
+	}
+	adminCommsH := &adminhandlers.CommsHandler{
+		Service:  commsService,
+		Renderer: renderer,
+		Cfg:      cfg,
+	}
+
 	// Impersonation: build a synthetic ResolvedSession for a target org.
 	// Used by the business session middleware when the impersonation cookie
 	// is present. The synthetic session makes the admin appear as the org's
@@ -453,6 +481,22 @@ func run() error {
 	mux.Handle("GET "+adminPath+"/audit",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOpsH.Audit))))
 
+	// ---- Admin support desk + broadcasts ----
+	mux.Handle("GET "+adminPath+"/complaints",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.ComplaintsIndex))))
+	mux.Handle("GET "+adminPath+"/complaints/{id}",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.ComplaintShow))))
+	mux.Handle("POST "+adminPath+"/complaints/{id}/reply",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.ComplaintReply))))
+	mux.Handle("POST "+adminPath+"/complaints/{id}/resolve",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.ComplaintResolve))))
+	mux.Handle("POST "+adminPath+"/complaints/{id}/reopen",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.ComplaintReopen))))
+	mux.Handle("GET "+adminPath+"/broadcasts",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.BroadcastsIndex))))
+	mux.Handle("POST "+adminPath+"/broadcasts",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminCommsH.BroadcastCreate))))
+
 	mux.Handle("POST "+adminPath+"/orgs/{id}/suspend",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Suspend))))
 	mux.Handle("POST "+adminPath+"/orgs/{id}/unsuspend",
@@ -552,6 +596,16 @@ func run() error {
 	// ---- Search  ----
 	mux.Handle("GET /reports", middleware.RequireTenant(http.HandlerFunc(reportH.Index)))
 	mux.Handle("GET /reports/export.csv", middleware.RequireTenant(http.HandlerFunc(reportH.ExportCSV)))
+
+	// ---- Notifications + support desk (requires auth + tenant) ----
+	mux.Handle("GET /notifications", middleware.RequireTenant(http.HandlerFunc(notifH.Index)))
+	mux.Handle("GET /notifications/count", middleware.RequireTenant(http.HandlerFunc(notifH.Count)))
+	mux.Handle("POST /notifications/{id}/read", middleware.RequireTenant(http.HandlerFunc(notifH.Read)))
+	mux.Handle("POST /notifications/read-all", middleware.RequireTenant(http.HandlerFunc(notifH.ReadAll)))
+	mux.Handle("GET /support", middleware.RequireTenant(http.HandlerFunc(supportH.Index)))
+	mux.Handle("POST /support", middleware.RequireTenant(http.HandlerFunc(supportH.Create)))
+	mux.Handle("GET /support/{id}", middleware.RequireTenant(http.HandlerFunc(supportH.Show)))
+	mux.Handle("POST /support/{id}/reply", middleware.RequireTenant(http.HandlerFunc(supportH.Reply)))
 
 	// ---- Stub pages (nav links that are on the roadmap) ----
 	mux.Handle("GET /payments", middleware.RequireTenant(http.HandlerFunc(ledgerH.Index)))
