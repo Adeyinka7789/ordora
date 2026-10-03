@@ -1,0 +1,154 @@
+{{ define "orders/_costs.html" }}
+{{ $s := .Costs }}
+<div id="costs-card" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary text-[22px]">calculate</span>
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Costs &amp; Profit</h2>
+    </div>
+    <span class="font-label-sm text-label-sm text-outline">Internal only</span>
+  </div>
+
+  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .FlashError }}</div>{{ end }}
+
+  {{ if $s }}
+    <!-- Profit tiles -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+      <div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-1">
+        <span class="text-label-sm text-outline uppercase tracking-wider">Revenue</span>
+        <span class="font-code-md text-headline-md font-bold text-on-surface tabular-nums">{{ currency $s.Revenue.Amount $s.Revenue.Currency }}</span>
+      </div>
+      <div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-1">
+        <span class="text-label-sm text-outline uppercase tracking-wider">Total costs</span>
+        <span class="font-code-md text-headline-md font-bold text-error tabular-nums">{{ currency $s.TotalCosts.Amount $s.TotalCosts.Currency }}</span>
+      </div>
+      <div class="p-space-md rounded-lg {{ if gt $s.Profit.Amount 0 }}bg-tertiary-fixed text-on-tertiary-fixed{{ else if lt $s.Profit.Amount 0 }}bg-error-container text-on-error-container{{ else }}bg-surface-container-low{{ end }} flex flex-col gap-1">
+        <span class="text-label-sm uppercase tracking-wider font-semibold">Profit</span>
+        <span class="font-code-md text-headline-md font-bold tabular-nums">{{ currency $s.Profit.Amount $s.Profit.Currency }}</span>
+        {{ if gt $s.Revenue.Amount 0 }}
+          <span class="text-label-sm opacity-80">{{ printf "%.1f" $s.MarginPercent }}% margin</span>
+        {{ end }}
+      </div>
+    </div>
+
+    <!-- Category breakdown -->
+    {{ if $s.ByCategory }}
+      <div class="flex flex-col gap-2 pt-space-sm border-t border-outline-variant/20">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Breakdown</span>
+        {{ range $s.ByCategory }}
+          <div class="flex items-center justify-between gap-space-sm">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="font-label-md font-semibold text-on-surface">{{ .Label }}</span>
+              <span class="text-label-sm text-on-surface-variant">{{ .Count }} entr{{ if ne .Count 1 }}ies{{ else }}y{{ end }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-24 h-1.5 rounded-full bg-surface-container-low overflow-hidden hidden sm:block">
+                <div class="h-full bg-primary-container rounded-full" style="width: {{ printf "%.0f" .Percent }}%;"></div>
+              </div>
+              <span class="font-code-md font-bold text-on-surface tabular-nums w-24 text-right">{{ currency .Total.Amount .Total.Currency }}</span>
+            </div>
+          </div>
+        {{ end }}
+      </div>
+    {{ end }}
+
+    <!-- Cost entries -->
+    {{ if $s.Costs }}
+      <div class="flex flex-col divide-y divide-outline-variant/20 pt-space-sm border-t border-outline-variant/20">
+        {{ range $s.Costs }}
+          <div class="flex items-start justify-between py-2 gap-space-sm">
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">{{ .Category.Label }}</span>
+                <span class="font-label-md font-semibold text-on-surface truncate">{{ .Description }}</span>
+              </div>
+              <div class="flex items-center gap-2 text-label-sm text-on-surface-variant mt-0.5">
+                <span>{{ .IncurredOn.Format "Jan 2, 2006" }}</span>
+                {{ if .Vendor }}<span>·</span><span>{{ .Vendor }}</span>{{ end }}
+              </div>
+              {{ if .Notes }}<p class="text-body-sm text-on-surface-variant mt-1 whitespace-pre-wrap">{{ .Notes }}</p>{{ end }}
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .Amount.Amount .Amount.Currency }}</span>
+              <form method="post" action="/costs/{{ .ID }}/delete?order_id={{ $s.OrderID }}" class="inline"
+                    onsubmit="return confirm('Delete this cost?');">
+                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                <button type="submit" class="p-1 rounded hover:bg-error-container text-on-surface-variant hover:text-error transition-colors" title="Delete">
+                  <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        {{ end }}
+      </div>
+    {{ else }}
+      <p class="text-body-md text-on-surface-variant">No costs recorded yet. Add your first expense below.</p>
+    {{ end }}
+
+    <!-- Add cost form -->
+    <details class="pt-space-md border-t border-outline-variant/30">
+      <summary class="cursor-pointer text-primary hover:underline font-label-md font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Add cost
+      </summary>
+      <form hx-post="/orders/{{ $s.OrderID }}/costs"
+            hx-target="#costs-card"
+            hx-swap="outerHTML"
+            class="pt-space-md flex flex-col gap-space-sm">
+        <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+          <label class="flex flex-col gap-1">
+            <span class="text-label-md text-on-surface">Category</span>
+            <select name="category" required
+                    class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+              {{ range $.CostCategories }}
+                <option value="{{ . }}">{{ .Label }}</option>
+              {{ end }}
+            </select>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-label-md text-on-surface">Amount</span>
+            <input type="text" name="amount" placeholder="0.00" required
+                   class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          </label>
+        </div>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-label-md text-on-surface">Description</span>
+          <input type="text" name="description" required maxlength="500"
+                 placeholder="e.g. Italian wool - 2 meters"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
+          <label class="flex flex-col gap-1">
+            <span class="text-label-md text-on-surface">Date incurred</span>
+            <input type="date" name="incurred_on" required
+                   class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-label-md text-on-surface">Vendor (optional)</span>
+            <input type="text" name="vendor" maxlength="200"
+                   class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          </label>
+        </div>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-label-md text-on-surface">Notes (optional)</span>
+          <textarea name="notes" rows="2" maxlength="2000"
+                    class="p-3 rounded bg-surface-container-low text-on-surface font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none"></textarea>
+        </label>
+
+        <button type="submit" class="self-start h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md font-semibold">
+          Add cost
+        </button>
+      </form>
+    </details>
+  {{ else }}
+    <p class="text-body-md text-on-surface-variant">No cost summary available.</p>
+  {{ end }}
+</div>
+{{ end }}

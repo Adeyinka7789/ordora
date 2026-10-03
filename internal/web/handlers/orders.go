@@ -11,6 +11,7 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
+	"github.com/Adeyinka7789/ordora/internal/domain/cost"
 	"github.com/Adeyinka7789/ordora/internal/domain/customer"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/domain/payment"
@@ -28,6 +29,7 @@ type OrderHandler struct {
 	Payments    *app.PaymentService
 	Audit       *postgres.AuditRepo
 	Renderer    *render.Renderer
+	Costs       *app.CostService
 }
 
 // -----------------------------------------------------------------------------
@@ -107,6 +109,8 @@ type orderShowPage struct {
 	PayStatus            payment.Status
 	AttachmentsByPayment map[uuid.UUID][]*attachment.Attachment
 	AuditTrail           []postgres.AuditTrailRow
+	Costs                *app.OrderCostSummary
+	CostCategories       []cost.Category
 }
 
 // -----------------------------------------------------------------------------
@@ -604,6 +608,12 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 		page.AttachmentsByPayment = byPayment
 	}
 
+	// Costs summary (best-effort).
+	if summary, err := h.Costs.SummaryForOrder(r.Context(), scope, o.ID); err == nil {
+		page.Costs = summary
+	}
+	page.CostCategories = cost.AllCategories()
+
 	// Audit trail (best-effort).
 	if h.Audit != nil {
 		if trail, err := h.Audit.ListTrailForEntity(r.Context(), scope, "ORDER", o.ID, 30); err == nil {
@@ -706,5 +716,16 @@ func humanizeOrderError(err error) string {
 		return "The discount cannot exceed the subtotal."
 	default:
 		return "Something went wrong. Please try again."
+	}
+}
+
+// costsFragment builds the map passed to the orders/_costs.html fragment.
+func costsFragment(page orderShowPage) map[string]any {
+	return map[string]any{
+		"Summary":    page.Costs,
+		"CSRFToken":  page.CSRFToken,
+		"Flash":      "",
+		"Error":      "",
+		"Categories": cost.AllCategories(),
 	}
 }

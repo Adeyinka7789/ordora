@@ -192,6 +192,9 @@
       <!-- Attachments -->
       {{ template "orders/_attachments.html" . }}
 
+      <!-- Costs & Profit -->
+      {{ template "orders/_costs.html" . }}
+
       <!-- Audit trail -->
       {{ if .AuditTrail }}
         <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">

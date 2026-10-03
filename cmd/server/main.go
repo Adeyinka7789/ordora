@@ -173,6 +173,18 @@ func run() error {
 		Renderer:    renderer,
 	}
 
+	// ---- Costs ----
+	costRepo := postgres.NewCostRepo(db)
+	costService := app.NewCostService(app.CostServiceDeps{
+		Costs:  costRepo,
+		Orders: orderRepo,
+		IDs:    id.Generator{},
+	})
+	costH := &handlers.CostHandler{
+		Service:  costService,
+		Renderer: renderer,
+	}
+
 	attachH := &handlers.AttachmentHandler{
 		Service:       attachService,
 		PaymentLookup: paymentRepo,
@@ -201,6 +213,7 @@ func run() error {
 		Payments:    paymentService,
 		Audit:       auditRepo,
 		Renderer:    renderer,
+		Costs:       costService,
 	}
 
 	// ---- Settings + profile ----
@@ -577,6 +590,9 @@ func run() error {
 	mux.Handle("POST /payments/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToPayment)))
 	mux.Handle("POST /payments/{id}/reverse", middleware.RequireTenant(http.HandlerFunc(paymentH.Reverse)))
 
+	mux.Handle("POST /orders/{id}/costs", middleware.RequireTenant(http.HandlerFunc(costH.Add)))
+	mux.Handle("POST /costs/{id}", middleware.RequireTenant(http.HandlerFunc(costH.Update)))
+	mux.Handle("POST /costs/{id}/delete", middleware.RequireTenant(http.HandlerFunc(costH.Delete)))
 	// ---- Attachments ----
 	mux.Handle("POST /orders/{id}/attachments", middleware.RequireTenant(http.HandlerFunc(attachH.UploadToOrder)))
 	mux.Handle("GET /attachments/{id}", middleware.RequireTenant(http.HandlerFunc(attachH.Download)))
