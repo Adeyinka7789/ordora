@@ -21,6 +21,12 @@
         <p class="font-body-md text-body-md text-on-surface-variant">{{ .View.Title }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-space-sm">
+        {{ if or (eq .View.Status "COMPLETED") (and (le .View.Balance.Amount 0) (gt .View.Total.Amount 0)) }}
+          <a href="/o/{{ .Token }}/receipt" class="h-9 px-space-md rounded bg-tertiary-container hover:opacity-90 text-on-tertiary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
+            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+            <span>Receipt</span>
+          </a>
+        {{ end }}
         <a href="#payments" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
           <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
           <span>View Payments</span>

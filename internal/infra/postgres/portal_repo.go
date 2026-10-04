@@ -36,6 +36,7 @@ func (r *PortalRepo) GetByTokenHash(ctx context.Context, tokenHash []byte) (*por
 			&o.TotalMinor, &o.AmountPaidMinor,
 			&o.ExpectedCompletion, &o.DeliveredAt, &o.CreatedAt,
 			&o.CustomerName, &o.CustomerEmail, &o.CustomerPhone,
+			&o.CustomerAddress,
 			&o.OrgName, &o.OrgSlug, &o.OrgEmail, &o.OrgPhone,
 			&o.OrgAddress, &o.OrgCurrency, &o.OrgTimezone,
 		); err != nil {
@@ -56,7 +57,33 @@ func (r *PortalRepo) GetByTokenHash(ctx context.Context, tokenHash []byte) (*por
 	return out, nil
 }
 
-// ListItems returns the line items for one order.
+// ListPayments returns the payment lines for one order (receipt view).
+// Uses the SECURITY DEFINER function from migration 0032. Only
+// filenames/counts of proof attachments are exposed; file downloads
+// stay behind staff auth.
+func (r *PortalRepo) ListPayments(ctx context.Context, orderID uuid.UUID) ([]portal.Payment, error) {
+	var out []portal.Payment
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `SELECT * FROM get_public_order_payments($1)`
+		rows, err := tx.Query(ctx, q, orderID)
+		if err != nil {
+			return fmt.Errorf("portal_repo: payments: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var p portal.Payment
+			if err := rows.Scan(&p.Method, &p.Reference, &p.PaidAt,
+				&p.AmountMinor, &p.Currency, &p.Notes,
+				&p.IsReversed, &p.IsReversal, &p.ProofCount, &p.ProofNames); err != nil {
+				return err
+			}
+			out = append(out, p)
+		}
+		return rows.Err()
+	})
+	return out, err
+}
+
 // ListItems returns the line items for one order.
 func (r *PortalRepo) ListItems(ctx context.Context, orderID uuid.UUID) ([]portal.Item, error) {
 	var out []portal.Item

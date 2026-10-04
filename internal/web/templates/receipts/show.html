@@ -1,0 +1,51 @@
+{{ define "receipts/show.html" }}
+<div class="rcpt-page p-space-lg lg:p-space-xl max-w-[880px] mx-auto flex flex-col gap-space-lg">
+
+  <div class="no-print flex flex-wrap items-center justify-between gap-space-sm">
+    <a href="/orders" class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span>Back to orders</span>
+    </a>
+    <div class="flex flex-wrap items-center gap-space-xs">
+      <button type="button" onclick="window.print()" class="h-9 px-space-sm rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">print</span>
+        <span>Print / PDF</span>
+      </button>
+      <button type="button" id="receipt-png-btn" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">image</span>
+        <span>Save image</span>
+      </button>
+      <button type="button" id="receipt-copy-btn" data-copy="{{ .Card.ReceiptURL }}" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">link</span>
+        <span>Copy link</span>
+      </button>
+      <a href="{{ .MailtoURL }}" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">mail</span>
+        <span>Email</span>
+      </a>
+      <a href="{{ .WhatsAppURL }}" target="_blank" rel="noopener" class="h-9 px-space-sm rounded bg-tertiary-container hover:opacity-90 text-on-tertiary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-[18px]">chat</span>
+        <span>WhatsApp</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="no-print p-space-sm rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface-variant flex flex-wrap items-center justify-between gap-space-sm">
+    {{ if .HasToken }}
+      <span>Client receipt link is ready — Email/WhatsApp above carry it. The customer can open, print, or save it.</span>
+      <button type="button" id="receipt-client-copy-btn" data-copy="{{ .ClientLink }}" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Copy client link</button>
+    {{ else }}
+      <span>Email/WhatsApp currently share the order summary. Mint a client link to include a receipt the customer can open.</span>
+      <form method="post" action="/orders/{{ .OrderID }}/public-token/regenerate" class="inline">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <input type="hidden" name="next" value="receipt">
+        <button type="submit" class="h-8 px-3 rounded bg-secondary-container hover:bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold">Generate client link</button>
+      </form>
+    {{ end }}
+  </div>
+
+  {{ template "receipts/_card.html" .Card }}
+</div>
+
+<script src="/static/js/receipt.js" defer></script>
+{{ end }}

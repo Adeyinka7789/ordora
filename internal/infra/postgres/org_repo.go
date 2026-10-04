@@ -52,6 +52,21 @@ func (r *OrgRepo) CreateTx(ctx context.Context, tx pgx.Tx, o *org.Organization) 
 	return nil
 }
 
+// GetByID loads an organization by id. Wraps GetByIDTx in a tenant-scoped
+// transaction so callers (e.g. the receipt handler) don't need raw DB access.
+func (r *OrgRepo) GetByID(ctx context.Context, id uuid.UUID) (*org.Organization, error) {
+	var out *org.Organization
+	err := r.db.WithTenant(ctx, id, func(tx pgx.Tx) error {
+		o, err := r.GetByIDTx(ctx, tx, id)
+		if err != nil {
+			return err
+		}
+		out = o
+		return nil
+	})
+	return out, err
+}
+
 // GetByID loads an organization. Must run inside WithTenant(o.ID, ...) for
 // RLS to permit the read.
 func (r *OrgRepo) GetByIDTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*org.Organization, error) {

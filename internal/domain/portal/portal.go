@@ -26,9 +26,10 @@ type Order struct {
 	DeliveredAt        *time.Time
 	CreatedAt          time.Time
 
-	CustomerName  string
-	CustomerEmail string
-	CustomerPhone string
+	CustomerName    string
+	CustomerEmail   string
+	CustomerPhone   string
+	CustomerAddress string
 
 	OrgName     string
 	OrgSlug     string
@@ -47,4 +48,20 @@ type Item struct {
 	SubtotalMinor  int64
 	Currency       string
 	Position       int
+}
+
+// Payment is one payment line for the public receipt. ProofNames carries
+// the filenames of payment-proof attachments (staff-side uploads); the
+// files themselves stay behind staff auth.
+type Payment struct {
+	Method      string
+	Reference   string
+	PaidAt      time.Time
+	AmountMinor int64
+	Currency    string
+	Notes       string
+	IsReversed  bool
+	IsReversal  bool
+	ProofCount  int
+	ProofNames  string
 }

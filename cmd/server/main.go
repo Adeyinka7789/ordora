@@ -237,6 +237,7 @@ func run() error {
 		Service:     orderService,
 		OrderRepo:   orderRepo,
 		CustRepo:    custRepo,
+		Orgs:        postgres.NewOrgRepo(db),
 		Attachments: attachService,
 		Payments:    paymentService,
 		Audit:       auditRepo,
@@ -567,6 +568,7 @@ func run() error {
 	// ---- Public routes (no auth required) ----
 	portalMux := http.NewServeMux()
 	portalMux.HandleFunc("GET /o/{token}", portalH.Show)
+	portalMux.HandleFunc("GET /o/{token}/receipt", portalH.Receipt)
 	portalMux.HandleFunc("GET /order/{slug}", portalH.IntakeForm)
 	portalMux.HandleFunc("POST /order/{slug}", portalH.IntakeSubmit)
 
@@ -575,6 +577,10 @@ func run() error {
 	// Wire portal routes into the main mux, with rate limiting on POST only.
 	// (GET routes are cheap; the POST is what needs protection.)
 	mux.Handle("GET /o/{token}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(portalMux))
+	mux.Handle("GET /o/{token}/receipt", middleware.RateLimit(middleware.RateLimitConfig{
 		Limit: 60, Window: time.Minute,
 		Message: "Too many requests. Please slow down.",
 	})(portalMux))
@@ -688,6 +694,7 @@ func run() error {
 	mux.Handle("GET /orders/{id}/edit", gated("orders", http.HandlerFunc(orderH.Edit)))
 	mux.Handle("POST /orders/{id}", gated("orders", http.HandlerFunc(orderH.Update)))
 	mux.Handle("POST /orders/{id}/status", gated("orders", http.HandlerFunc(orderH.ChangeStatus)))
+	mux.Handle("GET /orders/{id}/receipt", gated("orders", http.HandlerFunc(orderH.Receipt)))
 	mux.Handle("POST /orders/{id}/public-token/regenerate", gated("orders", http.HandlerFunc(orderH.RegenerateToken)))
 	//
 	// ---- Payments ----

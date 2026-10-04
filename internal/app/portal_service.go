@@ -20,6 +20,7 @@ import (
 type PortalRepoStore interface {
 	GetByTokenHash(ctx context.Context, tokenHash []byte) (*portal.Order, error)
 	ListItems(ctx context.Context, orderID uuid.UUID) ([]portal.Item, error)
+	ListPayments(ctx context.Context, orderID uuid.UUID) ([]portal.Payment, error)
 }
 
 // PortalService serves the public customer-facing order view.
@@ -58,9 +59,12 @@ type PortalView struct {
 
 	Items []PortalItemView
 
-	CustomerName  string
-	CustomerEmail string
-	CustomerPhone string
+	CustomerName    string
+	CustomerEmail   string
+	CustomerPhone   string
+	CustomerAddress string
+
+	Payments []PortalPaymentView
 
 	OrgName    string
 	OrgSlug    string
@@ -75,6 +79,20 @@ type PortalItemView struct {
 	Quantity    int64 // scaled by 1000, like order items
 	UnitPrice   money.Money
 	Subtotal    money.Money
+}
+
+// PortalPaymentView is one payment line on the public receipt.
+type PortalPaymentView struct {
+	Method      string
+	MethodLabel string
+	Reference   string
+	PaidAt      time.Time
+	Amount      money.Money
+	Notes       string
+	IsReversed  bool
+	IsReversal  bool
+	ProofCount  int
+	ProofNames  string
 }
 
 // ErrPortalNotFound is returned when a token is invalid, revoked, or unknown.
@@ -133,6 +151,26 @@ func (s *PortalService) Load(ctx context.Context, rawToken string) (*PortalView,
 		})
 	}
 
+	// Load payment lines for the receipt (best-effort; totals above already
+	// carry paid/balance even when this is empty).
+	payRows, _ := s.repo.ListPayments(ctx, po.OrderID)
+	payments := make([]PortalPaymentView, 0, len(payRows))
+	for _, p := range payRows {
+		amt, _ := money.New(p.AmountMinor, p.Currency)
+		payments = append(payments, PortalPaymentView{
+			Method:      p.Method,
+			MethodLabel: payment.Method(p.Method).Label(),
+			Reference:   p.Reference,
+			PaidAt:      p.PaidAt,
+			Amount:      amt,
+			Notes:       p.Notes,
+			IsReversed:  p.IsReversed,
+			IsReversal:  p.IsReversal,
+			ProofCount:  p.ProofCount,
+			ProofNames:  p.ProofNames,
+		})
+	}
+
 	return &PortalView{
 		OrderID:            po.OrderID,
 		OrderNumber:        po.OrderNumber,
@@ -155,6 +193,8 @@ func (s *PortalService) Load(ctx context.Context, rawToken string) (*PortalView,
 		CustomerName:       po.CustomerName,
 		CustomerEmail:      po.CustomerEmail,
 		CustomerPhone:      po.CustomerPhone,
+		CustomerAddress:    po.CustomerAddress,
+		Payments:           payments,
 		OrgName:            po.OrgName,
 		OrgSlug:            po.OrgSlug,
 		OrgEmail:           po.OrgEmail,

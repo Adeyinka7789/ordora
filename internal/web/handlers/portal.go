@@ -25,6 +25,7 @@ type PortalHandler struct {
 type portalPageData struct {
 	Title           string
 	OrgName         string // for the public layout header
+	Token           string // raw public token, for building the receipt URL
 	View            *app.PortalView
 	Items           []portalItemView
 	OrderForStepper *order.Order
@@ -69,6 +70,7 @@ func (h *PortalHandler) Show(w http.ResponseWriter, r *http.Request) {
 	data := portalPageData{
 		Title:           v.OrderNumber,
 		OrgName:         v.OrgName,
+		Token:           token,
 		View:            v,
 		OrderForStepper: stepper,
 		Items:           buildItemViews(v),

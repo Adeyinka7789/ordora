@@ -25,6 +25,7 @@ type OrderHandler struct {
 	Service     *app.OrderService
 	OrderRepo   *postgres.OrderRepo
 	CustRepo    *postgres.CustomerRepo
+	Orgs        *postgres.OrgRepo
 	Attachments *app.AttachmentService
 	Payments    *app.PaymentService
 	Audit       *postgres.AuditRepo
@@ -699,6 +700,12 @@ func (h *OrderHandler) RegenerateToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// The receipt page mints its client link through this same endpoint and
+	// asks to land back on the receipt (?next=receipt).
+	if r.FormValue("next") == "receipt" {
+		http.Redirect(w, r, "/orders/"+oid.String()+"/receipt?token="+raw, http.StatusSeeOther)
+		return
+	}
 	http.Redirect(w, r, "/orders/"+oid.String()+"?token="+raw, http.StatusSeeOther)
 }
 

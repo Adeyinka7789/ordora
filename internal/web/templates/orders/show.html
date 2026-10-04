@@ -66,6 +66,12 @@
       </form>
 
       <div class="flex flex-wrap items-center gap-space-xs self-start xl:self-center">
+        {{ if or (eq .Order.Status "COMPLETED") (and (le .Balance 0) (gt .Order.Total.Amount 0)) }}
+          <a href="/orders/{{ .Order.ID }}/receipt" class="h-9 px-space-sm rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+            <span>Receipt</span>
+          </a>
+        {{ end }}
         {{ if not .Order.Status.IsTerminal }}
           <a href="/orders/{{ .Order.ID }}/edit" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
             <span class="material-symbols-outlined text-[18px]">edit</span>

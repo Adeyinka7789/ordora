@@ -1,0 +1,122 @@
+{{ define "receipts/_card.html" }}
+{{/* Shared OPay-style receipt card. Rendered with a receiptCard value.
+  Uses rcpt-* classes ONLY (plain CSS in /static/css/receipt.css, no
+  Tailwind) so it prints cleanly to PDF. The data-* attributes feed the
+  fixed-size share-card PNG (see receipt.js); keep them in sync. */}}
+<div id="receipt-card" class="rcpt-card"
+     data-org="{{ .OrgName }}"
+     data-amount="{{ currency .PaidMinor .Currency }}"
+     data-total="{{ currency .TotalMinor .Currency }}"
+     data-order="{{ .OrderNumber }}"
+     data-customer="{{ .CustomerName }}"
+     data-date="{{ if .FulfilledAt }}{{ .FulfilledAt.Format "Jan 2, 2006" }}{{ else }}{{ .CreatedAt.Format "Jan 2, 2006" }}{{ end }}"
+     data-status="{{ .PayStatus }}"
+     data-methods="{{ .Methods }}"
+     data-link="{{ .ReceiptURL }}">
+  <div class="rcpt-head">
+    <div class="rcpt-org">
+      <div class="rcpt-org-name">{{ .OrgName }}</div>
+      {{ if .OrgAddress }}<div class="rcpt-org-line">{{ .OrgAddress }}</div>{{ end }}
+      {{ if .OrgPhone }}<div class="rcpt-org-line">{{ .OrgPhone }}</div>{{ end }}
+      {{ if .OrgEmail }}<div class="rcpt-org-line">{{ .OrgEmail }}</div>{{ end }}
+    </div>
+    <div class="rcpt-title-block">
+      <div class="rcpt-title">Receipt</div>
+      <div class="rcpt-number">{{ .OrderNumber }}</div>
+      {{ if eq .PayStatus "PAID" }}
+        <span class="rcpt-badge rcpt-badge-paid">PAID</span>
+      {{ else }}
+        <span class="rcpt-badge">{{ .PayStatus }}</span>
+      {{ end }}
+    </div>
+  </div>
+
+  <div class="rcpt-amount-block">
+    <div class="rcpt-amount-label">Total paid</div>
+    <div class="rcpt-amount">{{ currency .PaidMinor .Currency }}</div>
+    <div class="rcpt-amount-sub">of {{ currency .TotalMinor .Currency }} · {{ .PaidPercent }}% cleared</div>
+  </div>
+
+  <div class="rcpt-meta">
+    <div class="rcpt-meta-row"><span>Order</span><strong>{{ .OrderNumber }}{{ if .OrderTitle }} · {{ .OrderTitle }}{{ end }}</strong></div>
+    <div class="rcpt-meta-row"><span>Status</span><strong>{{ .StatusLabel }}</strong></div>
+    <div class="rcpt-meta-row"><span>Created</span><strong>{{ formatDate .CreatedAt }}</strong></div>
+    {{ if .FulfilledAt }}<div class="rcpt-meta-row"><span>Fulfilled</span><strong>{{ formatDate .FulfilledAt }}</strong></div>{{ end }}
+  </div>
+
+  <div class="rcpt-section">
+    <div class="rcpt-section-title">Billed to</div>
+    <div class="rcpt-customer-name">{{ .CustomerName }}</div>
+    {{ if .CustomerAddress }}<div class="rcpt-customer-line">{{ .CustomerAddress }}</div>{{ end }}
+    {{ if .CustomerPhone }}<div class="rcpt-customer-line">{{ .CustomerPhone }}</div>{{ end }}
+    {{ if .CustomerEmail }}<div class="rcpt-customer-line">{{ .CustomerEmail }}</div>{{ end }}
+  </div>
+
+  {{ if .Lines }}
+  <div class="rcpt-section">
+    <div class="rcpt-section-title">What was done</div>
+    <table class="rcpt-table">
+      <thead>
+        <tr><th>Description</th><th class="rcpt-num">Qty</th><th class="rcpt-num">Unit</th><th class="rcpt-num">Amount</th></tr>
+      </thead>
+      <tbody>
+        {{ range .Lines }}
+        <tr>
+          <td>{{ .Description }}</td>
+          <td class="rcpt-num">{{ formatQty .QuantityScaled }}</td>
+          <td class="rcpt-num">{{ currency .UnitPriceMinor .Currency }}</td>
+          <td class="rcpt-num">{{ currency .SubtotalMinor .Currency }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ end }}
+
+  <div class="rcpt-section">
+    <div class="rcpt-section-title">What was paid</div>
+    {{ if .Payments }}
+      {{ range .Payments }}
+      <div class="rcpt-pay {{ if or .IsReversed .IsReversal }}rcpt-pay-void{{ end }}">
+        <div class="rcpt-pay-top">
+          <strong>{{ currency .AmountMinor .Currency }}</strong>
+          <span class="rcpt-pay-method">{{ .MethodLabel }}</span>
+          {{ if .IsReversed }}<span class="rcpt-flag">REVERSED</span>{{ end }}
+          {{ if .IsReversal }}<span class="rcpt-flag">REVERSAL</span>{{ end }}
+        </div>
+        <div class="rcpt-pay-sub">{{ .PaidAt.Format "Jan 2, 2006 · 15:04" }}{{ if .Reference }} · Ref: {{ .Reference }}{{ end }}</div>
+        {{ if .Notes }}<div class="rcpt-pay-notes">{{ .Notes }}</div>{{ end }}
+        {{ if .Proofs }}
+        <div class="rcpt-proofs">
+          {{ range .Proofs }}
+            {{ if .ID }}
+              <a class="rcpt-proof-link" href="/attachments/{{ .ID }}">🧾 {{ .Filename }}</a>
+            {{ else }}
+              <span class="rcpt-proof-text">🧾 {{ .Filename }}</span>
+            {{ end }}
+          {{ end }}
+        </div>
+        {{ end }}
+      </div>
+      {{ end }}
+    {{ else }}
+      <div class="rcpt-empty">No itemized payments recorded.</div>
+    {{ end }}
+  </div>
+
+  <div class="rcpt-totals">
+    <div class="rcpt-total-row"><span>Subtotal</span><span>{{ currency .SubtotalMinor .Currency }}</span></div>
+    {{ if gt .DiscountMinor 0 }}<div class="rcpt-total-row"><span>Discount</span><span>− {{ currency .DiscountMinor .Currency }}</span></div>{{ end }}
+    {{ if gt .TaxMinor 0 }}<div class="rcpt-total-row"><span>Tax</span><span>{{ currency .TaxMinor .Currency }}</span></div>{{ end }}
+    <div class="rcpt-total-row rcpt-grand"><span>Total</span><span>{{ currency .TotalMinor .Currency }}</span></div>
+    <div class="rcpt-total-row"><span>Paid</span><span>{{ currency .PaidMinor .Currency }}</span></div>
+    <div class="rcpt-total-row"><span>Balance</span><span>{{ currency .BalanceMinor .Currency }}</span></div>
+  </div>
+
+  <div class="rcpt-foot">
+    <div>Thank you for your patronage.</div>
+    {{ if .ReceiptURL }}<div class="rcpt-url">{{ .ReceiptURL }}</div>{{ end }}
+    <div class="rcpt-generated">Generated {{ .GeneratedAt.Format "Jan 2, 2006 · 15:04" }}</div>
+  </div>
+</div>
+{{ end }}
