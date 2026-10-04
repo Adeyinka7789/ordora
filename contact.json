@@ -1,9 +1,9 @@
 {
-  "emails": ["hello@example.com"],
-  "phones": ["+234 800 000 0000"],
+  "emails": ["info@admtechub.com"],
+  "phones": ["+2349011294151"],
   "address": "Lagos, Nigeria",
-  "website": "example.com",
-  "website_url": "https://example.com",
-  "whatsapp_number": "+234 800 000 0000",
+  "website": "Admtechub.com",
+  "website_url": "https://www.admtechub.com",
+  "whatsapp_number": "+2347030834157",
   "whatsapp_message": "Hello! I found you through your website and I have a question."
 }

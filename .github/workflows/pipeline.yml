@@ -1,0 +1,256 @@
+# CI/CD pipeline — one file, three stages that run in order:
+#
+#   test   → gofmt, vet, build, migrate + full test suite on Postgres 16
+#   build  → linux/amd64 binaries (server, migrate, worker) + release tarball
+#   deploy → ship to the Truehost VPS, run migrations, flip the release,
+#             restart services, health-check (production only)
+#
+# Triggers:
+#   - push to main ......... test → build → deploy (full pipeline)
+#   - pull_request .......... test → build only (no deploy)
+#   - Run workflow (manual) . full pipeline on the selected branch
+#
+# Deploy needs GitHub secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY
+# (optional: VPS_PORT default 22, APP_PORT default 8080).
+# contact.json + uploads live in /opt/ordora/shared on the VPS and are
+# NEVER overwritten by deploys. See DEPLOY.md for server setup.
+
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ------------------------------------------------------------------ #
+  # Stage 1: test — quality gates + full suite on a real database.     #
+  # ------------------------------------------------------------------ #
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ordora_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      ORDORA_ENV: development
+      ORDORA_BASE_URL: http://localhost:8080
+      ORDORA_HTTP_ADDR: :8080
+      ORDORA_DB_HOST: localhost
+      ORDORA_DB_PORT: "5432"
+      ORDORA_DB_NAME: ordora_test
+      ORDORA_DB_USER: postgres
+      ORDORA_DB_PASSWORD: postgres
+      ORDORA_DB_SSLMODE: disable
+      ORDORA_DB_ADMIN_USER: postgres
+      ORDORA_DB_ADMIN_PASSWORD: postgres
+      ORDORA_SESSION_COOKIE_NAME: ordora_session
+      ORDORA_CSRF_COOKIE_NAME: ordora_csrf
+      ORDORA_SESSION_TTL_HOURS: "720"
+      ORDORA_EMAIL_MODE: console
+      ORDORA_EMAIL_FROM: no-reply@ordora.local
+      ORDORA_STORAGE_MODE: local
+      ORDORA_STORAGE_LOCAL_DIR: ./uploads
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "Files not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build ./...
+
+      - name: Install extensions (superuser only)
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d ordora_test <<'SQL'
+            CREATE EXTENSION IF NOT EXISTS pgcrypto;
+            CREATE EXTENSION IF NOT EXISTS citext;
+            CREATE EXTENSION IF NOT EXISTS pg_trgm;
+          SQL
+      - name: Create roles for RLS
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d ordora_test <<'SQL'
+            CREATE ROLE ordora_admin WITH LOGIN PASSWORD 'admin' BYPASSRLS;
+            CREATE ROLE ordora_app   WITH LOGIN PASSWORD 'app' NOBYPASSRLS;
+            GRANT CONNECT ON DATABASE ordora_test TO ordora_app, ordora_admin;
+            GRANT USAGE ON SCHEMA public TO ordora_app, ordora_admin;
+            ALTER SCHEMA public OWNER TO ordora_admin;
+            ALTER DEFAULT PRIVILEGES FOR ROLE ordora_admin IN SCHEMA public
+              GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ordora_app;
+            ALTER DEFAULT PRIVILEGES FOR ROLE ordora_admin IN SCHEMA public
+              GRANT USAGE, SELECT ON SEQUENCES TO ordora_app;
+          SQL
+
+      - name: Run migrations
+        env:
+          ORDORA_DB_ADMIN_USER: ordora_admin
+          ORDORA_DB_ADMIN_PASSWORD: admin
+        run: go run ./cmd/migrate
+
+      - name: Run tests
+        env:
+          ORDORA_DB_USER: ordora_app
+          ORDORA_DB_PASSWORD: app
+        run: go test -race -timeout=5m ./...
+
+  # ------------------------------------------------------------------ #
+  # Stage 2: build — production binaries + release tarball.            #
+  # Runs only if test passed. Artifact flows into deploy via `needs`.  #
+  # ------------------------------------------------------------------ #
+  build:
+    name: Build release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build linux binaries
+        run: |
+          mkdir -p dist
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/server ./cmd/server
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/migrate ./cmd/migrate
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/worker ./cmd/worker
+
+      - name: Package release
+        run: |
+          SHA="$(git rev-parse --short HEAD)"
+          echo "RELEASE_SHA=$SHA" >> "$GITHUB_ENV"
+          mkdir -p "release-$SHA"
+          cp dist/server dist/migrate dist/worker "release-$SHA/"
+          cp -r migrations "release-$SHA/"
+          mkdir -p "release-$SHA/internal/web"
+          cp -r internal/web/templates internal/web/static "release-$SHA/internal/web/"
+          tar -czf "ordora-$SHA.tar.gz" -C "release-$SHA" .
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ordora-${{ env.RELEASE_SHA }}
+          path: ordora-${{ env.RELEASE_SHA }}.tar.gz
+          retention-days: 7
+
+  # ------------------------------------------------------------------ #
+  # Stage 3: deploy — Truehost VPS. Runs only on main (push or manual) #
+  # after build succeeded. Migrations run BEFORE the new code starts.  #
+  # ------------------------------------------------------------------ #
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    env:
+      APP_PORT: ${{ secrets.APP_PORT || '8080' }}
+
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ordora-*
+          merge-multiple: true
+
+      - name: Ship to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          source: "ordora-*.tar.gz"
+          target: "/tmp"
+
+      - name: Release on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          APP_PORT: ${{ env.APP_PORT }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: APP_PORT
+          script: |
+            set -euo pipefail
+            TARBALL="$(ls -t /tmp/ordora-*.tar.gz | head -1)"
+            SHA="$(basename "$TARBALL" .tar.gz | sed 's/^ordora-//')"
+            RELEASE="/opt/ordora/releases/$SHA"
+            mkdir -p /opt/ordora/releases "$RELEASE"
+            tar -xzf "$TARBALL" -C "$RELEASE"
+            rm -f "$TARBALL"
+
+            # Migrations first: the new code never boots on an old schema.
+            set -a
+            # shellcheck disable=SC1091
+            source /etc/ordora/ordora.env
+            set +a
+            ( cd "$RELEASE" && ./migrate )
+
+            ln -sfn "$RELEASE" /opt/ordora/current
+            sudo systemctl restart ordora-server ordora-worker
+            sleep 4
+            curl -fsS "http://127.0.0.1:${APP_PORT:-8080}/health"
+
+            # Keep the last 5 releases for instant rollback.
+            ls -dt /opt/ordora/releases/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf
+            echo "DEPLOYED $SHA"

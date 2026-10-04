@@ -1,14 +1,15 @@
 # Ordora — Production Deploy (Truehost VPS)
 
-CI (`.github/workflows/ci.yml`) tests every push. CD (`.github/workflows/deploy.yml`)
-ships `main` to the VPS automatically once CI passes. You can also deploy manually
-from the Actions tab (Run workflow → Deploy).
+One pipeline file, three stages that run in order (`.github/workflows/pipeline.yml`):
 
 ```
-push to main → CI (build+migrate+tests) → Deploy job
-  → build linux binaries → scp to VPS → run migrations
-  → flip /opt/ordora/current → restart services → health check
+push to main → [test] gofmt, vet, build, migrate + tests on Postgres 16
+             → [build] linux binaries + release tarball (needs test to pass)
+             → [deploy] ship to VPS, migrate, flip release, restart, health-check
 ```
+
+Pull requests run test → build only (deploy is main-branch only). You can also
+run the whole pipeline manually from the Actions tab (Run workflow).
 
 ## Layout on the VPS
 
@@ -41,7 +42,7 @@ only adds its own DB/roles, users, units and one Caddy site file.
    append the `.pub` to `/home/deploy/.ssh/authorized_keys` on the VPS.
 5. **GitHub secrets** (repo Settings → Secrets → Actions): `VPS_HOST`, `VPS_USER=deploy`,
    `VPS_SSH_KEY` (private key), plus `VPS_PORT` / `APP_PORT` only if non-default.
-6. **First deploy**: Actions → Deploy → Run workflow (or push to main). Watch
+6. **First deploy**: push to `main` (or Actions → CI/CD → Run workflow). Watch
    `journalctl -u ordora-server -f` on the VPS, then open `https://DOMAIN`.
 
 ## Day-to-day
