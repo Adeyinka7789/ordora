@@ -21,6 +21,11 @@
 -- =============================================================
 
 -- 1. Customer address on the portal projection.
+-- NOTE: the new column changes the RETURNS TABLE shape, and Postgres
+-- forbids that under CREATE OR REPLACE (SQLSTATE 42P13), so drop first
+-- (same pattern as 0018_portal_items.sql).
+DROP FUNCTION IF EXISTS get_order_by_public_token(bytea);
+
 CREATE OR REPLACE FUNCTION get_order_by_public_token(p_token_hash bytea)
 RETURNS TABLE (
     order_id              uuid,
