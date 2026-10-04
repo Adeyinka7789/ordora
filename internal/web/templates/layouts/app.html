@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/css/app.css">
   <link rel="stylesheet" href="/static/css/receipt.css">
+  <link rel="stylesheet" href="/static/css/chrome.css">
   <meta name="csrf-token" content="{{ csrfToken .Data }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -143,7 +144,7 @@
 
   <style>
     #app-sidebar, #content-wrapper, #topbar {
-      transition: transform .3s ease, width .3s ease, padding-left .3s ease, left .3s ease;
+      transition: transform .3s ease, width .3s ease, padding-left .3s ease, left .3s ease, top .3s ease;
     }
     /* Desktop: full sidebar by default; collapsed becomes a slim icon rail. */
     @media (min-width: 768px) {
@@ -174,7 +175,7 @@
     }
   </style>
 </head>
-<body class="bg-surface font-body-md text-on-surface antialiased">
+<body class="bg-surface font-body-md text-on-surface antialiased {{ if .Shell.Impersonating }}impersonating{{ end }}">
   <script>
     // Apply the saved desktop sidebar state as early as possible to avoid a flicker.
     (function () {
@@ -201,6 +202,8 @@
   {{ end }}
 
   {{ template "partials/sidebar.html" . }}
+
+  {{ template "partials/utilbar.html" "app" }}
 
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black/40 z-[45]"></div>
 
@@ -233,6 +236,7 @@
   </div>
 
   <script src="/static/js/pwa.js" defer></script>
+  <script src="/static/js/chrome.js" defer></script>
   <script src="/static/js/skeleton.js" defer></script>
 
   {{/* Central HTMX skeletons. Rendered once per full page, outside every

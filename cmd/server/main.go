@@ -20,6 +20,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
+	"github.com/Adeyinka7789/ordora/internal/contact"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/domain/user"
 	"github.com/Adeyinka7789/ordora/internal/flags"
@@ -120,6 +121,14 @@ func run() error {
 		return fmt.Errorf("renderer: %w", err)
 	}
 	render.SupportEmail = cfg.SupportEmail
+
+	// Editable public contact details (utility top bar + WhatsApp float).
+	// Missing file hides the details; invalid JSON fails fast.
+	if cinfo, err := contact.Load(cfg.ContactFile); err != nil {
+		return fmt.Errorf("contact: %w", err)
+	} else {
+		render.Contact = cinfo
+	}
 
 	// ---- Feature flags (Waffle-style) ----
 	// Fail-closed in-memory snapshot, refreshed every 30s; admin writes

@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/Adeyinka7789/ordora/internal/contact"
 )
 
 func readFile(path string) (string, error) {
@@ -214,6 +216,11 @@ func templateFuncs() template.FuncMap {
 		"inc": func(i int) int { return i + 1 },
 		"dec": func(i int) int { return i - 1 },
 		"sub": func(a, b int) int { return a - b },
+
+		// contact returns the editable public contact details for the
+		// utility top bar and floating buttons. Usage: {{ with contact }}.
+		// Nil Contact renders nothing (safe in tests without wiring).
+		"contact": func() *contact.Info { return Contact },
 	}
 }
 

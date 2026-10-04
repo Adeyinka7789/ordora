@@ -16,6 +16,9 @@ func TestTemplateFuncs_HasDict(t *testing.T) {
 	if _, ok := fm["list"]; !ok {
 		t.Fatal("list is not in templateFuncs()")
 	}
+	if _, ok := fm["contact"]; !ok {
+		t.Fatal("contact is not in templateFuncs()")
+	}
 }
 
 func TestTemplateFuncs_ParsesDictUsage(t *testing.T) {

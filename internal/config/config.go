@@ -15,13 +15,17 @@ type Config struct {
 	BaseURL string
 	// SupportEmail is shown in the app footer for complaints and help.
 	SupportEmail string
-	Sentry       SentryConfig
-	HTTP         HTTPConfig
-	DB           DBConfig
-	Session      SessionConfig
-	Email        EmailConfig
-	Storage      StorageConfig
-	Admin        AdminConfig
+	// ContactFile is the editable JSON file with public contact details
+	// (emails, phones, address, website, WhatsApp) shown in the utility
+	// top bar and floating buttons. Missing file = hidden, not fatal.
+	ContactFile string
+	Sentry      SentryConfig
+	HTTP        HTTPConfig
+	DB          DBConfig
+	Session     SessionConfig
+	Email       EmailConfig
+	Storage     StorageConfig
+	Admin       AdminConfig
 }
 
 type AdminConfig struct {
@@ -115,6 +119,7 @@ func Load() (*Config, error) {
 		Env:          getEnv("ORDORA_ENV", "development"),
 		BaseURL:      getEnv("ORDORA_BASE_URL", "http://localhost:8080"),
 		SupportEmail: getEnv("ORDORA_SUPPORT_EMAIL", "support@ordora.local"),
+		ContactFile:  getEnv("ORDORA_CONTACT_FILE", "contact.json"),
 		Sentry: SentryConfig{
 			DSN:         getEnv("ORDORA_SENTRY_DSN", ""),
 			Environment: getEnv("ORDORA_SENTRY_ENVIRONMENT", getEnv("ORDORA_ENV", "development")),

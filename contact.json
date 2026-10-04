@@ -1,0 +1,9 @@
+{
+  "emails": ["hello@example.com"],
+  "phones": ["+234 800 000 0000"],
+  "address": "Lagos, Nigeria",
+  "website": "example.com",
+  "website_url": "https://example.com",
+  "whatsapp_number": "+234 800 000 0000",
+  "whatsapp_message": "Hello! I found you through your website and I have a question."
+}

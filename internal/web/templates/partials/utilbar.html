@@ -1,0 +1,41 @@
+{{ define "partials/utilbar.html" }}
+{{/* Utility contact strip above the nav/topbar. Render with "landing" or
+  "app" so the bar spans the right area. Content comes from contact.json
+  via the global "contact" func — renders nothing when unconfigured. */}}
+{{ with contact }}
+  {{ if .HasAny }}
+    <div id="{{ if eq $ "app" }}utilbar-app{{ else }}utilbar{{ end }}">
+      <div class="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-full flex items-center justify-between gap-4 overflow-hidden">
+        <div class="flex items-center gap-4 min-w-0">
+          {{ range .Emails }}
+            <a href="mailto:{{ . }}" class="hidden sm:inline-flex items-center gap-1.5 hover:text-white transition-colors truncate">
+              <span class="material-symbols-outlined text-[14px]">mail</span>
+              <span class="truncate">{{ . }}</span>
+            </a>
+          {{ end }}
+          {{ range .Phones }}
+            <a href="tel:{{ . }}" class="inline-flex items-center gap-1.5 hover:text-white transition-colors whitespace-nowrap">
+              <span class="material-symbols-outlined text-[14px]">call</span>
+              <span>{{ . }}</span>
+            </a>
+          {{ end }}
+        </div>
+        <div class="hidden md:flex items-center gap-4 min-w-0">
+          {{ if .Address }}
+            <span class="inline-flex items-center gap-1.5 opacity-90 truncate">
+              <span class="material-symbols-outlined text-[14px]">location_on</span>
+              <span class="truncate">{{ .Address }}</span>
+            </span>
+          {{ end }}
+          {{ if .Website }}
+            <a href="{{ .WebsiteURL }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:text-white transition-colors whitespace-nowrap">
+              <span class="material-symbols-outlined text-[14px]">language</span>
+              <span>{{ .Website }}</span>
+            </a>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  {{ end }}
+{{ end }}
+{{ end }}

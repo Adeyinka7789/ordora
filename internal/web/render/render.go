@@ -15,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Adeyinka7789/ordora/internal/contact"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 )
 
@@ -28,6 +29,11 @@ type Renderer struct {
 // SupportEmail is the help/complaints address shown in the app footer.
 // Set once at startup from config (main.go). Empty means "don't display".
 var SupportEmail string
+
+// Contact holds the editable public contact details (utility top bar +
+// floating WhatsApp button). Set once at startup from contact.json. Nil
+// means "show nothing" so pages render sanely without wiring (tests).
+var Contact *contact.Info
 
 // Flags evaluates feature flags inside templates via the "flag" function.
 // Set once at startup (main.go). A nil provider means "all flags on"
