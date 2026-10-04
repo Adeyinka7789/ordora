@@ -105,6 +105,68 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   border: 2px solid #fff;
 }
 
+/* ---- Mobile bottom tab bar (app layout, mobile only) ----
+ * NOTE: hide/show lives here (not just Tailwind's md:hidden) because the
+ * #mobile-bottomnav ID selector below would otherwise beat the md:hidden
+ * class on desktop and the bar would leak onto wide screens. */
+#mobile-bottomnav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 45;
+  display: flex;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(195, 207, 209, 0.6);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mnav-item {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0.55rem 0 0.5rem;
+  color: #455556;
+  text-decoration: none;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  position: relative;
+  transition: color 200ms ease;
+}
+.mnav-item:hover { color: #0c2226; }
+.mnav-icon { font-size: 24px; line-height: 1; }
+.mnav-label { font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
+.mnav-item.is-active { color: #005f6b; }
+.mnav-item.is-active .mnav-icon {
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+.mnav-item.is-active::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 2rem; height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: #005f6b;
+}
+
+/* Keep page content + PWA banner clear of the tab bar on mobile. */
+@media (max-width: 767.98px) {
+  #content-wrapper { padding-bottom: 4.25rem; }
+  #pwa-install-banner { bottom: 5.25rem; }
+  /* The bottom tab bar owns the menu on mobile: drop the topbar hamburger. */
+  #sidebar-toggler { display: none; }
+}
+
+/* Desktop: no tab bar, ever. The topbar toggler owns the sidebar there. */
+@media (min-width: 768px) {
+  #mobile-bottomnav { display: none; }
+}
+
 /* ---- Landing section spotlight: past sections go grey ---- */
 [data-spotlight] {
   transition: filter 600ms ease, opacity 600ms ease;

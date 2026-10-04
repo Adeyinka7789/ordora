@@ -1,0 +1,24 @@
+{{ define "partials/bottomnav.html" }}
+{{/* Mobile-only bottom tab bar (Nigeria is mobile-first): menu opens the
+  existing left drawer; the other tabs link to top-level sections. Active
+  tab is set client-side by chrome.js from the URL path. md:hidden keeps it
+  off desktop entirely. */}}
+<nav id="mobile-bottomnav" class="md:hidden" aria-label="Primary">
+  <button id="mobile-menu-btn" type="button" class="mnav-item" aria-label="Open menu" title="Menu">
+    <span class="material-symbols-outlined mnav-icon">menu</span>
+    <span class="mnav-label">Menu</span>
+  </button>
+  <a href="/dashboard" class="mnav-item" data-mnav="dashboard" aria-label="Dashboard">
+    <span class="material-symbols-outlined mnav-icon">home</span>
+    <span class="mnav-label">Home</span>
+  </a>
+  <a href="/orders" class="mnav-item" data-mnav="orders" aria-label="Orders">
+    <span class="material-symbols-outlined mnav-icon">receipt_long</span>
+    <span class="mnav-label">Orders</span>
+  </a>
+  <a href="/customers" class="mnav-item" data-mnav="customers" aria-label="Customers">
+    <span class="material-symbols-outlined mnav-icon">group</span>
+    <span class="mnav-label">Customers</span>
+  </a>
+</nav>
+{{ end }}

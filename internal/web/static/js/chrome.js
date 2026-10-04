@@ -64,6 +64,36 @@
     });
   }
 
+  // ---- 4. Mobile bottom tab bar: menu opens the same drawer as the
+  // topbar toggler, and the tab matching the URL gets the active state.
+  var menuBtn = document.getElementById('mobile-menu-btn');
+  if (menuBtn) {
+    menuBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var toggler = document.getElementById('sidebar-toggler');
+      if (toggler) {
+        toggler.click(); // reuse the exact drawer behavior
+      } else {
+        document.body.classList.toggle('sidebar-open');
+      }
+    });
+  }
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-mnav]'));
+  if (tabs.length) {
+    // Only the three hub sections highlight; anywhere else no tab is active.
+    var path = window.location.pathname || '/';
+    var section = '';
+    if (path === '/' || path.indexOf('/dashboard') === 0) section = 'dashboard';
+    else if (path.indexOf('/orders') === 0) section = 'orders';
+    else if (path.indexOf('/customers') === 0) section = 'customers';
+    tabs.forEach(function (t) {
+      var active = t.getAttribute('data-mnav') === section;
+      t.classList.toggle('is-active', active);
+      if (active) t.setAttribute('aria-current', 'page');
+      else t.removeAttribute('aria-current');
+    });
+  }
+
   markSpotlight();
   onScroll();
 })();

@@ -111,6 +111,8 @@ func TestChromeCSSBarHeights(t *testing.T) {
 		"body:not(.util-hidden) #landing-nav { top: 2.25rem; }",
 		"body:not(.util-hidden) #topbar { top: 1.75rem; }",
 		"padding-top: 5.75rem",
+		"#mobile-bottomnav { display: none; }",
+		"#sidebar-toggler { display: none; }",
 	} {
 		if !strings.Contains(css, want) {
 			t.Errorf("chrome.css missing %q", want)
@@ -142,6 +144,11 @@ func TestAppChrome(t *testing.T) {
 
 	for _, want := range []string{
 		`id="utilbar-app"`,
+		`id="mobile-bottomnav"`, // mobile tab bar
+		`id="mobile-menu-btn"`,  // drawer opener (leftmost tab)
+		`data-mnav="dashboard"`,
+		`data-mnav="orders"`,
+		`data-mnav="customers"`,
 		"/static/js/chrome.js",
 		"/static/css/chrome.css",
 	} {
