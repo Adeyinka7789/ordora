@@ -1,0 +1,117 @@
+# CD: deploy to the production VPS (Truehost) after CI passes on main.
+#
+# Flow per deploy:
+#   1. Build linux/amd64 binaries (server, migrate, worker).
+#   2. Ship binaries + migrations + templates + static assets to the VPS.
+#   3. Run database migrations, flip the `current` symlink, restart services.
+#   4. Health-check the app; old releases are pruned (keeps 5).
+#
+# Required GitHub secrets (Settings → Secrets → Actions):
+#   VPS_HOST   - VPS IP or hostname
+#   VPS_USER   - SSH user (e.g. `deploy`; see scripts/provision-vps.sh)
+#   VPS_SSH_KEY - private key for VPS_USER
+# Optional secrets (have defaults):
+#   VPS_PORT   - SSH port (default 22)
+#   APP_PORT   - app listen port on the VPS (default 8080)
+#
+# contact.json and uploads live in /opt/ordora/shared on the VPS and are
+# NEVER overwritten by deploys — edit them on the server anytime.
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+
+    env:
+      APP_PORT: ${{ secrets.APP_PORT || '8080' }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build linux binaries
+        run: |
+          mkdir -p dist
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/server ./cmd/server
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/migrate ./cmd/migrate
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/worker ./cmd/worker
+
+      - name: Package release
+        run: |
+          SHA="$(git rev-parse --short HEAD)"
+          echo "RELEASE_SHA=$SHA" >> "$GITHUB_ENV"
+          mkdir -p "release-$SHA"
+          cp dist/server dist/migrate dist/worker "release-$SHA/"
+          cp -r migrations "release-$SHA/"
+          mkdir -p "release-$SHA/internal/web"
+          cp -r internal/web/templates internal/web/static "release-$SHA/internal/web/"
+          tar -czf "ordora-$SHA.tar.gz" -C "release-$SHA" .
+
+      - name: Ship to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          source: "ordora-${{ env.RELEASE_SHA }}.tar.gz"
+          target: "/tmp"
+
+      - name: Release on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          RELEASE_SHA: ${{ env.RELEASE_SHA }}
+          APP_PORT: ${{ env.APP_PORT }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          envs: RELEASE_SHA,APP_PORT
+          script: |
+            set -euo pipefail
+            RELEASE="/opt/ordora/releases/$RELEASE_SHA"
+            mkdir -p /opt/ordora/releases "$RELEASE"
+            tar -xzf "/tmp/ordora-$RELEASE_SHA.tar.gz" -C "$RELEASE"
+            rm -f "/tmp/ordora-$RELEASE_SHA.tar.gz"
+
+            # Migrations first: the new code never boots on an old schema.
+            set -a
+            # shellcheck disable=SC1091
+            source /etc/ordora/ordora.env
+            set +a
+            ( cd "$RELEASE" && ./migrate )
+
+            ln -sfn "$RELEASE" /opt/ordora/current
+            sudo systemctl restart ordora-server ordora-worker
+            sleep 4
+            curl -fsS "http://127.0.0.1:${APP_PORT:-8080}/health"
+
+            # Keep the last 5 releases for instant rollback.
+            ls -dt /opt/ordora/releases/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf
+            echo "DEPLOYED $RELEASE_SHA"
