@@ -95,9 +95,58 @@
     </div>
   </div>
 
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <div>
+      <h2 class="font-headline-md text-headline-md font-bold">Feature flags for this business</h2>
+      <p class="text-body-sm text-on-surface-variant">Overrides win over the global switch and rollout. No override means the business follows the global rule.</p>
+    </div>
+    {{ if .Flags }}
+      <div class="flex flex-col gap-space-xs">
+        {{ range .Flags }}
+          <div class="flex items-center justify-between gap-space-sm p-space-sm rounded-lg bg-surface-container-low flex-wrap">
+            <div class="flex items-center gap-2 min-w-0">
+              <code class="font-code-md text-code-md font-bold bg-surface-container px-2 py-0.5 rounded">{{ .Key }}</code>
+              <span class="text-body-sm text-on-surface-variant truncate">{{ .Name }}</span>
+              {{ if .Override }}
+                {{ if .EffectiveOn }}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">Forced on</span>
+                {{ else }}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-error-container text-on-error-container">Forced off</span>
+                {{ end }}
+              {{ else }}
+                {{ if .EffectiveOn }}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container text-on-surface-variant">On (global)</span>
+                {{ else }}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container text-on-surface-variant">Off (global)</span>
+                {{ end }}
+              {{ end }}
+            </div>
+            <div class="flex items-center gap-space-xs">
+              <form method="post" action="{{ $.Path }}/orgs/{{ $.Org.ID }}/flags/{{ .Key }}/on" class="inline">
+                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                <button type="submit" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high font-label-sm text-label-sm font-semibold" title="Force on for this business">Force on</button>
+              </form>
+              <form method="post" action="{{ $.Path }}/orgs/{{ $.Org.ID }}/flags/{{ .Key }}/off" class="inline">
+                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                <button type="submit" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high font-label-sm text-label-sm font-semibold" title="Force off for this business">Force off</button>
+              </form>
+              {{ if .Override }}
+                <form method="post" action="{{ $.Path }}/orgs/{{ $.Org.ID }}/flags/{{ .Key }}/clear" class="inline">
+                  <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                  <button type="submit" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high font-label-sm text-label-sm font-semibold" title="Back to the global rule">Use global</button>
+                </form>
+              {{ end }}
+            </div>
+          </div>
+        {{ end }}
+      </div>
+    {{ else }}
+      <p class="text-body-sm text-on-surface-variant">No flags configured.</p>
+    {{ end }}
+  </div>
+
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-    <h2 class="font-headline-md text-headline-md font-bold mb-space-sm">Profile</h2>
-    <dl class="grid grid-cols-[160px_1fr] gap-x-space-md gap-y-space-sm">
+    <h2 class="font-headline-md text-headline-md font-bold mb-space-sm">Profile</h2>    <dl class="grid grid-cols-[160px_1fr] gap-x-space-md gap-y-space-sm">
       <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Currency</dt>
       <dd class="font-code-md text-code-md">{{ .Org.Currency }}</dd>
 

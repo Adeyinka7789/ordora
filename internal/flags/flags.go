@@ -1,9 +1,12 @@
 // Package flags implements Waffle-style feature flags: platform-global
-// kill switches with optional per-org percentage rollouts.
+// kill switches with optional per-org percentage rollouts, plus
+// per-org overrides that force a flag on or off for one tenant
+// regardless of the global rule.
 //
-// Flags live in the feature_flags table and are toggled from the admin
-// panel. The Provider caches a snapshot in memory (refreshed on an
-// interval; busted immediately on admin writes in-process) so evaluation
+// Flags live in the feature_flags table (overrides in
+// feature_flag_overrides) and are toggled from the admin panel. The
+// Provider caches a snapshot in memory (refreshed on an interval;
+// busted immediately on admin writes in-process) so evaluation
 // never costs a database query per request.
 //
 // Evaluation is fail-closed: unknown flags and disabled flags are off.
@@ -42,12 +45,25 @@ type Flag struct {
 // kept as a func so this package stays dependency-free.
 type Loader func(ctx context.Context) ([]Flag, error)
 
+// Override forces a flag on or off for one org, winning over the global
+// switch and rollout. Implemented by the postgres repo.
+type Override struct {
+	FlagKey string
+	OrgID   uuid.UUID
+	Enabled bool
+}
+
+// OverrideLoader fetches all per-org overrides. Nil means "no overrides".
+type OverrideLoader func(ctx context.Context) ([]Override, error)
+
 // Provider holds a cached snapshot and evaluates flags against it.
 type Provider struct {
-	mu       sync.RWMutex
-	flags    map[string]Flag
-	loader   Loader
-	interval time.Duration
+	mu             sync.RWMutex
+	flags          map[string]Flag
+	overrides      map[string]map[uuid.UUID]bool
+	loader         Loader
+	overrideLoader OverrideLoader
+	interval       time.Duration
 }
 
 // NewProvider returns a Provider that refreshes every interval.
@@ -58,6 +74,13 @@ func NewProvider(loader Loader, interval time.Duration) *Provider {
 		loader:   loader,
 		interval: interval,
 	}
+}
+
+// WithOverrideLoader attaches the override source. Chain off NewProvider:
+// flags.NewProvider(load, interval).WithOverrideLoader(loadOverrides).
+func (p *Provider) WithOverrideLoader(l OverrideLoader) *Provider {
+	p.overrideLoader = l
+	return p
 }
 
 // Start loads the initial snapshot, then refreshes on the interval until
@@ -93,18 +116,40 @@ func (p *Provider) Refresh(ctx context.Context) error {
 	for _, f := range list {
 		next[f.Key] = f
 	}
+	var over map[string]map[uuid.UUID]bool
+	if p.overrideLoader != nil {
+		rows, err := p.overrideLoader(ctx)
+		if err != nil {
+			return err
+		}
+		over = make(map[string]map[uuid.UUID]bool, len(rows))
+		for _, o := range rows {
+			m, ok := over[o.FlagKey]
+			if !ok {
+				m = map[uuid.UUID]bool{}
+				over[o.FlagKey] = m
+			}
+			m[o.OrgID] = o.Enabled
+		}
+	}
 	p.mu.Lock()
 	p.flags = next
+	p.overrides = over
 	p.mu.Unlock()
 	return nil
 }
 
 // Enabled reports whether key is on for the given org. Fail-closed:
-// unknown keys, disabled flags, and 0% rollouts are off.
+// unknown keys, disabled flags, and 0% rollouts are off. A per-org
+// override wins over everything else.
 func (p *Provider) Enabled(orgID uuid.UUID, key string) bool {
 	p.mu.RLock()
+	overridden, hasOverride := p.overrides[key][orgID]
 	f, ok := p.flags[key]
 	p.mu.RUnlock()
+	if hasOverride {
+		return overridden
+	}
 	if !ok || !f.Enabled {
 		return false
 	}
@@ -115,6 +160,15 @@ func (p *Provider) Enabled(orgID uuid.UUID, key string) bool {
 		return false
 	}
 	return rolloutBucket(key, orgID) < f.RolloutPercent
+}
+
+// Overridden reports whether the org has an explicit override for key,
+// and its value. Admin display use.
+func (p *Provider) Overridden(orgID uuid.UUID, key string) (enabled, ok bool) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	enabled, ok = p.overrides[key][orgID]
+	return enabled, ok
 }
 
 // All returns a sorted copy of the snapshot (admin/debug use).

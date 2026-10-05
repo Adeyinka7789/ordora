@@ -58,23 +58,27 @@ type AdminOrgRow struct {
 
 // AdminOrgDetail bundles the org plus its members.
 type AdminOrgDetail struct {
-	ID              uuid.UUID
-	Name            string
-	Slug            string
-	Currency        string
-	Timezone        string
-	Email           string
-	Phone           string
-	Address         string
-	MemberCount     int
-	CustomerCount   int
-	OrderCount      int
-	TotalOrdersGMV  int64
-	OutstandingGMV  int64
-	CreatedAt       time.Time
-	Members         []AdminMemberRow
-	SuspendedAt     *time.Time
-	SuspendedReason string
+	ID               uuid.UUID
+	Name             string
+	Slug             string
+	Currency         string
+	Timezone         string
+	Email            string
+	Phone            string
+	Address          string
+	BusinessType     string
+	BusinessCategory string
+	TeamSize         string
+	ReferralSource   string
+	MemberCount      int
+	CustomerCount    int
+	OrderCount       int
+	TotalOrdersGMV   int64
+	OutstandingGMV   int64
+	CreatedAt        time.Time
+	Members          []AdminMemberRow
+	SuspendedAt      *time.Time
+	SuspendedReason  string
 }
 
 type AdminMemberRow struct {

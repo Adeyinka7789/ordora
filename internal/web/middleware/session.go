@@ -71,6 +71,8 @@ func RequireAuth(next http.Handler) http.Handler {
 }
 
 // RequireTenant requires an authenticated session *and* a tenant scope.
+// Suspended orgs are rejected with 403: suspension must actually lock
+// the business out, not just show a banner in the admin panel.
 func RequireTenant(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s := SessionFromContext(r.Context())
@@ -80,6 +82,10 @@ func RequireTenant(next http.Handler) http.Handler {
 		}
 		if s.Scope.IsZero() {
 			http.Error(w, "no active organization", http.StatusForbidden)
+			return
+		}
+		if s.OrgSuspended {
+			http.Error(w, "This business has been suspended. Please contact support.", http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)

@@ -81,3 +81,37 @@ func TestRefresh_LoadsSnapshot(t *testing.T) {
 		t.Errorf("All() = %d flags, want 1", got)
 	}
 }
+
+func TestEnabled_OverrideWins(t *testing.T) {
+	org := uuid.New()
+	other := uuid.New()
+	p := NewProvider(func(ctx context.Context) ([]Flag, error) {
+		return []Flag{
+			{Key: "on", Enabled: true, RolloutPercent: 100},
+			{Key: "off", Enabled: false, RolloutPercent: 100},
+		}, nil
+	}, 0).WithOverrideLoader(func(ctx context.Context) ([]Override, error) {
+		return []Override{
+			{FlagKey: "on", OrgID: org, Enabled: false},
+			{FlagKey: "off", OrgID: org, Enabled: true},
+		}, nil
+	})
+	if err := p.Refresh(context.Background()); err != nil {
+		t.Fatalf("refresh: %v", err)
+	}
+	if p.Enabled(org, "on") {
+		t.Error("override off must beat global on")
+	}
+	if !p.Enabled(org, "off") {
+		t.Error("override on must beat global off")
+	}
+	if !p.Enabled(other, "on") || p.Enabled(other, "off") {
+		t.Error("orgs without overrides must follow the global rule")
+	}
+	if en, ok := p.Overridden(org, "on"); !ok || en {
+		t.Error("Overridden should report (false, true)")
+	}
+	if _, ok := p.Overridden(other, "on"); ok {
+		t.Error("Overridden should report no override for other orgs")
+	}
+}

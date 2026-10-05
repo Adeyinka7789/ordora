@@ -36,6 +36,10 @@ func (h *DashboardHandler) Index(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/onboarding", http.StatusSeeOther)
 		return
 	}
+	if s.OrgSuspended {
+		http.Error(w, "This business has been suspended. Please contact support.", http.StatusForbidden)
+		return
+	}
 
 	scope := s.Scope
 	page := dashboardPage{

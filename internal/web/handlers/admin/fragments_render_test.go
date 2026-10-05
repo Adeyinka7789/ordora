@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/flags"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -59,4 +61,35 @@ func TestFragmentsExecute(t *testing.T) {
 			t.Errorf("admin/ops.html: expected outstanding 500000-300000=200000 in output")
 		}
 	}
+
+	// Tenant detail must render with profile, suspension state and the
+	// per-org flag table (missing struct fields 500 the page).
+	t.Run("org_detail", func(t *testing.T) {
+		overrideOff := false
+		out, err := r.Raw("admin/org_detail.html", orgDetailPageData{
+			Title: "Test Shop", Path: "/ops-x9k2m",
+			Org: &app.AdminOrgDetail{
+				ID: uuid.New(), Name: "Test Shop", Slug: "test-shop",
+				Currency: "NGN", Timezone: "Africa/Lagos",
+				BusinessCategory: "Tailoring & Fashion",
+				MemberCount:      2,
+				CreatedAt:        time.Now(),
+			},
+			Flags: []orgFlagRow{
+				{Key: "orders", Name: "Orders module", GlobalOn: true, EffectiveOn: true},
+				{Key: "reports", Name: "Reports module", GlobalOn: true, EffectiveOn: false, Override: &overrideOff},
+			},
+		})
+		if err != nil {
+			t.Fatalf("admin/org_detail.html: %v", err)
+		}
+		for _, want := range []string{
+			"Test Shop", "Tailoring &amp; Fashion", "Suspend", "Delete",
+			"Feature flags for this business", "Forced off", "Use global",
+		} {
+			if !strings.Contains(out, want) {
+				t.Errorf("admin/org_detail.html missing %q", want)
+			}
+		}
+	})
 }

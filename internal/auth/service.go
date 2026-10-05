@@ -529,6 +529,10 @@ type ResolvedSession struct {
 	OrgSlug     string
 	OrgCurrency string
 	OrgTimezone string
+	// OrgSuspended is true when the org was suspended by the platform
+	// admin. Tenant middleware rejects suspended orgs (403); public
+	// intake treats them as not found.
+	OrgSuspended bool
 }
 
 // ResolveSession loads a session by raw token and constructs a TenantScope.
@@ -571,21 +575,23 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 	}
 
 	var orgName, orgSlug, orgCurrency, orgTimezone string
+	var orgSuspended bool
 	if sess.OrganizationID != nil {
 		_ = s.db.WithTenant(ctx, *sess.OrganizationID, func(tx pgx.Tx) error {
-			const q = `SELECT name, slug::text, currency::text, timezone FROM organizations WHERE id = $1`
-			return tx.QueryRow(ctx, q, *sess.OrganizationID).Scan(&orgName, &orgSlug, &orgCurrency, &orgTimezone)
+			const q = `SELECT name, slug::text, currency::text, timezone, suspended_at IS NOT NULL FROM organizations WHERE id = $1`
+			return tx.QueryRow(ctx, q, *sess.OrganizationID).Scan(&orgName, &orgSlug, &orgCurrency, &orgTimezone, &orgSuspended)
 		})
 	}
 
 	return &ResolvedSession{
-		Session:     sess,
-		User:        u,
-		Scope:       scope,
-		OrgName:     orgName,
-		OrgSlug:     orgSlug,
-		OrgCurrency: orgCurrency,
-		OrgTimezone: orgTimezone,
+		Session:      sess,
+		User:         u,
+		Scope:        scope,
+		OrgName:      orgName,
+		OrgSlug:      orgSlug,
+		OrgCurrency:  orgCurrency,
+		OrgTimezone:  orgTimezone,
+		OrgSuspended: orgSuspended,
 	}, nil
 }
 

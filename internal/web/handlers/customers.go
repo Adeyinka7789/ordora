@@ -346,12 +346,18 @@ func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // Helpers
 // -----------------------------------------------------------------------------
 
-// requireScope returns the tenant scope, writing a 401 and returning false
-// if the request is not authenticated.
+// requireScope returns the tenant scope, writing a redirect (unauthenticated)
+// or 403 (suspended org) and returning false when the request may not
+// proceed. Every tenant handler funnels through here, so suspension is
+// enforced app-wide at a single choke point.
 func requireScope(w http.ResponseWriter, r *http.Request) (tenant.TenantScope, bool) {
 	s := middleware.SessionFromContext(r.Context())
 	if s == nil || s.Scope.IsZero() {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return tenant.TenantScope{}, false
+	}
+	if s.OrgSuspended {
+		http.Error(w, "This business has been suspended. Please contact support.", http.StatusForbidden)
 		return tenant.TenantScope{}, false
 	}
 	return s.Scope, true

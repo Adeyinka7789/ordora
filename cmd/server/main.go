@@ -143,7 +143,9 @@ func run() error {
 	flagRepo := postgres.NewFlagRepo(db)
 	flagProvider := flags.NewProvider(func(ctx context.Context) ([]flags.Flag, error) {
 		return flagRepo.List(ctx)
-	}, 30*time.Second)
+	}, 30*time.Second).WithOverrideLoader(func(ctx context.Context) ([]flags.Override, error) {
+		return flagRepo.ListOverrides(ctx)
+	})
 	if err := flagProvider.Refresh(ctx); err != nil {
 		slog.Warn("flags: initial load failed; flags evaluate closed until refresh succeeds", "err", err)
 	}
@@ -340,6 +342,9 @@ func run() error {
 
 	adminOrgH := &adminhandlers.OrgHandler{
 		Service:  adminSvc,
+		Flags:    postgres.NewFlagRepo(adminDB),
+		Provider: flagProvider,
+		Audit:    postgres.NewAdminAuditAdapter(adminAuditRepo),
 		Renderer: renderer,
 		Cfg:      cfg,
 	}
@@ -576,6 +581,12 @@ func run() error {
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Unsuspend))))
 	mux.Handle("POST "+adminPath+"/orgs/{id}/delete",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.Delete))))
+	mux.Handle("POST "+adminPath+"/orgs/{id}/flags/{key}/on",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.FlagOn))))
+	mux.Handle("POST "+adminPath+"/orgs/{id}/flags/{key}/off",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.FlagOff))))
+	mux.Handle("POST "+adminPath+"/orgs/{id}/flags/{key}/clear",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminOrgH.FlagClear))))
 
 	// Static
 	staticDir := filepath.Join("internal", "web", "static")
