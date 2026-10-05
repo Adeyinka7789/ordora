@@ -112,6 +112,18 @@
 
       <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Address</dt>
       <dd class="font-body-md text-body-md">{{ if .Org.Address }}{{ .Org.Address }}{{ else }}—{{ end }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Category</dt>
+      <dd class="font-body-md text-body-md">{{ if .Org.BusinessCategory }}{{ .Org.BusinessCategory }}{{ else }}—{{ end }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Type</dt>
+      <dd class="font-body-md text-body-md">{{ if .Org.BusinessType }}{{ .Org.BusinessType }}{{ else }}—{{ end }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Team size</dt>
+      <dd class="font-body-md text-body-md">{{ if .Org.TeamSize }}{{ .Org.TeamSize }}{{ else }}—{{ end }}</dd>
+
+      <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Heard via</dt>
+      <dd class="font-body-md text-body-md">{{ if .Org.ReferralSource }}{{ .Org.ReferralSource }}{{ else }}—{{ end }}</dd>
     </dl>
   </div>
 

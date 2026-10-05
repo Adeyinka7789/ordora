@@ -34,13 +34,16 @@ func NewOrgRepo(db *DB) *OrgRepo { return &OrgRepo{db: db} }
 //	})
 func (r *OrgRepo) CreateTx(ctx context.Context, tx pgx.Tx, o *org.Organization) error {
 	const q = `
-		INSERT INTO organizations (id, name, slug, logo_key, email, phone, address, currency, timezone, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO organizations (id, name, slug, logo_key, email, phone, address, currency, timezone, created_at, updated_at,
+		                           business_type, business_category, team_size, referral_source)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 	`
 	_, err := tx.Exec(ctx, q,
 		o.ID, o.Name, o.Slug.String(), nullIfEmpty(o.LogoKey),
 		nullIfEmpty(o.Email), nullIfEmpty(o.Phone), nullIfEmpty(o.Address),
 		o.Currency, o.Timezone, o.CreatedAt, o.UpdatedAt,
+		nullIfEmpty(o.BusinessType), nullIfEmpty(o.BusinessCategory),
+		nullIfEmpty(o.TeamSize), nullIfEmpty(o.ReferralSource),
 	)
 	if err != nil {
 		classified := Classify(err)
@@ -73,6 +76,8 @@ func (r *OrgRepo) GetByIDTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*org.
 	const q = `
 		SELECT id, name, slug, COALESCE(logo_key,''), COALESCE(email::text,''),
 		       COALESCE(phone,''), COALESCE(address,''), currency, timezone,
+		       COALESCE(business_type,''), COALESCE(business_category,''),
+		       COALESCE(team_size,''), COALESCE(referral_source,''),
 		       created_at, updated_at
 		FROM organizations
 		WHERE id = $1
@@ -100,11 +105,16 @@ func scanOrg(row pgx.Row) (*org.Organization, error) {
 		address   string
 		currency  string
 		timezone  string
+		bizType   string
+		bizCat    string
+		teamSize  string
+		referral  string
 		createdAt time.Time
 		updatedAt time.Time
 	)
 	if err := row.Scan(&id, &name, &slugStr, &logoKey, &email, &phone, &address,
-		&currency, &timezone, &createdAt, &updatedAt); err != nil {
+		&currency, &timezone, &bizType, &bizCat, &teamSize, &referral,
+		&createdAt, &updatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, org.ErrNotFound
 		}
@@ -115,17 +125,21 @@ func scanOrg(row pgx.Row) (*org.Organization, error) {
 		return nil, fmt.Errorf("org_repo: corrupt slug in db: %w", err)
 	}
 	return &org.Organization{
-		ID:        id,
-		Name:      name,
-		Slug:      slug,
-		LogoKey:   logoKey,
-		Email:     email,
-		Phone:     phone,
-		Address:   address,
-		Currency:  currency,
-		Timezone:  timezone,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		ID:               id,
+		Name:             name,
+		Slug:             slug,
+		LogoKey:          logoKey,
+		Email:            email,
+		Phone:            phone,
+		Address:          address,
+		Currency:         currency,
+		Timezone:         timezone,
+		BusinessType:     bizType,
+		BusinessCategory: bizCat,
+		TeamSize:         teamSize,
+		ReferralSource:   referral,
+		CreatedAt:        createdAt,
+		UpdatedAt:        updatedAt,
 	}, nil
 }
 
@@ -187,6 +201,8 @@ func (r *OrgRepo) GetTx(ctx context.Context, tx pgx.Tx, id uuid.UUID) (*org.Orga
 	const q = `
 		SELECT id, name, slug, COALESCE(logo_key,''), COALESCE(email::text,''),
 		       COALESCE(phone,''), COALESCE(address,''), currency, timezone,
+		       COALESCE(business_type,''), COALESCE(business_category,''),
+		       COALESCE(team_size,''), COALESCE(referral_source,''),
 		       created_at, updated_at
 		FROM organizations
 		WHERE id = $1

@@ -18,6 +18,84 @@
            class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
   </label>
 
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Business category *</span>
+      <select id="reg-category" name="business_category" required
+              class="h-10 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="">Choose…</option>
+        {{ range .Categories }}
+          <option value="{{ . }}" {{ if eq $.BusinessCategory . }}selected{{ end }}>{{ . }}</option>
+        {{ end }}
+      </select>
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Business type</span>
+      <select id="reg-type" name="business_type"
+              class="h-10 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="">Choose…</option>
+        {{ range .Types }}
+          <option value="{{ . }}" {{ if eq $.BusinessType . }}selected{{ end }}>{{ . }}</option>
+        {{ end }}
+      </select>
+    </label>
+  </div>
+
+  <label id="reg-category-other-wrap" class="flex-col gap-1" style="{{ if eq .BusinessCategory "Other" }}display:flex;{{ else }}display:none;{{ end }}">
+    <span class="font-label-md text-label-md text-on-surface">Your category</span>
+    <input type="text" name="business_category_other" value="{{ .CategoryOther }}" maxlength="120" placeholder="e.g. Shoe making"
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+  </label>
+
+  <label id="reg-type-other-wrap" class="flex-col gap-1" style="{{ if eq .BusinessType "Other" }}display:flex;{{ else }}display:none;{{ end }}">
+    <span class="font-label-md text-label-md text-on-surface">Your business type</span>
+    <input type="text" name="business_type_other" value="{{ .TypeOther }}" maxlength="120" placeholder="e.g. Cooperative"
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+  </label>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Business phone *</span>
+      <input type="tel" name="business_phone" value="{{ .BusinessPhone }}" required maxlength="40" placeholder="+234…"
+             class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Team size</span>
+      <select name="team_size"
+              class="h-10 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="">Choose…</option>
+        {{ range .TeamSizes }}
+          <option value="{{ . }}" {{ if eq $.TeamSize . }}selected{{ end }}>{{ . }}</option>
+        {{ end }}
+      </select>
+    </label>
+  </div>
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Business address</span>
+    <input type="text" name="business_address" value="{{ .BusinessAddress }}" maxlength="500" placeholder="Optional"
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+  </label>
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">How did you hear about us?</span>
+    <select id="reg-referral" name="referral_source"
+            class="h-10 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <option value="">Choose…</option>
+      {{ range .Referrals }}
+        <option value="{{ . }}" {{ if eq $.ReferralSource . }}selected{{ end }}>{{ . }}</option>
+      {{ end }}
+    </select>
+  </label>
+
+  <label id="reg-referral-other-wrap" class="flex-col gap-1" style="{{ if eq .ReferralSource "Other" }}display:flex;{{ else }}display:none;{{ end }}">
+    <span class="font-label-md text-label-md text-on-surface">Tell us more</span>
+    <input type="text" name="referral_source_other" value="{{ .ReferralOther }}" maxlength="120" placeholder="e.g. Radio jingle"
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+  </label>
+
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Email</span>
     <input type="email" name="email" value="{{ .Email }}" required
@@ -26,9 +104,28 @@
 
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Password</span>
-    <input type="password" name="password" minlength="10" required
-           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    <span class="relative flex items-center">
+      <input id="reg-password" type="password" name="password" minlength="10" required autocomplete="new-password"
+             class="w-full h-10 pl-3 pr-10 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <button type="button" data-toggle-password="reg-password" aria-label="Show password" aria-pressed="false"
+              class="absolute right-2 p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-[20px]">visibility</span>
+      </button>
+    </span>
     <span class="font-label-sm text-label-sm text-on-surface-variant">At least 10 characters.</span>
+  </label>
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Confirm password</span>
+    <span class="relative flex items-center">
+      <input id="reg-password-confirm" type="password" name="password_confirm" minlength="10" required autocomplete="new-password"
+             class="w-full h-10 pl-3 pr-10 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <button type="button" data-toggle-password="reg-password-confirm" aria-label="Show password" aria-pressed="false"
+              class="absolute right-2 p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-[20px]">visibility</span>
+      </button>
+    </span>
+    <span id="reg-match-hint" class="font-label-sm text-label-sm text-on-surface-variant" aria-live="polite"></span>
   </label>
 
   <button type="submit" class="h-10 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors">Create account</button>
@@ -37,4 +134,69 @@
 <p class="text-center font-label-md text-label-md text-on-surface-variant mt-space-lg">
   Already have an account? <a href="/login" class="text-primary hover:underline">Sign in</a>
 </p>
+
+<script>
+  (function () {
+    // "Other" selects reveal their free-text input.
+    function wireOther(selectId, wrapId) {
+      var sel = document.getElementById(selectId);
+      var wrap = document.getElementById(wrapId);
+      if (!sel || !wrap) return;
+      function sync() {
+        wrap.style.display = sel.value === 'Other' ? 'flex' : 'none';
+      }
+      sel.addEventListener('change', sync);
+      sync();
+    }
+    wireOther('reg-category', 'reg-category-other-wrap');
+    wireOther('reg-type', 'reg-type-other-wrap');
+    wireOther('reg-referral', 'reg-referral-other-wrap');
+
+    // Show/hide toggles: flip the input type and swap the eye icon.
+    document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.getAttribute('data-toggle-password'));
+        if (!input) return;
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        btn.querySelector('.material-symbols-outlined').textContent = show ? 'visibility_off' : 'visibility';
+        input.focus({ preventScroll: true });
+      });
+    });
+
+    // Live match hint + submit guard (the server re-checks authoritatively).
+    var pw = document.getElementById('reg-password');
+    var confirm = document.getElementById('reg-password-confirm');
+    var hint = document.getElementById('reg-match-hint');
+    var form = pw && pw.form;
+    function check() {
+      if (!confirm.value) {
+        hint.textContent = '';
+        confirm.classList.remove('ring-2', 'ring-error');
+        return true;
+      }
+      var ok = pw.value === confirm.value;
+      hint.textContent = ok ? 'Passwords match.' : 'Passwords do not match yet.';
+      hint.classList.toggle('text-tertiary', ok);
+      hint.classList.toggle('text-error', !ok);
+      confirm.classList.toggle('ring-2', !ok);
+      confirm.classList.toggle('ring-error', !ok);
+      return ok;
+    }
+    if (pw && confirm) {
+      pw.addEventListener('input', check);
+      confirm.addEventListener('input', check);
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          if (!check()) {
+            e.preventDefault();
+            confirm.focus();
+          }
+        });
+      }
+    }
+  })();
+</script>
 {{ end }}

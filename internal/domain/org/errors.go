@@ -13,5 +13,12 @@ var (
 
 	ErrCurrencyInvalid = errors.New("org: currency must be a 3-letter ISO code")
 
+	ErrProfileCategoryRequired = errors.New("org: business category is required")
+	ErrProfileCategoryInvalid  = errors.New("org: business category is invalid")
+	ErrProfileTypeInvalid      = errors.New("org: business type is invalid")
+	ErrProfileTeamSizeInvalid  = errors.New("org: team size is invalid")
+	ErrProfileReferralInvalid  = errors.New("org: referral source is invalid")
+	ErrProfilePhoneInvalid     = errors.New("org: business phone is invalid")
+
 	ErrNotFound = errors.New("org: not found")
 )

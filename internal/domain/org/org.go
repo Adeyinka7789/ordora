@@ -22,6 +22,12 @@ type Organization struct {
 	Timezone  string // IANA, e.g. "Africa/Lagos"
 	CreatedAt time.Time
 	UpdatedAt time.Time
+
+	// Business profile captured at registration for analytics.
+	BusinessType     string // e.g. "Retail", or free text via Other
+	BusinessCategory string // e.g. "Tailoring & Fashion", or free text via Other
+	TeamSize         string // e.g. "2–5"
+	ReferralSource   string // e.g. "WhatsApp"
 }
 
 // New constructs a new Organization with sensible defaults.

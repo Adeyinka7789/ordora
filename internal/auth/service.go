@@ -141,6 +141,13 @@ type RegisterInput struct {
 	Password     string
 	Name         string
 	BusinessName string
+	// Business profile for analytics (phone required, rest optional).
+	BusinessPhone    string
+	BusinessAddress  string
+	BusinessType     string
+	BusinessCategory string
+	TeamSize         string
+	ReferralSource   string
 }
 
 // RegisterResult is returned on successful registration.
@@ -219,6 +226,12 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (*RegisterResu
 	}
 	o, err := org.New(orgID, businessName, slug, now)
 	if err != nil {
+		return nil, err
+	}
+	if err := o.SetProfile(
+		in.BusinessType, in.BusinessCategory, in.TeamSize,
+		in.ReferralSource, in.BusinessPhone, in.BusinessAddress, now,
+	); err != nil {
 		return nil, err
 	}
 

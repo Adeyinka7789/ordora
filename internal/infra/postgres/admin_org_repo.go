@@ -119,6 +119,8 @@ func (r *AdminOrgRepo) GetOrg(ctx context.Context, id uuid.UUID) (*org.Organizat
 		const orgQ = `
 			SELECT id, name, slug::text, COALESCE(logo_key,''), COALESCE(email::text,''),
 			       COALESCE(phone,''), COALESCE(address,''), currency::text, timezone,
+			       COALESCE(business_type,''), COALESCE(business_category,''),
+			       COALESCE(team_size,''), COALESCE(referral_source,''),
 			       created_at, updated_at, suspended_at, COALESCE(suspended_reason,'')
 			FROM organizations WHERE id = $1
 		`
@@ -132,13 +134,18 @@ func (r *AdminOrgRepo) GetOrg(ctx context.Context, id uuid.UUID) (*org.Organizat
 			address         string
 			currency        string
 			timezone        string
+			bizType         string
+			bizCat          string
+			teamSize        string
+			referral        string
 			createdAt       time.Time
 			updatedAt       time.Time
 			suspendedAt     *time.Time
 			suspendedReason string
 		)
 		if err := tx.QueryRow(ctx, orgQ, id).Scan(&oid, &name, &slugStr, &logoKey, &email,
-			&phone, &address, &currency, &timezone, &createdAt, &updatedAt,
+			&phone, &address, &currency, &timezone, &bizType, &bizCat, &teamSize, &referral,
+			&createdAt, &updatedAt,
 			&suspendedAt, &suspendedReason); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return org.ErrNotFound
@@ -150,6 +157,8 @@ func (r *AdminOrgRepo) GetOrg(ctx context.Context, id uuid.UUID) (*org.Organizat
 			ID: oid, Name: name, Slug: slug, LogoKey: logoKey,
 			Email: email, Phone: phone, Address: address,
 			Currency: currency, Timezone: timezone,
+			BusinessType: bizType, BusinessCategory: bizCat,
+			TeamSize: teamSize, ReferralSource: referral,
 			CreatedAt: createdAt, UpdatedAt: updatedAt,
 		}
 

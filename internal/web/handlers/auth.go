@@ -10,6 +10,7 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
@@ -30,6 +31,35 @@ type authPage struct {
 	Name         string
 	BusinessName string
 	VerifyLink   string
+
+	// Registration analytics fields (raw select values + Other free text,
+	// so error re-renders show exactly what the user picked).
+	BusinessPhone    string
+	BusinessAddress  string
+	BusinessType     string
+	TypeOther        string
+	BusinessCategory string
+	CategoryOther    string
+	TeamSize         string
+	ReferralSource   string
+	ReferralOther    string
+
+	// Option lists for the registration selects.
+	Categories []string
+	Types      []string
+	TeamSizes  []string
+	Referrals  []string
+}
+
+// registerPage returns the base registration page with option lists loaded.
+func registerPage() authPage {
+	return authPage{
+		Title:      "Create account",
+		Categories: org.BusinessCategories(),
+		Types:      org.BusinessTypes(),
+		TeamSizes:  org.TeamSizes(),
+		Referrals:  org.ReferralSources(),
+	}
 }
 
 func (h *AuthHandler) renderAuth(w http.ResponseWriter, r *http.Request, status int, templateName string, page authPage) {
@@ -46,7 +76,7 @@ func (h *AuthHandler) RegisterPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
-	h.renderAuth(w, r, http.StatusOK, "auth/register.html", authPage{Title: "Create account"})
+	h.renderAuth(w, r, http.StatusOK, "auth/register.html", registerPage())
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -54,22 +84,41 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
+	page := registerPage()
+	page.Email = formValue(r, "email")
+	page.Name = formValue(r, "name")
+	page.BusinessName = formValue(r, "business_name")
+	page.BusinessPhone = formValue(r, "business_phone")
+	page.BusinessAddress = formValue(r, "business_address")
+	page.BusinessType = formValue(r, "business_type")
+	page.TypeOther = formValue(r, "business_type_other")
+	page.BusinessCategory = formValue(r, "business_category")
+	page.CategoryOther = formValue(r, "business_category_other")
+	page.TeamSize = formValue(r, "team_size")
+	page.ReferralSource = formValue(r, "referral_source")
+	page.ReferralOther = formValue(r, "referral_source_other")
+
 	in := auth.RegisterInput{
-		Email:        r.PostFormValue("email"),
-		Password:     r.PostFormValue("password"),
-		Name:         r.PostFormValue("name"),
-		BusinessName: r.PostFormValue("business_name"),
+		Email:            page.Email,
+		Password:         r.PostFormValue("password"),
+		Name:             page.Name,
+		BusinessName:     page.BusinessName,
+		BusinessPhone:    page.BusinessPhone,
+		BusinessAddress:  page.BusinessAddress,
+		BusinessType:     org.ResolveOther(page.BusinessType, page.TypeOther),
+		BusinessCategory: org.ResolveOther(page.BusinessCategory, page.CategoryOther),
+		TeamSize:         page.TeamSize,
+		ReferralSource:   org.ResolveOther(page.ReferralSource, page.ReferralOther),
+	}
+	if err := validatePasswordConfirm(in.Password, r.PostFormValue("password_confirm")); err != nil {
+		page.Error = err.Error()
+		h.renderAuth(w, r, http.StatusBadRequest, "auth/register.html", page)
+		return
 	}
 
 	result, err := h.Auth.Register(r.Context(), in)
 	if err != nil {
-		page := authPage{
-			Title:        "Create account",
-			Error:        humanizeAuthError(err),
-			Email:        in.Email,
-			Name:         in.Name,
-			BusinessName: in.BusinessName,
-		}
+		page.Error = humanizeAuthError(err)
 		h.renderAuth(w, r, http.StatusBadRequest, "auth/register.html", page)
 		return
 	}
@@ -79,7 +128,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		slog.Error("auth: send verify email", "err", err, "user_id", result.User.ID)
 	}
 
-	page := authPage{
+	page = authPage{
 		Title:      "Check your email",
 		Email:      result.User.Email.String(),
 		VerifyLink: verifyURL,
@@ -253,6 +302,15 @@ func (h *AuthHandler) clearSessionCookie(w http.ResponseWriter) {
 // Error humanization
 // -----------------------------------------------------------------------------
 
+// validatePasswordConfirm ensures the two password entries match. The client
+// also checks live, but the server is authoritative — never trust the browser.
+func validatePasswordConfirm(password, confirm string) error {
+	if password != confirm {
+		return errors.New("Passwords do not match. Please enter the same password twice.")
+	}
+	return nil
+}
+
 func humanizeAuthError(err error) string {
 	switch {
 	case errors.Is(err, auth.ErrInvalidCredentials):
@@ -267,6 +325,18 @@ func humanizeAuthError(err error) string {
 		return "Password must be at least 10 characters."
 	case errors.Is(err, auth.ErrPasswordTooLong):
 		return "Password must be at most 256 characters."
+	case errors.Is(err, org.ErrProfileCategoryRequired):
+		return "Please choose your business category."
+	case errors.Is(err, org.ErrProfileCategoryInvalid):
+		return "Please choose a valid business category."
+	case errors.Is(err, org.ErrProfileTypeInvalid):
+		return "Please choose a valid business type."
+	case errors.Is(err, org.ErrProfileTeamSizeInvalid):
+		return "Please choose a valid team size."
+	case errors.Is(err, org.ErrProfileReferralInvalid):
+		return "Please choose a valid option for how you heard about us."
+	case errors.Is(err, org.ErrProfilePhoneInvalid):
+		return "Please enter a valid business phone number."
 	default:
 		slog.Error("auth: unhandled error", "err", err)
 		return "Something went wrong. Please try again."
