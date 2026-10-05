@@ -195,6 +195,33 @@
       <!-- Payments -->
       {{ template "orders/_payments.html" . }}
 
+      <!-- Measurements (tailoring orders only) -->
+      {{ if .Measurement }}
+        <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-[22px]">straighten</span>
+              <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Measurements</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">{{ .Measurement.GenderLabel }}</span>
+              <span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">{{ .Measurement.TemplateName }}</span>
+            </div>
+          </div>
+          <dl class="grid grid-cols-2 md:grid-cols-3 gap-space-sm">
+            {{ range .Measurement.Rows }}
+              <div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-0.5">
+                <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider">{{ .Label }}{{ if .Unit }} ({{ .Unit }}){{ end }}</dt>
+                <dd class="font-code-md text-code-md font-bold text-on-surface tabular-nums">{{ .Value }}</dd>
+              </div>
+            {{ end }}
+          </dl>
+          {{ if .Measurement.Notes }}
+            <p class="font-body-sm text-body-sm text-on-surface-variant whitespace-pre-wrap">{{ .Measurement.Notes }}</p>
+          {{ end }}
+        </div>
+      {{ end }}
+
       <!-- Attachments -->
       {{ template "orders/_attachments.html" . }}
 

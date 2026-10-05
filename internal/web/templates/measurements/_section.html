@@ -1,0 +1,82 @@
+{{ define "measurements/_section.html" }}
+{{ if .IsTailoring }}
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+  <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+    <span class="material-symbols-outlined text-primary text-[20px]">straighten</span>
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Measurements</h2>
+    <span class="font-label-sm text-label-sm text-on-surface-variant">Tailoring · optional</span>
+  </div>
+
+  <div class="flex items-center gap-2" id="meas-gender">
+    <span class="font-label-md text-label-md text-on-surface">Fit for:</span>
+    <label class="cursor-pointer">
+      <input type="radio" name="meas_gender" value="male" class="peer sr-only" {{ if eq .FormMeasGender "male" }}checked{{ end }}>
+      <span class="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md font-semibold peer-checked:bg-primary-container peer-checked:text-on-primary transition-colors">Male</span>
+    </label>
+    <label class="cursor-pointer">
+      <input type="radio" name="meas_gender" value="female" class="peer sr-only" {{ if eq .FormMeasGender "female" }}checked{{ end }}>
+      <span class="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md font-semibold peer-checked:bg-primary-container peer-checked:text-on-primary transition-colors">Female</span>
+    </label>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Garment</span>
+      <select name="meas_template_id" id="meas-garment"
+              hx-get="/measurements/fields"
+              hx-trigger="change"
+              hx-target="#meas-fields"
+              hx-swap="innerHTML"
+              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="">— No measurements —</option>
+        {{ range .MeasTemplates }}
+          <option value="{{ .ID }}" data-gender="{{ .Gender }}" {{ if eq $.FormMeasTemplateID .ID }}selected{{ end }}>{{ .Name }}</option>
+        {{ end }}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Fit notes (optional)</span>
+      <input type="text" name="meas_notes" value="{{ .FormMeasNotes }}" maxlength="2000" placeholder="e.g. customer prefers a slim fit"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+  </div>
+
+  <div id="meas-fields" class="grid grid-cols-2 md:grid-cols-3 gap-space-sm">
+    {{ template "measurements/_fields.html" (dict "Fields" .FormMeasFields) }}
+  </div>
+</div>
+
+<script>
+(function () {
+  var garment = document.getElementById('meas-garment');
+  if (!garment) return;
+  var radios = document.querySelectorAll('input[name="meas_gender"]');
+  function selectedGender() {
+    for (var i = 0; i < radios.length; i++) {
+      if (radios[i].checked) return radios[i].value;
+    }
+    return 'male';
+  }
+  function syncGarments(onlyFilter) {
+    var g = selectedGender();
+    var first = null;
+    garment.querySelectorAll('option[data-gender]').forEach(function (opt) {
+      var show = opt.getAttribute('data-gender') === g || opt.getAttribute('data-gender') === 'unisex';
+      opt.hidden = !show;
+      if (show && !first) first = opt;
+    });
+    if (onlyFilter) return;
+    // Only re-pick when the current pick vanished under the gender switch;
+    // an explicit "No measurements" choice is always respected.
+    var cur = garment.selectedOptions.length ? garment.selectedOptions[0] : null;
+    if (cur && cur.value !== '' && cur.hidden && first) {
+      garment.value = first.value;
+      garment.dispatchEvent(new Event('change'));
+    }
+  }
+  radios.forEach(function (r) { r.addEventListener('change', function () { syncGarments(false); }); });
+  syncGarments(true);
+})();
+</script>
+{{ end }}
+{{ end }}

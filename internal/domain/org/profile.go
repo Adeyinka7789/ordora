@@ -93,6 +93,35 @@ func validProfileValue(options []string, v string) bool {
 	return len(v) <= MaxCustomProfileLength
 }
 
+// UpdateBusinessProfile replaces the analytics profile fields. Unlike
+// SetProfile (signup), every field may be empty — empty means "unset", which
+// keeps businesses that signed up before these fields existed fully editable
+// without forcing values on them.
+func (o *Organization) UpdateBusinessProfile(businessType, category, teamSize, referral string, now time.Time) error {
+	businessType = strings.TrimSpace(businessType)
+	if businessType != "" && !validProfileValue(BusinessTypes(), businessType) {
+		return ErrProfileTypeInvalid
+	}
+	category = strings.TrimSpace(category)
+	if category != "" && !validProfileValue(BusinessCategories(), category) {
+		return ErrProfileCategoryInvalid
+	}
+	teamSize = strings.TrimSpace(teamSize)
+	if teamSize != "" && !inList(TeamSizes(), teamSize) {
+		return ErrProfileTeamSizeInvalid
+	}
+	referral = strings.TrimSpace(referral)
+	if referral != "" && !validProfileValue(ReferralSources(), referral) {
+		return ErrProfileReferralInvalid
+	}
+	o.BusinessType = businessType
+	o.BusinessCategory = category
+	o.TeamSize = teamSize
+	o.ReferralSource = referral
+	o.UpdatedAt = now
+	return nil
+}
+
 // SetProfile records the registration-time business profile for analytics.
 // Category and phone are required; type, team size, referral and address are
 // optional. Values must come from the taxonomies (ResolveOther first).

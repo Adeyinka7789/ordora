@@ -132,6 +132,9 @@ func run() error {
 	if _, err := os.Stat(cfg.ContactFile); err != nil {
 		slog.Warn("contact: file not found, utility bar and WhatsApp button hidden",
 			"file", cfg.ContactFile)
+	} else if !render.Contact.HasAny() {
+		slog.Warn("contact: file has no usable details (want keys: emails, phones, address, website, website_url, whatsapp_number, whatsapp_message)",
+			"file", cfg.ContactFile)
 	}
 
 	// ---- Feature flags (Waffle-style) ----
@@ -180,16 +183,18 @@ func run() error {
 	})
 
 	numberRepo := postgres.NewOrderNumberRepo(db)
+	measurementRepo := postgres.NewMeasurementRepo(db)
 
 	orderService := app.NewOrderService(app.OrderServiceDeps{
-		DB:        db,
-		Customers: custRepo,
-		Orders:    orderRepo,
-		OrderRead: orderRepo,
-		Numbers:   numberRepo,
-		Audit:     auditRepo,
-		Outbox:    outboxRepo,
-		IDs:       id.Generator{},
+		DB:           db,
+		Customers:    custRepo,
+		Orders:       orderRepo,
+		OrderRead:    orderRepo,
+		Numbers:      numberRepo,
+		Audit:        auditRepo,
+		Outbox:       outboxRepo,
+		Measurements: measurementRepo,
+		IDs:          id.Generator{},
 	})
 
 	paymentRepo := postgres.NewPaymentRepo(db)
@@ -247,15 +252,16 @@ func run() error {
 	}
 
 	orderH := &handlers.OrderHandler{
-		Service:     orderService,
-		OrderRepo:   orderRepo,
-		CustRepo:    custRepo,
-		Orgs:        postgres.NewOrgRepo(db),
-		Attachments: attachService,
-		Payments:    paymentService,
-		Audit:       auditRepo,
-		Renderer:    renderer,
-		Costs:       costService,
+		Service:      orderService,
+		OrderRepo:    orderRepo,
+		CustRepo:     custRepo,
+		Orgs:         postgres.NewOrgRepo(db),
+		Measurements: measurementRepo,
+		Attachments:  attachService,
+		Payments:     paymentService,
+		Audit:        auditRepo,
+		Renderer:     renderer,
+		Costs:        costService,
 	}
 
 	// ---- Settings + profile ----
@@ -713,6 +719,7 @@ func run() error {
 	mux.Handle("GET /orders/{id}/edit", gated("orders", http.HandlerFunc(orderH.Edit)))
 	mux.Handle("POST /orders/{id}", gated("orders", http.HandlerFunc(orderH.Update)))
 	mux.Handle("POST /orders/{id}/status", gated("orders", http.HandlerFunc(orderH.ChangeStatus)))
+	mux.Handle("GET /measurements/fields", gated("orders", http.HandlerFunc(orderH.MeasurementFields)))
 	mux.Handle("GET /orders/{id}/receipt", gated("orders", http.HandlerFunc(orderH.Receipt)))
 	mux.Handle("POST /orders/{id}/public-token/regenerate", gated("orders", http.HandlerFunc(orderH.RegenerateToken)))
 	//

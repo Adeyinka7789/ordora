@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
@@ -28,6 +29,14 @@ type settingsPage struct {
 	FormEmail      string
 	FormPhone      string
 	FormAddress    string
+	FormBizType    string
+	FormBizCat     string
+	FormTeamSize   string
+	FormReferral   string
+	Categories     []string
+	Types          []string
+	TeamSizes      []string
+	Referrals      []string
 	CurrencyLocked bool // true if the org already has orders
 }
 
@@ -77,6 +86,14 @@ func (h *SettingsHandler) Settings(w http.ResponseWriter, r *http.Request) {
 		FormEmail:    o.Email,
 		FormPhone:    o.Phone,
 		FormAddress:  o.Address,
+		FormBizType:  o.BusinessType,
+		FormBizCat:   o.BusinessCategory,
+		FormTeamSize: o.TeamSize,
+		FormReferral: o.ReferralSource,
+		Categories:   org.BusinessCategories(),
+		Types:        org.BusinessTypes(),
+		TeamSizes:    org.TeamSizes(),
+		Referrals:    org.ReferralSources(),
 	}
 	if v := queryValue(r, "notice"); v != "" {
 		data.FlashNotice = v
@@ -100,13 +117,17 @@ func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 	}
 
 	in := app.UpdateOrgInput{
-		Name:     formValue(r, "name"),
-		Slug:     formValue(r, "slug"),
-		Currency: formValue(r, "currency"),
-		Timezone: formValue(r, "timezone"),
-		Email:    formValue(r, "email"),
-		Phone:    formValue(r, "phone"),
-		Address:  formValue(r, "address"),
+		Name:             formValue(r, "name"),
+		Slug:             formValue(r, "slug"),
+		Currency:         formValue(r, "currency"),
+		Timezone:         formValue(r, "timezone"),
+		Email:            formValue(r, "email"),
+		Phone:            formValue(r, "phone"),
+		Address:          formValue(r, "address"),
+		BusinessType:     formValue(r, "business_type"),
+		BusinessCategory: formValue(r, "business_category"),
+		TeamSize:         formValue(r, "team_size"),
+		ReferralSource:   formValue(r, "referral_source"),
 	}
 	_, err := h.Service.UpdateOrg(r.Context(), s.Scope, in)
 	if err != nil {

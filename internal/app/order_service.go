@@ -19,6 +19,7 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/domain/audit"
 	"github.com/Adeyinka7789/ordora/internal/domain/customer"
+	"github.com/Adeyinka7789/ordora/internal/domain/measurement"
 	"github.com/Adeyinka7789/ordora/internal/domain/money"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
@@ -67,30 +68,39 @@ type OutboxWriter interface {
 	Enqueue(ctx context.Context, orgID uuid.UUID, eventName string, payload any) error
 }
 
+// MeasurementStore persists order measurements. Reads go through the
+// tenant-scoped repo; writes join the order transaction.
+type MeasurementStore interface {
+	GetTemplate(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (measurement.Template, error)
+	SaveMeasurementTx(ctx context.Context, tx pgx.Tx, m measurement.Measurement) error
+}
+
 // OrderService orchestrates order-related workflows.
 type OrderService struct {
-	db        TxRunner
-	customers CustomerReader
-	orders    OrderWriter
-	orderRead OrderReader
-	numbers   NumberAllocator
-	audit     AuditWriter
-	outbox    OutboxWriter
-	ids       IDGen
-	now       func() time.Time
+	db           TxRunner
+	customers    CustomerReader
+	orders       OrderWriter
+	orderRead    OrderReader
+	numbers      NumberAllocator
+	audit        AuditWriter
+	outbox       OutboxWriter
+	measurements MeasurementStore
+	ids          IDGen
+	now          func() time.Time
 }
 
 // OrderServiceDeps bundles the dependencies.
 type OrderServiceDeps struct {
-	DB        TxRunner
-	Customers CustomerReader
-	Orders    OrderWriter
-	OrderRead OrderReader
-	Numbers   NumberAllocator
-	Audit     AuditWriter
-	Outbox    OutboxWriter
-	IDs       IDGen
-	Now       func() time.Time
+	DB           TxRunner
+	Customers    CustomerReader
+	Orders       OrderWriter
+	OrderRead    OrderReader
+	Numbers      NumberAllocator
+	Audit        AuditWriter
+	Outbox       OutboxWriter
+	Measurements MeasurementStore // optional; nil disables measurement saving
+	IDs          IDGen
+	Now          func() time.Time
 }
 
 func NewOrderService(d OrderServiceDeps) *OrderService {
@@ -98,15 +108,16 @@ func NewOrderService(d OrderServiceDeps) *OrderService {
 		d.Now = time.Now
 	}
 	return &OrderService{
-		db:        d.DB,
-		customers: d.Customers,
-		orders:    d.Orders,
-		orderRead: d.OrderRead,
-		numbers:   d.Numbers,
-		audit:     d.Audit,
-		outbox:    d.Outbox,
-		ids:       d.IDs,
-		now:       d.Now,
+		db:           d.DB,
+		customers:    d.Customers,
+		orders:       d.Orders,
+		orderRead:    d.OrderRead,
+		numbers:      d.Numbers,
+		audit:        d.Audit,
+		outbox:       d.Outbox,
+		measurements: d.Measurements,
+		ids:          d.IDs,
+		now:          d.Now,
 	}
 }
 
@@ -123,6 +134,16 @@ type CreateOrderInput struct {
 	Items              []CreateOrderItemInput
 	DiscountMinor      int64
 	TaxMinor           int64
+	Measurement        *CreateMeasurementInput
+}
+
+// CreateMeasurementInput carries one tailoring measurement set for an order.
+// TemplateID must reference a template visible to the org; Values maps field
+// keys to entered values.
+type CreateMeasurementInput struct {
+	TemplateID uuid.UUID
+	Values     map[string]string
+	Notes      string
 }
 
 type CreateOrderItemInput struct {
@@ -221,6 +242,10 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 			return err
 		}
 
+		if err := s.saveMeasurementTx(ctx, tx, scope, o.ID, in.Measurement); err != nil {
+			return err
+		}
+
 		if s.audit != nil {
 			if err := s.audit.RecordTx(ctx, tx, audit.Entry{
 				OrganizationID: scope.OrgID,
@@ -276,6 +301,7 @@ type UpdateOrderInput struct {
 	Items              []CreateOrderItemInput
 	DiscountMinor      int64
 	TaxMinor           int64
+	Measurement        *CreateMeasurementInput
 }
 
 func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, in UpdateOrderInput) (*order.Order, error) {
@@ -344,6 +370,9 @@ func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope
 		if err := s.orders.UpdateTx(ctx, tx, o); err != nil {
 			return err
 		}
+		if err := s.saveMeasurementTx(ctx, tx, scope, o.ID, in.Measurement); err != nil {
+			return err
+		}
 		if s.audit != nil {
 			_ = s.audit.RecordTx(ctx, tx, audit.Entry{
 				OrganizationID: scope.OrgID,
@@ -361,6 +390,38 @@ func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope
 		return nil, err
 	}
 	return updated, nil
+}
+
+// saveMeasurementTx validates and persists the optional measurement set
+// inside the order transaction. A nil store or nil input is a no-op (keeps
+// non-tailoring flows and existing tests untouched).
+func (s *OrderService) saveMeasurementTx(ctx context.Context, tx pgx.Tx, scope tenant.TenantScope, orderID uuid.UUID, in *CreateMeasurementInput) error {
+	if s.measurements == nil || in == nil {
+		return nil
+	}
+	tmpl, err := s.measurements.GetTemplate(ctx, scope, in.TemplateID)
+	if err != nil {
+		return err
+	}
+	now := s.now()
+	m := measurement.Measurement{
+		ID:             s.ids.New(),
+		OrganizationID: scope.OrgID,
+		OrderID:        orderID,
+		TemplateID:     tmpl.ID,
+		Gender:         tmpl.Gender,
+		Garment:        tmpl.Garment,
+		TemplateName:   tmpl.Name,
+		Values:         in.Values,
+		Notes:          strings.TrimSpace(in.Notes),
+		CreatedBy:      scope.UserID,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	if err := m.Validate(tmpl); err != nil {
+		return err
+	}
+	return s.measurements.SaveMeasurementTx(ctx, tx, m)
 }
 
 // -----------------------------------------------------------------------------

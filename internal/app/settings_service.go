@@ -81,13 +81,17 @@ func NewSettingsService(d SettingsServiceDeps) *SettingsService {
 
 // Inputs.
 type UpdateOrgInput struct {
-	Name     string
-	Slug     string
-	Currency string
-	Timezone string
-	Email    string
-	Phone    string
-	Address  string
+	Name             string
+	Slug             string
+	Currency         string
+	Timezone         string
+	Email            string
+	Phone            string
+	Address          string
+	BusinessType     string
+	BusinessCategory string
+	TeamSize         string
+	ReferralSource   string
 }
 
 type UpdateProfileInput struct {
@@ -152,6 +156,9 @@ func (s *SettingsService) UpdateOrg(ctx context.Context, scope tenant.TenantScop
 		}
 
 		if err := o.Update(in.Name, slug, in.Email, in.Phone, in.Address, in.Timezone, s.now()); err != nil {
+			return err
+		}
+		if err := o.UpdateBusinessProfile(in.BusinessType, in.BusinessCategory, in.TeamSize, in.ReferralSource, s.now()); err != nil {
 			return err
 		}
 		if err := s.orgs.Update(ctx, scope, o); err != nil {

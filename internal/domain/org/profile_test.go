@@ -61,7 +61,6 @@ func TestSetProfileRejects(t *testing.T) {
 		}
 	}
 }
-
 func TestResolveOther(t *testing.T) {
 	if got := ResolveOther("Retail", ""); got != "Retail" {
 		t.Errorf("plain value: got %q", got)
@@ -71,5 +70,46 @@ func TestResolveOther(t *testing.T) {
 	}
 	if got := ResolveOther("Other", ""); got != "" {
 		t.Errorf("empty custom: got %q", got)
+	}
+}
+
+// TestUpdateBusinessProfile is the backward-compat contract: pre-profile
+// businesses may set (or clear) each field independently; empties never fail.
+func TestUpdateBusinessProfile(t *testing.T) {
+	now := time.Now()
+
+	o := testOrg(t)
+	if err := o.UpdateBusinessProfile("", "", "", "", now); err != nil {
+		t.Fatalf("all-empty update rejected: %v", err)
+	}
+
+	o = testOrg(t)
+	if err := o.UpdateBusinessProfile("Services", "Tailoring & Fashion", "2–5", "WhatsApp", now); err != nil {
+		t.Fatalf("valid update rejected: %v", err)
+	}
+	if o.BusinessCategory != "Tailoring & Fashion" || o.TeamSize != "2–5" {
+		t.Errorf("profile not stored: %+v", o)
+	}
+
+	o = testOrg(t)
+	if err := o.UpdateBusinessProfile("", "Shoe making", "", "", now); err != nil {
+		t.Fatalf("custom category rejected: %v", err)
+	}
+
+	for _, tc := range []struct {
+		name           string
+		typ, cat, size string
+		ref            string
+		want           error
+	}{
+		{"raw Other type", "Other", "", "", "", ErrProfileTypeInvalid},
+		{"raw Other category", "", "Other", "", "", ErrProfileCategoryInvalid},
+		{"bad team size", "", "", "1000", "", ErrProfileTeamSizeInvalid},
+		{"raw Other referral", "", "", "", "Other", ErrProfileReferralInvalid},
+	} {
+		o := testOrg(t)
+		if err := o.UpdateBusinessProfile(tc.typ, tc.cat, tc.size, tc.ref, now); err != tc.want {
+			t.Errorf("%s: got %v, want %v", tc.name, err, tc.want)
+		}
 	}
 }

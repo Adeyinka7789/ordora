@@ -13,8 +13,10 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/cost"
 	"github.com/Adeyinka7789/ordora/internal/domain/customer"
+	"github.com/Adeyinka7789/ordora/internal/domain/measurement"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/domain/payment"
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -22,15 +24,16 @@ import (
 
 // OrderHandler serves /orders/*.
 type OrderHandler struct {
-	Service     *app.OrderService
-	OrderRepo   *postgres.OrderRepo
-	CustRepo    *postgres.CustomerRepo
-	Orgs        *postgres.OrgRepo
-	Attachments *app.AttachmentService
-	Payments    *app.PaymentService
-	Audit       *postgres.AuditRepo
-	Renderer    *render.Renderer
-	Costs       *app.CostService
+	Service      *app.OrderService
+	OrderRepo    *postgres.OrderRepo
+	CustRepo     *postgres.CustomerRepo
+	Orgs         *postgres.OrgRepo
+	Measurements *postgres.MeasurementRepo
+	Attachments  *app.AttachmentService
+	Payments     *app.PaymentService
+	Audit        *postgres.AuditRepo
+	Renderer     *render.Renderer
+	Costs        *app.CostService
 }
 
 // -----------------------------------------------------------------------------
@@ -63,6 +66,14 @@ type orderNewPage struct {
 	FormCustID  string
 	FormDisc    string
 	FormTax     string
+
+	// Tailoring measurements (only populated for tailoring orgs).
+	IsTailoring        bool
+	MeasTemplates      []measTemplateOption
+	FormMeasGender     string
+	FormMeasTemplateID string
+	FormMeasFields     []measFieldView
+	FormMeasNotes      string
 }
 
 type orderFormItem struct {
@@ -84,6 +95,14 @@ type orderEditPage struct {
 	FormDisc    string
 	FormTax     string
 	FormCustID  string
+
+	// Tailoring measurements (only populated for tailoring orgs).
+	IsTailoring        bool
+	MeasTemplates      []measTemplateOption
+	FormMeasGender     string
+	FormMeasTemplateID string
+	FormMeasFields     []measFieldView
+	FormMeasNotes      string
 }
 
 // orderShowPage is passed to orders/show.html. The timeline and attachments
@@ -105,6 +124,7 @@ type orderShowPage struct {
 	Error                string
 	Order                *order.Order
 	OrderID              uuid.UUID
+	Measurement          *measShowView
 	Attachments          []*attachment.Attachment
 	Payments             []*payment.Payment
 	PayStatus            payment.Status
@@ -204,7 +224,83 @@ func (h *OrderHandler) New(w http.ResponseWriter, r *http.Request) {
 	if len(customers.Customers) == 0 {
 		page.Error = "You need to create a customer before you can create an order."
 	}
+	h.fillMeasNewForm(r, scope, &page, "", "", nil, "")
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "orders/new.html", page)
+}
+
+// measFormData builds the measurement section for new/edit pages. It returns
+// zero-value (IsTailoring false) unless the org is a tailoring business.
+// gender/templateID/values/notes carry the user's current (or re-rendered)
+// selection; blanks resolve to defaults (male, first template).
+func (h *OrderHandler) measFormData(r *http.Request, scope tenant.TenantScope, gender, templateID string, values map[string]string, notes string) measFormData {
+	data := measFormData{}
+	if h.Measurements == nil {
+		return data
+	}
+	org, err := h.Orgs.GetByID(r.Context(), scope.OrgID)
+	if err != nil || !isTailoringOrg(org) {
+		return data
+	}
+	list := h.measTemplateList(r, scope)
+	if len(list) == 0 {
+		return data
+	}
+	data.IsTailoring = true
+	data.Templates = measOptions(list)
+	if gender != string(measurement.GenderMale) && gender != string(measurement.GenderFemale) {
+		gender = string(measurement.GenderMale)
+	}
+	tmpl, ok := measTemplateByID(list, parseUUIDOrNil(templateID))
+	if !ok {
+		tmpl, _ = firstTemplateOfGender(list, gender)
+		gender = string(tmpl.Gender)
+	}
+	data.Gender = gender
+	data.TemplateID = tmpl.ID.String()
+	data.Fields = measFieldsFor(tmpl, values)
+	data.Notes = notes
+	return data
+}
+
+// measFormData is the measurement section shared by new/edit pages.
+type measFormData struct {
+	IsTailoring bool
+	Templates   []measTemplateOption
+	Gender      string
+	TemplateID  string
+	Fields      []measFieldView
+	Notes       string
+}
+
+// fillMeasNewForm assigns shared measurement data onto a new-order page.
+func (h *OrderHandler) fillMeasNewForm(r *http.Request, scope tenant.TenantScope, page *orderNewPage, gender, templateID string, values map[string]string, notes string) {
+	d := h.measFormData(r, scope, gender, templateID, values, notes)
+	page.IsTailoring = d.IsTailoring
+	page.MeasTemplates = d.Templates
+	page.FormMeasGender = d.Gender
+	page.FormMeasTemplateID = d.TemplateID
+	page.FormMeasFields = d.Fields
+	page.FormMeasNotes = d.Notes
+}
+
+// fillMeasEditForm assigns shared measurement data onto an edit-order page.
+func (h *OrderHandler) fillMeasEditForm(r *http.Request, scope tenant.TenantScope, page *orderEditPage, gender, templateID string, values map[string]string, notes string) {
+	d := h.measFormData(r, scope, gender, templateID, values, notes)
+	page.IsTailoring = d.IsTailoring
+	page.MeasTemplates = d.Templates
+	page.FormMeasGender = d.Gender
+	page.FormMeasTemplateID = d.TemplateID
+	page.FormMeasFields = d.Fields
+	page.FormMeasNotes = d.Notes
+}
+
+// parseUUIDOrNil parses an id, returning Nil on any error.
+func parseUUIDOrNil(s string) uuid.UUID {
+	id, err := uuid.Parse(strings.TrimSpace(s))
+	if err != nil {
+		return uuid.Nil
+	}
+	return id
 }
 
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -270,9 +366,18 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	// Optional tailoring measurements (order form section, tailoring orgs).
+	// Echo data for error re-renders is rebuilt from in.Measurement.
+	measIn, _, _, _ := parseMeasurementInput(r)
+	in.Measurement = measIn
+
 	o, err := h.Service.CreateOrder(r.Context(), scope, in)
 	if err != nil {
-		h.respondCreateError(w, r, scope.OrgID, humanizeOrderError(err), &in)
+		msg := humanizeMeasurementError(err)
+		if msg == "" {
+			msg = humanizeOrderError(err)
+		}
+		h.respondCreateError(w, r, scope.OrgID, msg, &in)
 		return
 	}
 
@@ -333,6 +438,16 @@ func (h *OrderHandler) Edit(w http.ResponseWriter, r *http.Request) {
 	if len(page.FormItems) == 0 {
 		page.FormItems = []orderFormItem{{}}
 	}
+	// Prefill saved measurements (best-effort; blanks resolve to defaults).
+	var eg, etid string
+	evals := map[string]string{}
+	enotes := ""
+	if h.Measurements != nil {
+		if m, err := h.Measurements.GetByOrder(r.Context(), scope, o.ID); err == nil {
+			eg, etid, evals, enotes = string(m.Gender), m.TemplateID.String(), m.Values, m.Notes
+		}
+	}
+	h.fillMeasEditForm(r, scope, &page, eg, etid, evals, enotes)
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "orders/edit.html", page)
 }
 
@@ -366,12 +481,16 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		// Re-render with error.
 		o, _ := h.Service.GetOrder(r.Context(), scope, oid)
 		customers, _ := h.CustRepo.List(r.Context(), scope, postgres.ListOptions{Limit: 500})
+		errMsg := humanizeMeasurementError(err)
+		if errMsg == "" {
+			errMsg = humanizeOrderError(err)
+		}
 		page := orderEditPage{
 			Title:     "Edit order",
 			CSRFToken: csrfFromCtx(r),
 			Order:     o,
 			Customers: customers.Customers,
-			Error:     humanizeOrderError(err),
+			Error:     errMsg,
 			FormTitle: in.Title,
 			FormDesc:  in.Description,
 			FormDisc:  formatMoneyMinor(in.DiscountMinor),
@@ -386,6 +505,14 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 		if len(page.FormItems) == 0 {
 			page.FormItems = []orderFormItem{{}}
+		}
+		if g, tid, fields, notes, ok := h.measEchoForError(r, scope, in.Measurement); ok {
+			page.IsTailoring = true
+			page.MeasTemplates = measOptions(h.measTemplateList(r, scope))
+			page.FormMeasGender = g
+			page.FormMeasTemplateID = tid
+			page.FormMeasFields = fields
+			page.FormMeasNotes = notes
 		}
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "orders/edit.html", page)
 		return
@@ -496,6 +623,8 @@ func parseUpdateOrderInput(r *http.Request) (*app.UpdateOrderInput, error) {
 			UnitPriceMinor: p,
 		})
 	}
+	measIn, _, _, _ := parseMeasurementInput(r)
+	in.Measurement = measIn
 	return in, nil
 }
 
@@ -524,6 +653,15 @@ func (h *OrderHandler) respondCreateError(w http.ResponseWriter, r *http.Request
 				Quantity:    formatQuantity(it.QuantityScaled),
 				UnitPrice:   formatMoneyMinor(it.UnitPriceMinor),
 			})
+		}
+		// Preserve the measurement selection (gender/garment/values/notes).
+		if g, tid, fields, notes, ok := h.measEchoForError(r, scope, in.Measurement); ok {
+			page.IsTailoring = true
+			page.MeasTemplates = measOptions(h.measTemplateList(r, scope))
+			page.FormMeasGender = g
+			page.FormMeasTemplateID = tid
+			page.FormMeasFields = fields
+			page.FormMeasNotes = notes
 		}
 	}
 	if len(page.FormItems) == 0 {
@@ -593,6 +731,28 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	// Load attachments (best-effort).
 	if list, err := h.Attachments.List(r.Context(), scope, attachment.EntityOrder, o.ID); err == nil {
 		page.Attachments = list
+	}
+
+	// Load tailoring measurements (best-effort; absent for non-tailoring).
+	if h.Measurements != nil {
+		if m, err := h.Measurements.GetByOrder(r.Context(), scope, o.ID); err == nil {
+			if tmpl, err := h.Measurements.GetTemplate(r.Context(), scope, m.TemplateID); err == nil {
+				view := &measShowView{
+					GenderLabel:  tmpl.Gender.Label(),
+					Garment:      m.Garment,
+					TemplateName: m.TemplateName,
+					Notes:        m.Notes,
+				}
+				for _, f := range tmpl.Fields {
+					if v := strings.TrimSpace(m.Values[f.Key]); v != "" {
+						view.Rows = append(view.Rows, measFieldView{
+							Label: f.Label, Value: v, Unit: f.Unit,
+						})
+					}
+				}
+				page.Measurement = view
+			}
+		}
 	}
 
 	// Load payments + per-payment receipts (best-effort, one batched query).

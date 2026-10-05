@@ -159,13 +159,17 @@ func (r *OrgRepo) Update(ctx context.Context, scope tenant.TenantScope, o *org.O
 		const q = `
 			UPDATE organizations
 			SET name = $2, slug = $3, email = $4, phone = $5,
-			    address = $6, currency = $7, timezone = $8, updated_at = $9
+			    address = $6, currency = $7, timezone = $8, updated_at = $9,
+			    business_type = $10, business_category = $11,
+			    team_size = $12, referral_source = $13
 			WHERE id = $1
 		`
 		ct, err := tx.Exec(ctx, q,
 			o.ID, o.Name, o.Slug.String(),
 			nullIfEmpty(o.Email), nullIfEmpty(o.Phone), nullIfEmpty(o.Address),
 			o.Currency, o.Timezone, o.UpdatedAt,
+			nullIfEmpty(o.BusinessType), nullIfEmpty(o.BusinessCategory),
+			nullIfEmpty(o.TeamSize), nullIfEmpty(o.ReferralSource),
 		)
 		if err != nil {
 			classified := Classify(err)

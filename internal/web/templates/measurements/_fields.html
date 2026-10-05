@@ -1,0 +1,14 @@
+{{ define "measurements/_fields.html" }}
+{{ range .Fields }}
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">
+      {{ .Label }}{{ if .Unit }} <span class="text-on-surface-variant font-normal">({{ .Unit }})</span>{{ end }}{{ if .Required }} *{{ end }}
+    </span>
+    <input type="text" name="measure[{{ .Key }}]" value="{{ .Value }}" maxlength="40" {{ if .Required }}required{{ end }}
+           placeholder="—"
+           class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+  </label>
+{{ else }}
+  <p class="font-body-sm text-body-sm text-on-surface-variant">No fields on this template.</p>
+{{ end }}
+{{ end }}

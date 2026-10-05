@@ -83,6 +83,49 @@
                 class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormAddress }}</textarea>
     </label>
 
+    <div class="flex flex-col gap-space-sm pt-space-xs border-t border-outline-variant/30">
+      <div>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Business profile</h2>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">Pick your trade to unlock tailoring measurements on orders. Leave blank if unsure — you can set it any time.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Business category</span>
+          <input type="text" name="business_category" value="{{ .FormBizCat }}" maxlength="120" list="biz-categories" placeholder="e.g. Tailoring & Fashion"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <datalist id="biz-categories">
+            {{ range .Categories }}<option value="{{ . }}">{{ end }}
+          </datalist>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Business type</span>
+          <input type="text" name="business_type" value="{{ .FormBizType }}" maxlength="120" list="biz-types" placeholder="e.g. Services"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <datalist id="biz-types">
+            {{ range .Types }}<option value="{{ . }}">{{ end }}
+          </datalist>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Team size</span>
+          <select name="team_size"
+                  class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+            <option value="">—</option>
+            {{ range .TeamSizes }}
+              <option value="{{ . }}" {{ if eq $.FormTeamSize . }}selected{{ end }}>{{ . }}</option>
+            {{ end }}
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Heard about us via</span>
+          <input type="text" name="referral_source" value="{{ .FormReferral }}" maxlength="120" list="biz-referrals" placeholder="e.g. WhatsApp"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <datalist id="biz-referrals">
+            {{ range .Referrals }}<option value="{{ . }}">{{ end }}
+          </datalist>
+        </label>
+      </div>
+    </div>
+
     <div class="flex items-center gap-space-sm pt-space-xs">
       <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save settings</button>
     </div>
