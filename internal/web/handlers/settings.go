@@ -143,8 +143,8 @@ func (h *SettingsHandler) Profile(w http.ResponseWriter, r *http.Request) {
 			ID:        sess.ID.String(),
 			UserAgent: sess.UserAgent,
 			IP:        sess.IP,
-			CreatedAt: sess.CreatedAt.Format("Jan 2, 2006 at 15:04"),
-			ExpiresAt: sess.ExpiresAt.Format("Jan 2, 2006"),
+			CreatedAt: sess.CreatedAt.Format("02-01-2006 · 15:04"),
+			ExpiresAt: sess.ExpiresAt.Format("02-01-2006"),
 			Current:   sess.ID == s.Session.ID,
 		})
 	}

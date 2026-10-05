@@ -53,20 +53,21 @@ type ledgerIndexPage struct {
 }
 
 // parseLedgerFilters reads the shared filter params from the query string.
-// from/to are calendar dates (YYYY-MM-DD) applied to paid_at; to is inclusive.
+// from/to are calendar dates (day-month-year or ISO) applied to paid_at;
+// to is inclusive.
 func parseLedgerFilters(r *http.Request) (opts postgres.LedgerOptions, fromStr, toStr string) {
 	opts.Query = queryValue(r, "q")
 	if m := payment.Method(queryValue(r, "method")); m.IsValid() {
 		opts.Method = string(m)
 	}
 	if v := queryValue(r, "from"); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
+		if t, err := parseDateInput(v); err == nil {
 			opts.PaidFrom = &t
 			fromStr = v
 		}
 	}
 	if v := queryValue(r, "to"); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
+		if t, err := parseDateInput(v); err == nil {
 			excl := t.AddDate(0, 0, 1)
 			opts.PaidBefore = &excl
 			toStr = v

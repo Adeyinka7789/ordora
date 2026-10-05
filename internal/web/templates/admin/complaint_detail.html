@@ -20,7 +20,7 @@
     <div class="flex flex-wrap gap-x-6 gap-y-1 font-body-sm text-body-sm text-on-surface-variant">
       <span>User: <strong class="text-on-surface">{{ .Thread.Row.UserName }}</strong> ({{ .Thread.Row.UserEmail }})</span>
       <span>Business: <strong class="text-on-surface">{{ .Thread.Row.OrgName }}</strong></span>
-      <span>Opened {{ .Thread.Row.Complaint.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+      <span>Opened {{ .Thread.Row.Complaint.CreatedAt.Format "02-01-2006 · 15:04" }}</span>
     </div>
     <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap pt-1">{{ .Thread.Row.Complaint.Message }}</p>
     <div class="flex gap-2 pt-1">
@@ -45,7 +45,7 @@
         {{ if .IsAdmin }}
           <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-primary-fixed text-on-primary-fixed">Admin</span>
         {{ end }}
-        <span class="font-code-md text-code-md text-on-surface-variant">{{ .Reply.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+        <span class="font-code-md text-code-md text-on-surface-variant">{{ .Reply.CreatedAt.Format "02-01-2006 · 15:04" }}</span>
       </div>
       <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Reply.Body }}</p>
     </div>

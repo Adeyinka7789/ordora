@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
@@ -169,9 +168,9 @@ func (h *PortalHandler) IntakeSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if d := formValue(r, "expected_completion"); d != "" {
-		t, err := time.Parse("2006-01-02", d)
+		t, err := parseDateInput(d)
 		if err != nil {
-			h.intakeError(w, r, org, "Invalid completion date.", in)
+			h.intakeError(w, r, org, "Invalid completion date. Use day-month-year.", in)
 			return
 		}
 		in.ExpectedDate = &t

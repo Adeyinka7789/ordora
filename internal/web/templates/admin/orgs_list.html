@@ -41,7 +41,7 @@
                 <td class="py-3 px-space-md text-right tabular-nums">{{ .OrderCount }}</td>
                 <td class="py-3 px-space-md text-right font-code-md text-code-md tabular-nums">{{ currency .TotalOrdersGMV .Currency }}</td>
                 <td class="py-3 px-space-md text-right font-code-md text-code-md tabular-nums {{ if gt .OutstandingGMV 0 }}text-error{{ end }}">{{ currency .OutstandingGMV .Currency }}</td>
-                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006" }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "02-01-2006" }}</td>
                 <td class="py-3 px-space-md text-right">
                   <form method="post" action="{{ $.Path }}/impersonate/{{ .ID }}" class="inline">
                     <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">

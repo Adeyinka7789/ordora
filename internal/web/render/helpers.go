@@ -39,7 +39,7 @@ func templateFuncs() template.FuncMap {
 			if t.IsZero() {
 				return ""
 			}
-			return t.Format("Jan 2, 2006")
+			return t.Format("02-01-2006")
 		},
 		// currency formats minor units as "CODE 1,234,567.89".
 		// Thousands grouping lives here and only here: every money

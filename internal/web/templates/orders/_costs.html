@@ -65,7 +65,7 @@
                 <span class="font-label-md font-semibold text-on-surface truncate">{{ .Description }}</span>
               </div>
               <div class="flex items-center gap-2 text-label-sm text-on-surface-variant mt-0.5">
-                <span>{{ .IncurredOn.Format "Jan 2, 2006" }}</span>
+                <span>{{ .IncurredOn.Format "02-01-2006" }}</span>
                 {{ if .Vendor }}<span>·</span><span>{{ .Vendor }}</span>{{ end }}
               </div>
               {{ if .Notes }}<p class="text-body-sm text-on-surface-variant mt-1 whitespace-pre-wrap">{{ .Notes }}</p>{{ end }}

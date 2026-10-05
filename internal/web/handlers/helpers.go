@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -41,6 +42,17 @@ func queryInt(r *http.Request, key string, fallback int) int {
 // csrfFromCtx is a one-line convenience for templates.
 func csrfFromCtx(r *http.Request) string {
 	return middleware.CSRFTokenFrom(r.Context())
+}
+
+// parseDateInput parses a calendar date in day-month-year ("05-10-2026" or
+// "5-10-2026", the format shown on every form) or ISO ("2026-10-05", native
+// date-input values). Day-first is tried first so "05-10-2026" is 5 October.
+func parseDateInput(s string) (time.Time, error) {
+	s = strings.TrimSpace(s)
+	if t, err := time.Parse("2-1-2006", s); err == nil {
+		return t, nil
+	}
+	return time.Parse("2006-01-02", s)
 }
 
 // Pagination describes a page of results for templates.

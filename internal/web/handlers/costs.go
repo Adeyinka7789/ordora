@@ -52,9 +52,9 @@ func (h *CostHandler) Add(w http.ResponseWriter, r *http.Request) {
 
 	incurredOn := time.Now()
 	if v := formValue(r, "incurred_on"); v != "" {
-		t, err := time.Parse("2006-01-02", v)
+		t, err := parseDateInput(v)
 		if err != nil {
-			h.renderCosts(w, r, scope, orderID, "", "Invalid date.")
+			h.renderCosts(w, r, scope, orderID, "", "Invalid date. Use day-month-year.")
 			return
 		}
 		incurredOn = t
@@ -110,7 +110,7 @@ func (h *CostHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	incurredOn := time.Now()
 	if v := formValue(r, "incurred_on"); v != "" {
-		t, err := time.Parse("2006-01-02", v)
+		t, err := parseDateInput(v)
 		if err != nil {
 			http.Error(w, "invalid date", http.StatusBadRequest)
 			return

@@ -49,7 +49,7 @@
         <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Paid</dt>
         <dd class="font-code-md text-code-md">{{ currency .Order.PaidMinor .Order.Currency }}</dd>
         <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Created</dt>
-        <dd class="font-code-md text-code-md">{{ .Order.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+        <dd class="font-code-md text-code-md">{{ .Order.CreatedAt.Format "02-01-2006 · 15:04" }}</dd>
       </dl>
 
       {{ if .Order.Items }}
@@ -91,7 +91,7 @@
             <tbody>
               {{ range .Order.Payments }}
                 <tr class="border-b border-outline-variant/20">
-                  <td class="py-2 px-space-sm font-code-md">{{ .PaidAt.Format "Jan 2, 2006" }}</td>
+                  <td class="py-2 px-space-sm font-code-md">{{ .PaidAt.Format "02-01-2006" }}</td>
                   <td class="py-2 px-space-sm font-code-md">{{ .Method }}</td>
                   <td class="py-2 px-space-sm font-code-md">{{ if .Reference }}{{ .Reference }}{{ else }}—{{ end }}</td>
                   <td class="py-2 px-space-sm text-right font-code-md tabular-nums">{{ .AmountMinor }}</td>
@@ -176,7 +176,7 @@
               <td class="py-2 px-space-md font-code-md font-bold {{ if eq .Status "DEAD" }}text-error{{ else if eq .Status "SENT" }}text-tertiary{{ end }}">{{ .Status }}</td>
               <td class="py-2 px-space-md text-right tabular-nums">{{ .Attempts }}</td>
               <td class="py-2 px-space-md font-code-md text-on-surface-variant truncate max-w-xs">{{ .LastError }}</td>
-              <td class="py-2 px-space-md font-code-md">{{ .NextAt.Format "Jan 2, 15:04" }}</td>
+              <td class="py-2 px-space-md font-code-md">{{ .NextAt.Format "02-01 15:04" }}</td>
               <td class="py-2 px-space-md">
                 {{ if ne .Status "SENT" }}
                   <form method="post" action="{{ $.Path }}/lookup/jobs/{{ .ID }}/resend" class="inline">

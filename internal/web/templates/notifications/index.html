@@ -34,7 +34,7 @@
               {{ else }}
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-tertiary-fixed text-on-tertiary-fixed">Support</span>
               {{ end }}
-              <span class="font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+              <span class="font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "02-01-2006 · 15:04" }}</span>
               {{ if not .IsRead }}
                 <span class="w-2 h-2 rounded-full bg-primary-container"></span>
               {{ end }}

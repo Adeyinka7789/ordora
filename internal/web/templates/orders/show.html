@@ -45,13 +45,13 @@
           <span class="text-outline">/</span>
           <div class="flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
-            <span>Created {{ .Order.CreatedAt.Format "Jan 2, 2006" }}</span>
+            <span>Created {{ .Order.CreatedAt.Format "02-01-2006" }}</span>
           </div>
           {{ if .Order.ExpectedCompletion }}
             <span class="text-outline">/</span>
             <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">
               <span class="material-symbols-outlined text-[15px]">event_upcoming</span>
-              <span>Target: <strong>{{ .Order.ExpectedCompletion.Format "Jan 2, 2006" }}</strong></span>
+              <span>Target: <strong>{{ .Order.ExpectedCompletion.Format "02-01-2006" }}</strong></span>
             </div>
           {{ end }}
         </div>
@@ -218,7 +218,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-label-md text-label-md font-bold text-on-surface">{{ .ActorName }} — {{ .Action }}</span>
                 </div>
-                <span class="font-label-sm text-label-sm text-outline">{{ .CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+                <span class="font-label-sm text-label-sm text-outline">{{ .CreatedAt.Format "02-01-2006 · 15:04" }}</span>
               </div>
             {{ end }}
           </div>

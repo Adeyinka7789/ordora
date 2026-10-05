@@ -18,7 +18,7 @@
         <span class="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900">Resolved</span>
       {{ end }}
     </div>
-    <span class="font-code-md text-code-md text-on-surface-variant">Opened {{ .Thread.Complaint.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+    <span class="font-code-md text-code-md text-on-surface-variant">Opened {{ .Thread.Complaint.CreatedAt.Format "02-01-2006 · 15:04" }}</span>
     <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Thread.Complaint.Message }}</p>
   </div>
 
@@ -29,7 +29,7 @@
         {{ if .IsAdmin }}
           <span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-primary-fixed text-on-primary-fixed">Ordora team</span>
         {{ end }}
-        <span class="font-code-md text-code-md text-on-surface-variant">{{ .Reply.CreatedAt.Format "Jan 2, 2006 · 15:04" }}</span>
+        <span class="font-code-md text-code-md text-on-surface-variant">{{ .Reply.CreatedAt.Format "02-01-2006 · 15:04" }}</span>
       </div>
       <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Reply.Body }}</p>
     </div>

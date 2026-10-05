@@ -46,7 +46,7 @@
                 {{ if .IsReversal }}<span class="font-code-md text-code-md px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant font-bold">REVERSAL</span>{{ end }}
               </div>
               {{ if .Reference }}<span class="font-body-sm text-body-sm text-on-surface-variant">Ref: <code class="font-code-md">{{ .Reference }}</code></span>{{ end }}
-              <span class="font-label-sm text-label-sm text-outline">{{ .PaidAt.Format "Jan 2, 2006 at 15:04" }}</span>
+              <span class="font-label-sm text-label-sm text-outline">{{ .PaidAt.Format "02-01-2006 · 15:04" }}</span>
               {{ if .Notes }}<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">{{ .Notes }}</span>{{ end }}
             </div>
           </div>

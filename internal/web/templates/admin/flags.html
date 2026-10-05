@@ -61,7 +61,7 @@
               <button type="submit" class="h-9 px-3 rounded bg-surface-container-low border border-outline-variant/30 hover:bg-surface-container font-label-md text-label-md font-semibold">Save</button>
             </div>
           </form>
-          <span class="font-code-md text-code-md text-on-surface-variant">Updated {{ .UpdatedAt.Format "Jan 2, 2006 · 15:04" }} · gate with <code>flags.Enabled(orgID, "{{ .Key }}")</code> in Go or <code>{{ "{{" }} if flag "{{ .Key }}" .Shell.OrgID {{ "}}" }}</code> in templates</span>
+          <span class="font-code-md text-code-md text-on-surface-variant">Updated {{ .UpdatedAt.Format "02-01-2006 · 15:04" }} · gate with <code>flags.Enabled(orgID, "{{ .Key }}")</code> in Go or <code>{{ "{{" }} if flag "{{ .Key }}" .Shell.OrgID {{ "}}" }}</code> in templates</span>
         </div>
       {{ end }}
     </div>

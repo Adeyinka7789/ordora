@@ -39,10 +39,10 @@
       <dd class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ if .Product.Description }}{{ .Product.Description }}{{ else }}—{{ end }}</dd>
 
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Created</dt>
-      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Product.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Product.CreatedAt.Format "02-01-2006 · 15:04" }}</dd>
 
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Updated</dt>
-      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Product.UpdatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Product.UpdatedAt.Format "02-01-2006 · 15:04" }}</dd>
     </dl>
   </div>
 </div>

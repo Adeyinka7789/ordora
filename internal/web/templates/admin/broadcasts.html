@@ -45,7 +45,7 @@
         <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-1">
           <div class="flex items-center justify-between gap-space-sm flex-wrap">
             <span class="font-label-md text-label-md font-bold text-on-surface">{{ .Title }}</span>
-            <span class="font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006 · 15:04" }} · {{ .Recipients }} recipients</span>
+            <span class="font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "02-01-2006 · 15:04" }} · {{ .Recipients }} recipients</span>
           </div>
           {{ if .Body }}<p class="font-body-md text-body-md text-on-surface-variant">{{ .Body }}</p>{{ end }}
           {{ if .Link }}<span class="font-code-md text-code-md text-primary">{{ .Link }}</span>{{ end }}

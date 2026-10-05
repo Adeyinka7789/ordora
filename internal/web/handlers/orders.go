@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -231,9 +231,9 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if due := formValue(r, "expected_completion"); due != "" {
-		t, err := time.Parse("2006-01-02", due)
+		t, err := parseDateInput(due)
 		if err != nil {
-			h.respondCreateError(w, r, scope.OrgID, "Invalid expected completion date.", nil)
+			h.respondCreateError(w, r, scope.OrgID, "Invalid expected completion date. Use day-month-year.", nil)
 			return
 		}
 		in.ExpectedCompletion = &t
@@ -454,7 +454,7 @@ func parseUpdateOrderInput(r *http.Request) (*app.UpdateOrderInput, error) {
 		Description: formValue(r, "description"),
 	}
 	if due := formValue(r, "expected_completion"); due != "" {
-		t, err := time.Parse("2006-01-02", due)
+		t, err := parseDateInput(due)
 		if err != nil {
 			return nil, errors.New("invalid expected completion date")
 		}
@@ -635,8 +635,26 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 // Helpers
 // -----------------------------------------------------------------------------
 
-// parseQuantity parses "2", "2.5", "1.125" into a scaled int64.
+// normalizeNumberInput strips Nigerian-style grouping so "50,000.00",
+// "50 000" and "₦50,000" all parse. Every money/quantity form funnels
+// through parseQuantity/parseMoneyMinor below, so this covers all of them.
+func normalizeNumberInput(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ReplaceAll(s, ",", "")
+	s = strings.ReplaceAll(s, " ", "")
+	upper := strings.ToUpper(s)
+	for _, p := range []string{"₦", "$", "£", "€", "NGN", "USD", "GBP", "EUR"} {
+		if strings.HasPrefix(upper, p) {
+			s = strings.TrimSpace(s[len(p):])
+			break
+		}
+	}
+	return s
+}
+
+// parseQuantity parses "2", "2.5", "1.125" (or "1,000.5") into a scaled int64.
 func parseQuantity(s string) (int64, error) {
+	s = normalizeNumberInput(s)
 	if s == "" {
 		return 0, errors.New("empty quantity")
 	}
@@ -659,8 +677,9 @@ func formatQuantity(scaled int64) string {
 	return s
 }
 
-// parseMoneyMinor parses "1500.00" into int64 minor units (150000).
+// parseMoneyMinor parses "1500.00" (or "1,500.00") into int64 minor units (150000).
 func parseMoneyMinor(s string) (int64, error) {
+	s = normalizeNumberInput(s)
 	if s == "" {
 		return 0, errors.New("empty amount")
 	}

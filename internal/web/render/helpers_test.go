@@ -3,6 +3,7 @@ package render
 import (
 	"testing"
 	"text/template"
+	"time"
 )
 
 func TestTemplateFuncs_HasDict(t *testing.T) {
@@ -55,6 +56,22 @@ func TestCurrency_Grouping(t *testing.T) {
 	}
 	if got := currency(100000, "USD"); got != "USD 1,000.00" {
 		t.Errorf("currency code passthrough: got %q", got)
+	}
+}
+
+// TestFormatDate_DayMonthYear locks the display format: day-month-year.
+func TestFormatDate_DayMonthYear(t *testing.T) {
+	fm := templateFuncs()
+	formatDate, ok := fm["formatDate"].(func(time.Time) string)
+	if !ok {
+		t.Fatal("formatDate func has unexpected signature")
+	}
+	got := formatDate(time.Date(2026, time.October, 5, 14, 30, 0, 0, time.UTC))
+	if got != "05-10-2026" {
+		t.Errorf("formatDate = %q, want %q", got, "05-10-2026")
+	}
+	if got := formatDate(time.Time{}); got != "" {
+		t.Errorf("zero time should render empty, got %q", got)
 	}
 }
 

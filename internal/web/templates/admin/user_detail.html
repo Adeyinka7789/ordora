@@ -23,9 +23,9 @@
       <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Email verified</dt>
       <dd>{{ if .User.EmailVerified }}<span class="text-tertiary font-semibold">✓ Verified</span>{{ else }}<span class="text-error font-semibold">Not verified</span>{{ end }}</dd>
       <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Created</dt>
-      <dd class="font-code-md text-code-md">{{ .User.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      <dd class="font-code-md text-code-md">{{ .User.CreatedAt.Format "02-01-2006 · 15:04" }}</dd>
       <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Updated</dt>
-      <dd class="font-code-md text-code-md">{{ .User.UpdatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      <dd class="font-code-md text-code-md">{{ .User.UpdatedAt.Format "02-01-2006 · 15:04" }}</dd>
     </dl>
   </div>
 
@@ -79,8 +79,8 @@
             <tr class="border-b border-outline-variant/20">
               <td class="py-3 px-space-md font-body-sm text-body-sm truncate max-w-md">{{ .UserAgent }}</td>
               <td class="py-3 px-space-md font-code-md text-code-md">{{ if .IP }}{{ .IP }}{{ else }}—{{ end }}</td>
-              <td class="py-3 px-space-md font-code-md text-code-md">{{ .CreatedAt.Format "Jan 2, 15:04" }}</td>
-              <td class="py-3 px-space-md font-code-md text-code-md">{{ .ExpiresAt.Format "Jan 2, 15:04" }}</td>
+              <td class="py-3 px-space-md font-code-md text-code-md">{{ .CreatedAt.Format "02-01 15:04" }}</td>
+              <td class="py-3 px-space-md font-code-md text-code-md">{{ .ExpiresAt.Format "02-01 15:04" }}</td>
             </tr>
           {{ end }}
         </tbody>

@@ -53,9 +53,9 @@ func (h *PaymentHandler) Record(w http.ResponseWriter, r *http.Request) {
 
 	var paidAt time.Time
 	if v := formValue(r, "paid_at"); v != "" {
-		t, err := time.Parse("2006-01-02", v)
+		t, err := parseDateInput(v)
 		if err != nil {
-			h.renderError(w, r, scope, orderID, "Invalid payment date.")
+			h.renderError(w, r, scope, orderID, "Invalid payment date. Use day-month-year.")
 			return
 		}
 		paidAt = t

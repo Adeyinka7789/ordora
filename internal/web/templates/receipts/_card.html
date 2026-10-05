@@ -9,7 +9,7 @@
      data-total="{{ currency .TotalMinor .Currency }}"
      data-order="{{ .OrderNumber }}"
      data-customer="{{ .CustomerName }}"
-     data-date="{{ if .FulfilledAt }}{{ .FulfilledAt.Format "Jan 2, 2006" }}{{ else }}{{ .CreatedAt.Format "Jan 2, 2006" }}{{ end }}"
+     data-date="{{ if .FulfilledAt }}{{ .FulfilledAt.Format "02-01-2006" }}{{ else }}{{ .CreatedAt.Format "02-01-2006" }}{{ end }}"
      data-status="{{ .PayStatus }}"
      data-methods="{{ .Methods }}"
      data-link="{{ .ReceiptURL }}">
@@ -84,7 +84,7 @@
           {{ if .IsReversed }}<span class="rcpt-flag">REVERSED</span>{{ end }}
           {{ if .IsReversal }}<span class="rcpt-flag">REVERSAL</span>{{ end }}
         </div>
-        <div class="rcpt-pay-sub">{{ .PaidAt.Format "Jan 2, 2006 · 15:04" }}{{ if .Reference }} · Ref: {{ .Reference }}{{ end }}</div>
+        <div class="rcpt-pay-sub">{{ .PaidAt.Format "02-01-2006 · 15:04" }}{{ if .Reference }} · Ref: {{ .Reference }}{{ end }}</div>
         {{ if .Notes }}<div class="rcpt-pay-notes">{{ .Notes }}</div>{{ end }}
         {{ if .Proofs }}
         <div class="rcpt-proofs">
@@ -116,7 +116,7 @@
   <div class="rcpt-foot">
     <div>Thank you for your patronage.</div>
     {{ if .ReceiptURL }}<div class="rcpt-url">{{ .ReceiptURL }}</div>{{ end }}
-    <div class="rcpt-generated">Generated {{ .GeneratedAt.Format "Jan 2, 2006 · 15:04" }}</div>
+    <div class="rcpt-generated">Generated {{ .GeneratedAt.Format "02-01-2006 · 15:04" }}</div>
   </div>
 </div>
 {{ end }}

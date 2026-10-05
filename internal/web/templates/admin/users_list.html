@@ -36,7 +36,7 @@
                 <td class="py-3 px-space-md text-right tabular-nums">{{ .MembershipCount }}</td>
                 <td class="py-3 px-space-md text-right tabular-nums">{{ .SessionCount }}</td>
                 <td class="py-3 px-space-md">{{ if .EmailVerified }}<span class="text-tertiary">✓</span>{{ else }}<span class="text-outline">—</span>{{ end }}</td>
-                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "Jan 2, 2006" }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">{{ .CreatedAt.Format "02-01-2006" }}</td>
               </tr>
             {{ end }}
           </tbody>

@@ -36,10 +36,10 @@
       <dd class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ if .Customer.Notes }}{{ .Customer.Notes }}{{ else }}—{{ end }}</dd>
 
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Created</dt>
-      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Customer.CreatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Customer.CreatedAt.Format "02-01-2006 · 15:04" }}</dd>
 
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Updated</dt>
-      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Customer.UpdatedAt.Format "Jan 2, 2006 at 15:04" }}</dd>
+      <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Customer.UpdatedAt.Format "02-01-2006 · 15:04" }}</dd>
     </dl>
   </div>
 
@@ -71,7 +71,7 @@
                 <td class="py-3 px-space-md">{{ template "partials/status_badge.html" $o.Status }}</td>
                 <td class="py-3 px-space-md text-right font-code-md text-code-md font-semibold tabular-nums">{{ currency $o.Total.Amount $o.Currency }}</td>
                 <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">
-                  {{ if $o.ExpectedCompletion }}{{ $o.ExpectedCompletion.Format "Jan 2" }}{{ else }}—{{ end }}
+                  {{ if $o.ExpectedCompletion }}{{ $o.ExpectedCompletion.Format "02-01" }}{{ else }}—{{ end }}
                 </td>
               </tr>
             {{ end }}

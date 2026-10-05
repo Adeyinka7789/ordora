@@ -10,7 +10,7 @@
           {{ if .View.ExpectedCompletion }}
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
               <span class="material-symbols-outlined text-[14px]">event</span>
-              <span>Due {{ .View.ExpectedCompletion.Format "Jan 2, 2006" }}</span>
+              <span>Due {{ .View.ExpectedCompletion.Format "02-01-2006" }}</span>
             </span>
           {{ end }}
         </div>

@@ -22,7 +22,7 @@
           <div class="flex items-center justify-between">
             <div class="flex flex-col min-w-0">
               <a href="/attachments/{{ .ID }}" class="font-label-md text-label-md font-bold text-on-surface truncate hover:text-primary">{{ .Filename }}</a>
-              <span class="font-label-sm text-label-sm text-outline">{{ .HumanSize }} · {{ .CreatedAt.Format "Jan 2" }}</span>
+              <span class="font-label-sm text-label-sm text-outline">{{ .HumanSize }} · {{ .CreatedAt.Format "02-01" }}</span>
             </div>
             <a href="/attachments/{{ .ID }}" class="p-1 text-on-surface-variant hover:text-primary transition-colors" title="Download">
               <span class="material-symbols-outlined text-[18px]">download</span>
