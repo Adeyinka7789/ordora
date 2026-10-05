@@ -129,6 +129,10 @@ func run() error {
 	} else {
 		render.Contact = cinfo
 	}
+	if _, err := os.Stat(cfg.ContactFile); err != nil {
+		slog.Warn("contact: file not found, utility bar and WhatsApp button hidden",
+			"file", cfg.ContactFile)
+	}
 
 	// ---- Feature flags (Waffle-style) ----
 	// Fail-closed in-memory snapshot, refreshed every 30s; admin writes
