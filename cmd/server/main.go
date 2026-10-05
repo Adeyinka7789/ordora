@@ -276,6 +276,11 @@ func run() error {
 		Service:  settingsService,
 		Renderer: renderer,
 	}
+	measTmplH := &handlers.MeasurementTemplateHandler{
+		Repo:     measurementRepo,
+		Orgs:     postgres.NewOrgRepo(db),
+		Renderer: renderer,
+	}
 
 	stubH := &handlers.StubHandler{Renderer: renderer}
 
@@ -691,6 +696,12 @@ func run() error {
 	// ---- Settings + profile ----
 	mux.Handle("GET /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.Settings)))
 	mux.Handle("POST /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.UpdateSettings)))
+	mux.Handle("GET /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Index)))
+	mux.Handle("GET /settings/measurements/new", middleware.RequireTenant(http.HandlerFunc(measTmplH.New)))
+	mux.Handle("POST /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Create)))
+	mux.Handle("GET /settings/measurements/{id}/edit", middleware.RequireTenant(http.HandlerFunc(measTmplH.Edit)))
+	mux.Handle("POST /settings/measurements/{id}", middleware.RequireTenant(http.HandlerFunc(measTmplH.Update)))
+	mux.Handle("POST /settings/measurements/{id}/delete", middleware.RequireTenant(http.HandlerFunc(measTmplH.Delete)))
 	mux.Handle("GET /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.Profile)))
 	mux.Handle("POST /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.UpdateProfile)))
 	mux.Handle("POST /profile/password", middleware.RequireAuth(http.HandlerFunc(settingsH.ChangePassword)))

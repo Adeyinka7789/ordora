@@ -734,24 +734,31 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load tailoring measurements (best-effort; absent for non-tailoring).
+	// The snapshot stored at order time renders history even if the template
+	// was edited or deleted afterwards; the live template is only a fallback
+	// for rows written before the snapshot migration.
 	if h.Measurements != nil {
 		if m, err := h.Measurements.GetByOrder(r.Context(), scope, o.ID); err == nil {
-			if tmpl, err := h.Measurements.GetTemplate(r.Context(), scope, m.TemplateID); err == nil {
-				view := &measShowView{
-					GenderLabel:  tmpl.Gender.Label(),
-					Garment:      m.Garment,
-					TemplateName: m.TemplateName,
-					Notes:        m.Notes,
+			fields := m.SnapshotFields
+			if len(fields) == 0 && m.TemplateID != uuid.Nil {
+				if tmpl, err := h.Measurements.GetTemplate(r.Context(), scope, m.TemplateID); err == nil {
+					fields = tmpl.Fields
 				}
-				for _, f := range tmpl.Fields {
-					if v := strings.TrimSpace(m.Values[f.Key]); v != "" {
-						view.Rows = append(view.Rows, measFieldView{
-							Label: f.Label, Value: v, Unit: f.Unit,
-						})
-					}
-				}
-				page.Measurement = view
 			}
+			view := &measShowView{
+				GenderLabel:  m.Gender.Label(),
+				Garment:      m.Garment,
+				TemplateName: m.TemplateName,
+				Notes:        m.Notes,
+			}
+			for _, f := range fields {
+				if v := strings.TrimSpace(m.Values[f.Key]); v != "" {
+					view.Rows = append(view.Rows, measFieldView{
+						Label: f.Label, Value: v, Unit: f.Unit,
+					})
+				}
+			}
+			page.Measurement = view
 		}
 	}
 

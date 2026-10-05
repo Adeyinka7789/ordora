@@ -1,0 +1,71 @@
+{{ define "settings/measurements/form.html" }}
+<div class="p-space-lg lg:p-space-xl max-w-3xl mx-auto flex flex-col gap-space-lg">
+
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">{{ .Title }}</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Rename fields, drop ones you don't take, or add extras for your style. Units are display hints (in/cm).</p>
+  </div>
+
+  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  <form method="post" action="{{ if .IsEdit }}/settings/measurements/{{ .TemplateID }}{{ else }}/settings/measurements{{ end }}"
+        class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Template name *</span>
+        <input type="text" name="name" value="{{ .FormName }}" required maxlength="120" placeholder="e.g. My Senator Style"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Garment slug *</span>
+        <input type="text" name="garment" value="{{ .FormGarment }}" required maxlength="60" placeholder="e.g. senator"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Lowercase, e.g. shirt, kaftan, senator, dress.</span>
+      </label>
+    </div>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Fit for</span>
+      <select name="gender"
+              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="male" {{ if eq .FormGender "male" }}selected{{ end }}>Male</option>
+        <option value="female" {{ if eq .FormGender "female" }}selected{{ end }}>Female</option>
+        <option value="unisex" {{ if eq .FormGender "unisex" }}selected{{ end }}>Unisex (both)</option>
+      </select>
+    </label>
+
+    <div class="flex flex-col gap-space-xs">
+      <span class="font-label-md text-label-md text-on-surface">Fields (blank rows are ignored)</span>
+      {{ range $i, $f := .Fields }}
+        <div class="grid grid-cols-12 gap-space-xs items-center">
+          <input type="text" name="fields[{{ $i }}][label]" value="{{ $f.Label }}" maxlength="80" placeholder="Label e.g. Chest"
+                 class="col-span-5 h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <input type="text" name="fields[{{ $i }}][key]" value="{{ $f.Key }}" maxlength="40" placeholder="key auto"
+                 class="col-span-3 h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <select name="fields[{{ $i }}][unit]"
+                  class="col-span-2 h-9 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+            <option value="in" {{ if eq $f.Unit "in" }}selected{{ end }}>in</option>
+            <option value="cm" {{ if eq $f.Unit "cm" }}selected{{ end }}>cm</option>
+          </select>
+          <label class="col-span-2 flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant cursor-pointer">
+            <input type="checkbox" name="fields[{{ $i }}][required]" {{ if $f.Required }}checked{{ end }} class="h-4 w-4">
+            Required
+          </label>
+        </div>
+      {{ end }}
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Keys are lowercase letters/numbers/underscore and must be unique. Leave the key empty to auto-generate it from the label.</span>
+    </div>
+
+    <div class="flex items-center gap-space-sm pt-space-xs">
+      <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">{{ if .IsEdit }}Save changes{{ else }}Create template{{ end }}</button>
+      <a href="/settings/measurements" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center">Cancel</a>
+    </div>
+  </form>
+
+  {{ if .IsEdit }}
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Past orders keep their original measurements — editing this template only affects new orders.</p>
+  {{ end }}
+</div>
+{{ end }}

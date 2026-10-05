@@ -414,6 +414,7 @@ func (s *OrderService) saveMeasurementTx(ctx context.Context, tx pgx.Tx, scope t
 		TemplateName:   tmpl.Name,
 		Values:         in.Values,
 		Notes:          strings.TrimSpace(in.Notes),
+		SnapshotFields: tmpl.Fields,
 		CreatedBy:      scope.UserID,
 		CreatedAt:      now,
 		UpdatedAt:      now,

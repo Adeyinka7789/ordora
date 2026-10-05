@@ -48,18 +48,27 @@ type measShowView struct {
 }
 
 // measTemplateList returns all visible templates (male + female genders,
-// tenant-owned first). Used to build the garment picker.
+// tenant-owned first). Unisex rows match both gender queries, so results are
+// de-duplicated by id. Used to build the garment picker.
 func (h *OrderHandler) measTemplateList(r *http.Request, scope tenant.TenantScope) []measurement.Template {
 	if h.Measurements == nil {
 		return nil
 	}
 	var out []measurement.Template
+	seen := map[string]bool{}
 	for _, g := range measurement.Genders {
 		tmpls, err := h.Measurements.ListTemplates(r.Context(), scope, g)
 		if err != nil {
 			continue
 		}
-		out = append(out, tmpls...)
+		for _, t := range tmpls {
+			key := t.ID.String()
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			out = append(out, t)
+		}
 	}
 	return out
 }
