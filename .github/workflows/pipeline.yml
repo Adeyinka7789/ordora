@@ -160,6 +160,9 @@ jobs:
           mkdir -p "release-$SHA"
           cp dist/ordora-server dist/ordora-migrate dist/ordora-worker dist/ordora-seedadmin "release-$SHA/"
           cp -r migrations "release-$SHA/"
+          mkdir -p "release-$SHA/internal/web"
+          cp -r internal/web/templates "release-$SHA/internal/web/"
+          cp -r internal/web/static "release-$SHA/internal/web/"
           tar -czf "ordora-$SHA.tar.gz" -C "release-$SHA" .
 
       - name: Upload release artifact
