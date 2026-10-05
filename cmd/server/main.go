@@ -282,7 +282,10 @@ func run() error {
 		Renderer: renderer,
 	}
 
-	stubH := &handlers.StubHandler{Renderer: renderer}
+	storefrontH := &handlers.StorefrontHandler{
+		Orgs:     postgres.NewOrgRepo(db),
+		Renderer: renderer,
+	}
 
 	// ---- Search ----
 	searchRepo := postgres.NewSearchRepo(db)
@@ -691,7 +694,7 @@ func run() error {
 	// ---- Stub pages (nav links that are on the roadmap) ----
 	mux.Handle("GET /payments", gated("ledger", http.HandlerFunc(ledgerH.Index)))
 	mux.Handle("GET /payments/export.csv", gated("ledger", http.HandlerFunc(ledgerH.ExportCSV)))
-	mux.Handle("GET /storefront", middleware.RequireTenant(http.HandlerFunc(stubH.Storefront)))
+	mux.Handle("GET /storefront", middleware.RequireTenant(http.HandlerFunc(storefrontH.Index)))
 
 	// ---- Settings + profile ----
 	mux.Handle("GET /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.Settings)))

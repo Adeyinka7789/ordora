@@ -124,6 +124,7 @@ func (h *PortalHandler) IntakeForm(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
+		slog.Error("portal: intake lookup failed", "err", err, "slug", slug)
 		http.Error(w, "could not load business", http.StatusInternalServerError)
 		return
 	}
@@ -155,6 +156,7 @@ func (h *PortalHandler) IntakeSubmit(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
+		slog.Error("portal: intake submit lookup failed", "err", err, "slug", slug)
 		http.Error(w, "could not load business", http.StatusInternalServerError)
 		return
 	}

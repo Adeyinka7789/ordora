@@ -46,9 +46,3 @@ func (h *StubHandler) Payments(w http.ResponseWriter, r *http.Request) {
 		"A consolidated view of all payments across every order, with filters and export, is planned for a future release.",
 		"account_balance_wallet")
 }
-
-func (h *StubHandler) Storefront(w http.ResponseWriter, r *http.Request) {
-	h.page(w, r, "Public Storefront",
-		"Your public order intake link and customer portal are on the roadmap. Customers will be able to submit orders and track fulfillment without an account.",
-		"storefront")
-}
