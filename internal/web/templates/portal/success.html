@@ -20,6 +20,12 @@
       <span class="font-label-md text-label-md text-on-surface-variant">Status</span>
       <span class="font-label-md text-label-md font-semibold text-on-surface">Pending review</span>
     </div>
+    {{ if .TotalMinor }}
+      <div class="flex justify-between">
+        <span class="font-label-md text-label-md text-on-surface-variant">Estimated total</span>
+        <span class="font-code-md text-code-md font-bold text-on-surface">{{ currency .TotalMinor .Currency }}</span>
+      </div>
+    {{ end }}
     {{ if .OrgPhone }}
       <div class="flex justify-between">
         <span class="font-label-md text-label-md text-on-surface-variant">Contact</span>

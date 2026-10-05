@@ -47,9 +47,29 @@
         <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Your Order</h2>
       </div>
 
+      {{ if .Products }}
+        <div class="flex flex-col gap-space-sm">
+          <span class="font-label-md text-label-md text-on-surface">Pick from the menu <span class="text-on-surface-variant font-normal">(enter a quantity for anything you want)</span></span>
+          {{ range .Products }}
+            <div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low">
+              <div class="flex-1 flex flex-col min-w-0">
+                <span class="font-label-md text-label-md text-on-surface font-semibold truncate">{{ .Name }}</span>
+                {{ if .Description }}<span class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ .Description }}</span>{{ end }}
+                <span class="font-code-md text-code-md text-primary font-bold">{{ currency .PriceMinor .Currency }}</span>
+              </div>
+              <label class="flex flex-col gap-1 shrink-0">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Qty</span>
+                <input type="number" name="qty_{{.ID}}" value="{{ index $.Quantities .ID }}" min="0" step="1" inputmode="numeric" placeholder="0"
+                       class="h-9 w-20 px-3 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md text-center focus:outline-none focus:ring-2 focus:ring-primary-container">
+              </label>
+            </div>
+          {{ end }}
+        </div>
+      {{ end }}
+
       <label class="flex flex-col gap-1">
-        <span class="font-label-md text-label-md text-on-surface">What would you like? *</span>
-        <textarea name="description" rows="5" required maxlength="2000" placeholder="Be as specific as you can. Include quantities, materials, colors, sizes, and any references."
+        <span class="font-label-md text-label-md text-on-surface">{{ if .Products }}Anything else? (optional){{ else }}What would you like? *{{ end }}</span>
+        <textarea name="description" rows="5" {{ if not .Products }}required{{ end }} maxlength="2000" placeholder="Be as specific as you can. Include quantities, materials, colors, sizes, and any references."
                   class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Form.Description }}</textarea>
       </label>
 

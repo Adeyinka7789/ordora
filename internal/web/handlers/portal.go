@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
@@ -94,12 +96,22 @@ func buildItemViews(v *app.PortalView) []portalItemView {
 // --- Intake form ---
 
 type intakePageData struct {
-	Title     string
-	OrgName   string
-	Slug      string
-	CSRFToken string
-	Error     string
-	Form      intakeForm
+	Title      string
+	OrgName    string
+	Slug       string
+	CSRFToken  string
+	Error      string
+	Form       intakeForm
+	Products   []intakeProductView
+	Quantities map[string]string
+}
+
+type intakeProductView struct {
+	ID          string
+	Name        string
+	Description string
+	PriceMinor  int64
+	Currency    string
 }
 
 type intakeForm struct {
@@ -130,12 +142,55 @@ func (h *PortalHandler) IntakeForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := intakePageData{
-		Title:     "Place an order",
-		OrgName:   org.Name,
-		Slug:      slug,
-		CSRFToken: middleware.CSRFTokenFrom(r.Context()),
+		Title:      "Place an order",
+		OrgName:    org.Name,
+		Slug:       slug,
+		CSRFToken:  middleware.CSRFTokenFrom(r.Context()),
+		Products:   h.intakeProducts(r, slug),
+		Quantities: map[string]string{},
 	}
 	h.Renderer.PagePublic(w, http.StatusOK, "layouts/public.html", "portal/intake.html", data)
+}
+
+// intakeProducts loads the shop's active catalog (best-effort: a catalog
+// failure must never break the free-text form).
+func (h *PortalHandler) intakeProducts(r *http.Request, slug string) []intakeProductView {
+	list := h.Public.ListProducts(r.Context(), slug)
+	out := make([]intakeProductView, 0, len(list))
+	for _, p := range list {
+		out = append(out, intakeProductView{
+			ID: p.ID.String(), Name: p.Name, Description: p.Description,
+			PriceMinor: p.UnitPriceMinor, Currency: p.Currency,
+		})
+	}
+	return out
+}
+
+// parseIntakeItems reads qty_<productID> fields. Blank/zero quantities are
+// skipped; the raw strings are echoed back for error re-renders.
+func parseIntakeItems(r *http.Request) ([]app.PublicOrderItemInput, map[string]string) {
+	var items []app.PublicOrderItemInput
+	echo := map[string]string{}
+	for key, vals := range r.PostForm {
+		if !strings.HasPrefix(key, "qty_") || len(vals) == 0 {
+			continue
+		}
+		raw := strings.TrimSpace(vals[0])
+		if raw == "" {
+			continue
+		}
+		id, err := uuid.Parse(strings.TrimPrefix(key, "qty_"))
+		if err != nil || id == uuid.Nil {
+			continue
+		}
+		echo[id.String()] = raw
+		scaled, err := parseQuantity(raw)
+		if err != nil || scaled <= 0 {
+			continue
+		}
+		items = append(items, app.PublicOrderItemInput{ProductID: id, QuantityScaled: scaled})
+	}
+	return items, echo
 }
 
 // IntakeSubmit handles POST /order/{slug}.
@@ -168,11 +223,13 @@ func (h *PortalHandler) IntakeSubmit(w http.ResponseWriter, r *http.Request) {
 		CustomerPhone: formValue(r, "customer_phone"),
 		Description:   formValue(r, "description"),
 	}
+	items, echo := parseIntakeItems(r)
+	in.Items = items
 
 	if d := formValue(r, "expected_completion"); d != "" {
 		t, err := parseDateInput(d)
 		if err != nil {
-			h.intakeError(w, r, org, "Invalid completion date. Use day-month-year.", in)
+			h.intakeError(w, r, org, "Invalid completion date. Use day-month-year.", in, echo)
 			return
 		}
 		in.ExpectedDate = &t
@@ -180,7 +237,7 @@ func (h *PortalHandler) IntakeSubmit(w http.ResponseWriter, r *http.Request) {
 	if b := formValue(r, "budget"); b != "" {
 		minor, err := parseMoneyMinor(b)
 		if err != nil {
-			h.intakeError(w, r, org, "Invalid budget.", in)
+			h.intakeError(w, r, org, "Invalid budget.", in, echo)
 			return
 		}
 		in.BudgetMinor = &minor
@@ -188,7 +245,7 @@ func (h *PortalHandler) IntakeSubmit(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.Public.Submit(r.Context(), in)
 	if err != nil {
-		h.intakeError(w, r, org, humanizePublicOrderError(err), in)
+		h.intakeError(w, r, org, humanizePublicOrderError(err), in, echo)
 		return
 	}
 
@@ -198,23 +255,29 @@ func (h *PortalHandler) IntakeSubmit(w http.ResponseWriter, r *http.Request) {
 		OrderNumber  string
 		OrgName      string
 		OrgPhone     string
+		TotalMinor   int64
+		Currency     string
 	}{
 		Title:        "Request received",
 		CustomerName: result.CustomerName,
 		OrderNumber:  result.OrderNumber,
 		OrgName:      result.OrgName,
 		OrgPhone:     result.OrgPhone,
+		TotalMinor:   result.TotalMinor,
+		Currency:     result.Currency,
 	}
 	h.Renderer.PagePublic(w, http.StatusOK, "layouts/public.html", "portal/success.html", data)
 }
 
-func (h *PortalHandler) intakeError(w http.ResponseWriter, r *http.Request, org *app.PublicOrg, msg string, form app.PublicOrderInput) {
+func (h *PortalHandler) intakeError(w http.ResponseWriter, r *http.Request, org *app.PublicOrg, msg string, form app.PublicOrderInput, echo map[string]string) {
 	data := intakePageData{
-		Title:     "Place an order",
-		OrgName:   org.Name,
-		Slug:      form.Slug,
-		CSRFToken: middleware.CSRFTokenFrom(r.Context()),
-		Error:     msg,
+		Title:      "Place an order",
+		OrgName:    org.Name,
+		Slug:       form.Slug,
+		CSRFToken:  middleware.CSRFTokenFrom(r.Context()),
+		Error:      msg,
+		Products:   h.intakeProducts(r, form.Slug),
+		Quantities: echo,
 		Form: intakeForm{
 			CustomerName:  form.CustomerName,
 			CustomerEmail: form.CustomerEmail,
@@ -239,6 +302,12 @@ func humanizePublicOrderError(err error) string {
 		return "Please enter your email."
 	case errors.Is(err, app.ErrPublicDescRequired):
 		return "Please tell us what you'd like to order."
+	case errors.Is(err, app.ErrPublicOrderEmpty):
+		return "Pick at least one product or tell us what you'd like to order."
+	case errors.Is(err, app.ErrPublicTooManyItems):
+		return "Too many items — please keep it to 25 or fewer."
+	case errors.Is(err, app.ErrPublicQtyInvalid):
+		return "One of the quantities looks wrong."
 	case errors.Is(err, app.ErrPublicOrgNotFound):
 		return "This business could not be found."
 	default:
