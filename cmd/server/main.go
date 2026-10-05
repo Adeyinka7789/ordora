@@ -52,10 +52,25 @@ func run() error {
 	}
 
 	// Error monitoring. Empty DSN (local dev) disables Sentry entirely.
-	if err := observe.Init(cfg.Sentry.DSN, cfg.Sentry.Environment); err != nil {
+	if err := observe.Init(observe.Options{
+		DSN:              cfg.Sentry.DSN,
+		Environment:      cfg.Sentry.Environment,
+		TracesSampleRate: cfg.Sentry.TracesSampleRate,
+		EnableLogs:       cfg.Sentry.EnableLogs,
+	}); err != nil {
 		return fmt.Errorf("sentry: %w", err)
 	}
 	defer observe.Flush()
+
+	// One-shot "It works!" ping: ORDORA_SENTRY_VERIFY=1 sends a test
+	// message at startup (then unset it — every boot would spam Issues).
+	if cfg.Sentry.Verify {
+		if observe.Verify() {
+			slog.Info("sentry: verify ping sent — check Issues")
+		} else {
+			slog.Warn("sentry: verify requested but Sentry is disabled")
+		}
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -762,6 +777,7 @@ func run() error {
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.
 	handler := chain(mux,
+		observe.Traced,
 		middleware.Recover(renderer),
 		middleware.RequestID,
 		middleware.Logger,
@@ -826,5 +842,6 @@ func setupLogging() {
 	} else {
 		h = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
-	slog.SetDefault(slog.New(h))
+	// Fan-out to Sentry Logs when enabled (stdout output unchanged).
+	slog.SetDefault(slog.New(observe.SentryHandler(h)))
 }

@@ -31,10 +31,23 @@ func run() error {
 		return err
 	}
 
-	if err := observe.Init(cfg.Sentry.DSN, cfg.Sentry.Environment); err != nil {
+	if err := observe.Init(observe.Options{
+		DSN:              cfg.Sentry.DSN,
+		Environment:      cfg.Sentry.Environment,
+		TracesSampleRate: cfg.Sentry.TracesSampleRate,
+		EnableLogs:       cfg.Sentry.EnableLogs,
+	}); err != nil {
 		return err
 	}
 	defer observe.Flush()
+
+	if cfg.Sentry.Verify {
+		if observe.Verify() {
+			slog.Info("sentry: verify ping sent — check Issues")
+		} else {
+			slog.Warn("sentry: verify requested but Sentry is disabled")
+		}
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -75,5 +88,6 @@ func setupLogging() {
 	} else {
 		h = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
-	slog.SetDefault(slog.New(h))
+	// Fan-out to Sentry Logs when enabled (stdout output unchanged).
+	slog.SetDefault(slog.New(observe.SentryHandler(h)))
 }

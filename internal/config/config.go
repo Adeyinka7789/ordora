@@ -93,6 +93,13 @@ type SessionConfig struct {
 type SentryConfig struct {
 	DSN         string
 	Environment string
+	// TracesSampleRate enables per-request transactions (0 disables
+	// sending; 1.0 captures everything — keep low in production).
+	TracesSampleRate float64
+	// EnableLogs forwards slog Warn/Error records to Sentry Logs.
+	EnableLogs bool
+	// Verify sends one "It works!" test message at startup.
+	Verify bool
 }
 
 type EmailConfig struct {
@@ -121,8 +128,11 @@ func Load() (*Config, error) {
 		SupportEmail: getEnv("ORDORA_SUPPORT_EMAIL", "support@ordora.local"),
 		ContactFile:  getEnv("ORDORA_CONTACT_FILE", "contact.json"),
 		Sentry: SentryConfig{
-			DSN:         getEnv("ORDORA_SENTRY_DSN", ""),
-			Environment: getEnv("ORDORA_SENTRY_ENVIRONMENT", getEnv("ORDORA_ENV", "development")),
+			DSN:              getEnv("ORDORA_SENTRY_DSN", ""),
+			Environment:      getEnv("ORDORA_SENTRY_ENVIRONMENT", getEnv("ORDORA_ENV", "development")),
+			TracesSampleRate: getEnvFloat("ORDORA_SENTRY_TRACES_SAMPLE_RATE", 0),
+			EnableLogs:       getEnvBool("ORDORA_SENTRY_ENABLE_LOGS", true),
+			Verify:           getEnvBool("ORDORA_SENTRY_VERIFY", false),
 		},
 		HTTP: HTTPConfig{
 			Addr:            getEnv("ORDORA_HTTP_ADDR", ":8080"),
@@ -249,4 +259,16 @@ func getEnvBool(key string, fallback bool) bool {
 		return false
 	}
 	return fallback
+}
+
+func getEnvFloat(key string, fallback float64) float64 {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return fallback
+	}
+	f, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+	if err != nil {
+		return fallback
+	}
+	return f
 }

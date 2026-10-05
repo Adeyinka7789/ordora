@@ -72,6 +72,9 @@ All config comes from environment (see `.env.example`). Nothing reads
 | `ORDORA_SUPPORT_EMAIL` | `support@ordora.local` | Footer contact + support reference |
 | `ORDORA_SENTRY_DSN` | _(empty = disabled)_ | Sentry project DSN |
 | `ORDORA_SENTRY_ENVIRONMENT` | = `ORDORA_ENV` | Sentry environment tag |
+| `ORDORA_SENTRY_TRACES_SAMPLE_RATE` | `0` | Fraction of requests traced (`1.0` = all; keep low in prod) |
+| `ORDORA_SENTRY_ENABLE_LOGS` | `true` | Forward slog Warn/Error records to Sentry Logs |
+| `ORDORA_SENTRY_VERIFY` | _(off)_ | Set `1` for a one-shot "It works!" ping at startup |
 | `ORDORA_ADMIN_PATH` | `/ops-x9k2m` | Secret admin panel prefix — change in production |
 | `ORDORA_ADMIN_SESSION_COOKIE` | `ordora_admin_session` | Must differ from business cookie |
 | `ORDORA_ADMIN_SESSION_TTL_HOURS` | `8` | Admin session lifetime |
