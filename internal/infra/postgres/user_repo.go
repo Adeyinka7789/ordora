@@ -73,7 +73,7 @@ func (r *UserRepo) GetByEmailTx(ctx context.Context, tx pgx.Tx, email user.Email
 
 func (r *UserRepo) getByEmailTx(ctx context.Context, tx pgx.Tx, email user.Email) (*user.User, error) {
 	const q = `
-		SELECT id, email, password_hash, name, email_verified_at, created_at, updated_at
+		SELECT id, email, password_hash, name, email_verified_at, onboarding_completed_at, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
@@ -85,7 +85,7 @@ func (r *UserRepo) GetByID(ctx context.Context, id uuid.UUID) (*user.User, error
 	var u *user.User
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `
-			SELECT id, email, password_hash, name, email_verified_at, created_at, updated_at
+			SELECT id, email, password_hash, name, email_verified_at, onboarding_completed_at, created_at, updated_at
 			FROM users
 			WHERE id = $1
 		`
@@ -135,10 +135,11 @@ func scanUser(row pgx.Row) (*user.User, error) {
 		passwordHash    string
 		name            string
 		emailVerifiedAt *time.Time
+		onboardedAt     *time.Time
 		createdAt       time.Time
 		updatedAt       time.Time
 	)
-	if err := row.Scan(&id, &emailStr, &passwordHash, &name, &emailVerifiedAt, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&id, &emailStr, &passwordHash, &name, &emailVerifiedAt, &onboardedAt, &createdAt, &updatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, user.ErrNotFound
 		}
@@ -149,14 +150,30 @@ func scanUser(row pgx.Row) (*user.User, error) {
 		return nil, fmt.Errorf("user_repo: corrupt email in db: %w", err)
 	}
 	return &user.User{
-		ID:              id,
-		Email:           email,
-		PasswordHash:    passwordHash,
-		Name:            name,
-		EmailVerifiedAt: emailVerifiedAt,
-		CreatedAt:       createdAt,
-		UpdatedAt:       updatedAt,
+		ID:                    id,
+		Email:                 email,
+		PasswordHash:          passwordHash,
+		Name:                  name,
+		EmailVerifiedAt:       emailVerifiedAt,
+		OnboardingCompletedAt: onboardedAt,
+		CreatedAt:             createdAt,
+		UpdatedAt:             updatedAt,
 	}, nil
+}
+
+// MarkOnboarded records that the user finished or skipped the wizard.
+func (r *UserRepo) MarkOnboarded(ctx context.Context, id uuid.UUID, now time.Time) error {
+	return r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `UPDATE users SET onboarding_completed_at = $2, updated_at = $2 WHERE id = $1`
+		ct, err := tx.Exec(ctx, q, id, now)
+		if err != nil {
+			return fmt.Errorf("user_repo: mark onboarded: %w", Classify(err))
+		}
+		if ct.RowsAffected() == 0 {
+			return user.ErrNotFound
+		}
+		return nil
+	})
 }
 
 // UpdateName updates a user's display name.

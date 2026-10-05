@@ -171,7 +171,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.setSessionCookie(w, result.RawToken)
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	http.Redirect(w, r, afterLoginTarget(result.User), http.StatusSeeOther)
 }
 
 // -----------------------------------------------------------------------------

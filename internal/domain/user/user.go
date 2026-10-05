@@ -18,6 +18,9 @@ type User struct {
 	EmailVerifiedAt *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	// OnboardingCompletedAt is nil until the user finishes or skips the
+	// first-run wizard. NULL = show the wizard after login.
+	OnboardingCompletedAt *time.Time
 }
 
 // New constructs a new User. The caller is responsible for hashing the
@@ -46,6 +49,15 @@ func (u *User) IsEmailVerified() bool { return u.EmailVerifiedAt != nil }
 // MarkEmailVerified sets the verification timestamp.
 func (u *User) MarkEmailVerified(now time.Time) {
 	u.EmailVerifiedAt = &now
+	u.UpdatedAt = now
+}
+
+// NeedsOnboarding reports whether the first-run wizard should be shown.
+func (u *User) NeedsOnboarding() bool { return u.OnboardingCompletedAt == nil }
+
+// CompleteOnboarding records that the wizard was finished or skipped.
+func (u *User) CompleteOnboarding(now time.Time) {
+	u.OnboardingCompletedAt = &now
 	u.UpdatedAt = now
 }
 

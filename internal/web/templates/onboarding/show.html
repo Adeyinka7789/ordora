@@ -1,0 +1,126 @@
+{{ define "onboarding/show.html" }}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Ordora</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/onboarding.css">
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  </style>
+</head>
+<body class="ob-body">
+  <div class="ob-blob ob-blob-a" aria-hidden="true"></div>
+  <div class="ob-blob ob-blob-b" aria-hidden="true"></div>
+
+  <div class="ob-shell">
+    <div class="ob-topbar">
+      <span class="ob-brand">
+        <img src="/static/logo.svg" alt="" class="ob-logo">
+        <span>Ordora</span>
+      </span>
+      <form id="ob-skip-form" method="post" action="/onboarding/skip">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="ob-skip">Skip tour</button>
+      </form>
+    </div>
+
+    <div class="ob-progress" aria-hidden="true"><span id="ob-progress-fill"></span></div>
+
+    <div id="ob-steps" data-dir="next">
+      <!-- Step 1: Welcome -->
+      <section class="ob-step is-active" data-step="0" aria-label="Welcome">
+        <div class="ob-visual">
+          <div class="ob-ring"><img src="/static/logo.svg" alt="Ordora" class="ob-ring-logo"></div>
+          <span class="ob-chip ob-chip-1"><span class="material-symbols-outlined">receipt_long</span>Orders</span>
+          <span class="ob-chip ob-chip-2"><span class="material-symbols-outlined">payments</span>Paid</span>
+          <span class="ob-chip ob-chip-3"><span class="material-symbols-outlined">route</span>Tracking</span>
+        </div>
+        <p class="ob-kicker">Welcome{{ if .Name }}, {{ .Name }}{{ end }}</p>
+        <h1 class="ob-title">From chaotic chats to <span class="ob-gradient">calm, paid work</span>.</h1>
+        <p class="ob-sub">Ordora runs your custom orders end to end — intake, crafting, payments and customer updates — in one place. This 30-second tour shows you around.</p>
+      </section>
+
+      <!-- Step 2: Track -->
+      <section class="ob-step" data-step="1" aria-label="Track every order" hidden>
+        <div class="ob-visual ob-lifecycle" aria-hidden="true">
+          <span class="ob-pill ob-pill-done">New</span>
+          <span class="ob-flow"></span>
+          <span class="ob-pill ob-pill-done">Confirmed</span>
+          <span class="ob-flow"></span>
+          <span class="ob-pill ob-pill-now">Crafting</span>
+          <span class="ob-flow"></span>
+          <span class="ob-pill">Ready</span>
+          <span class="ob-flow"></span>
+          <span class="ob-pill">Paid</span>
+        </div>
+        <p class="ob-kicker">1 · Track</p>
+        <h1 class="ob-title">Every order, <span class="ob-gradient">visible at a glance</span>.</h1>
+        <p class="ob-sub">One tap moves an order from New to Completed. Each step is timestamped, audit-logged, and shown to the customer on their own tracking link.</p>
+      </section>
+
+      <!-- Step 3: Get paid -->
+      <section class="ob-step" data-step="2" aria-label="Get paid" hidden>
+        <div class="ob-visual" aria-hidden="true">
+          <div class="ob-mini-receipt">
+            <span class="ob-mini-badge">PAID</span>
+            <span class="ob-mini-amount">₦100,000</span>
+            <span class="ob-mini-sub">of ₦193,500 · GTBank transfer</span>
+            <span class="ob-mini-proof">🧾 transfer receipt attached</span>
+          </div>
+        </div>
+        <p class="ob-kicker">2 · Get paid</p>
+        <h1 class="ob-title">Deposits in, <span class="ob-gradient">balances chased down</span>.</h1>
+        <p class="ob-sub">Record part-payments, attach transfer receipts, and see exactly who still owes what — before anything leaves the workshop.</p>
+      </section>
+
+      <!-- Step 4: First moves -->
+      <section class="ob-step" data-step="3" aria-label="Your first moves" hidden>
+        <p class="ob-kicker">3 · Start now</p>
+        <h1 class="ob-title">Make your <span class="ob-gradient">first moves</span>.</h1>
+        <p class="ob-sub">Three things set you up completely. Do them now or later from the dashboard.</p>
+        <div class="ob-actions">
+          <a href="/customers/new" class="ob-action">
+            <span class="material-symbols-outlined">group_add</span>
+            <span><strong>Add a customer</strong><em>Name + phone is enough</em></span>
+          </a>
+          <a href="/orders/new" class="ob-action">
+            <span class="material-symbols-outlined">add_box</span>
+            <span><strong>Create an order</strong><em>Items, price, due date</em></span>
+          </a>
+          <a href="/dashboard" class="ob-action">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span><strong>See your dashboard</strong><em>Live business overview</em></span>
+          </a>
+        </div>
+        <form method="post" action="/onboarding/complete" class="ob-finish">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <button type="submit" class="ob-cta">Finish — take me to my dashboard</button>
+        </form>
+      </section>
+    </div>
+
+    <div class="ob-nav">
+      <button id="ob-back" type="button" class="ob-back" disabled>Back</button>
+      <div class="ob-dots" role="tablist" aria-label="Tour steps">
+        <button type="button" data-goto="0" class="ob-dot is-active" aria-label="Step 1"></button>
+        <button type="button" data-goto="1" class="ob-dot" aria-label="Step 2"></button>
+        <button type="button" data-goto="2" class="ob-dot" aria-label="Step 3"></button>
+        <button type="button" data-goto="3" class="ob-dot" aria-label="Step 4"></button>
+      </div>
+      <button id="ob-next" type="button" class="ob-next">Next</button>
+    </div>
+    <p class="ob-count"><span id="ob-count-now">1</span> of 4</p>
+  </div>
+
+  <script src="/static/js/onboarding.js" defer></script>
+</body>
+</html>
+{{ end }}

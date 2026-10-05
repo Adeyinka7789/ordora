@@ -1,0 +1,324 @@
+/* =============================================================
+   Onboarding wizard — first-run takeover page.
+   Self-contained (no app layout): gradient stage, glass card, animated
+   step transitions. Respects prefers-reduced-motion.
+   ============================================================= */
+
+.ob-body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #102e33 0%, #00414a 55%, #005f6b 100%);
+  color: #0c2226;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.ob-blob {
+  position: fixed;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+.ob-blob-a { width: 480px; height: 480px; background: #6ffbbe; top: -160px; right: -120px; opacity: 0.25; }
+.ob-blob-b { width: 420px; height: 420px; background: #8fd0d7; bottom: -160px; left: -120px; opacity: 0.22; }
+
+.ob-shell {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ob-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ob-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+}
+.ob-logo { width: 28px; height: 28px; }
+.ob-skip {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 4px;
+}
+.ob-skip:hover { color: #fff; text-decoration: underline; }
+
+/* Progress */
+.ob-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.ob-progress span {
+  display: block;
+  height: 100%;
+  width: 25%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6ffbbe, #8fd0d7);
+  transition: width 450ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Steps */
+#ob-steps { position: relative; }
+.ob-step {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 36px 32px 30px;
+  text-align: center;
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.45);
+}
+.ob-step[hidden] { display: none; }
+#ob-steps[data-dir="next"] .ob-step.is-active { animation: ob-in-right 450ms cubic-bezier(0.16, 1, 0.3, 1); }
+#ob-steps[data-dir="back"] .ob-step.is-active { animation: ob-in-left 450ms cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes ob-in-right {
+  from { opacity: 0; transform: translateX(56px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes ob-in-left {
+  from { opacity: 0; transform: translateX(-56px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ob-kicker {
+  margin: 18px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #005f6b;
+}
+.ob-title {
+  margin: 8px 0 0;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.ob-gradient {
+  background: linear-gradient(90deg, #005f6b, #006e4b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ob-sub {
+  margin: 12px auto 0;
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #455556;
+}
+
+/* Visuals */
+.ob-visual {
+  position: relative;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ob-ring {
+  width: 120px; height: 120px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d2e9ec, #6ffbbe);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 12px 30px -8px rgba(0, 95, 107, 0.4);
+  animation: ob-breathe 4s ease-in-out infinite;
+}
+.ob-ring-logo { width: 56px; height: 56px; }
+@keyframes ob-breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+.ob-chip {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #e0ebeb;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.25);
+  animation: ob-float 5s ease-in-out infinite;
+}
+.ob-chip .material-symbols-outlined { font-size: 17px; color: #005f6b; }
+.ob-chip-1 { left: 2%; top: 8px; }
+.ob-chip-2 { right: 2%; top: 44px; animation-delay: -1.6s; }
+.ob-chip-3 { left: 12%; bottom: 0; animation-delay: -3.2s; }
+@keyframes ob-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-9px); }
+}
+
+/* Lifecycle strip (step 2) */
+.ob-lifecycle { flex-wrap: wrap; gap: 6px; padding: 10px 0; }
+.ob-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #edf3f3;
+  color: #455556;
+}
+.ob-pill-done { background: #6ffbbe; color: #002113; }
+.ob-pill-now {
+  background: #005f6b; color: #fff;
+  box-shadow: 0 0 0 6px rgba(0, 95, 107, 0.15);
+  animation: ob-now 2s ease-in-out infinite;
+}
+@keyframes ob-now {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(0, 95, 107, 0.12); }
+  50%      { box-shadow: 0 0 0 9px rgba(0, 95, 107, 0.06); }
+}
+.ob-flow { width: 14px; height: 2px; background: #c3cfd1; border-radius: 2px; }
+
+/* Mini receipt (step 3) */
+.ob-mini-receipt {
+  background: #f7fafa;
+  border: 1px solid #e0ebeb;
+  border-radius: 16px;
+  padding: 18px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: ob-float 6s ease-in-out infinite;
+}
+.ob-mini-badge {
+  font-size: 11px; font-weight: 700;
+  background: #6ffbbe; color: #002113;
+  border-radius: 999px; padding: 2px 12px;
+}
+.ob-mini-amount { font-size: 34px; font-weight: 700; color: #005338; letter-spacing: -0.02em; }
+.ob-mini-sub { font-size: 13px; color: #455556; }
+.ob-mini-proof {
+  margin-top: 6px;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid #e0ebeb;
+  border-radius: 8px;
+  padding: 3px 10px;
+}
+
+/* First-move actions (step 4) */
+.ob-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 22px;
+  text-align: left;
+}
+@media (min-width: 560px) {
+  .ob-actions { grid-template-columns: repeat(3, 1fr); }
+}
+.ob-action {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #f7fafa;
+  border: 1px solid #e0ebeb;
+  border-radius: 14px;
+  padding: 14px;
+  text-decoration: none;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.ob-action:hover {
+  transform: translateY(-2px);
+  border-color: #005f6b;
+  box-shadow: 0 10px 22px -10px rgba(0, 65, 74, 0.35);
+}
+.ob-action .material-symbols-outlined { color: #005f6b; font-size: 24px; }
+.ob-action span span { display: flex; flex-direction: column; }
+.ob-action strong { font-size: 14px; color: #0c2226; }
+.ob-action em { font-style: normal; font-size: 12px; color: #455556; }
+.ob-finish { margin-top: 20px; }
+.ob-cta {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: #005f6b;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 150ms ease, background-color 200ms ease;
+}
+.ob-cta:hover { background: #00414a; transform: translateY(-1px); }
+
+/* Bottom nav */
+.ob-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.ob-back, .ob-next {
+  min-width: 96px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 200ms ease, background-color 200ms ease;
+}
+.ob-back {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+}
+.ob-back:disabled { opacity: 0.35; cursor: default; }
+.ob-next {
+  background: #fff;
+  border: none;
+  color: #00414a;
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.5);
+}
+.ob-next:hover { background: #d2e9ec; }
+.ob-dots { display: flex; gap: 8px; }
+.ob-dot {
+  width: 10px; height: 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  padding: 0;
+  transition: width 300ms ease, background-color 300ms ease;
+}
+.ob-dot.is-active { width: 28px; background: #fff; }
+.ob-count {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-ring, .ob-chip, .ob-mini-receipt, .ob-pill-now,
+  .ob-step.is-active, .ob-progress span, .ob-dot {
+    animation: none !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -644,6 +644,12 @@ func run() error {
 	// ---- Dashboard (requires auth) ----
 	mux.Handle("GET /dashboard", middleware.RequireAuth(http.HandlerFunc(dashH.Index)))
 
+	// ---- Onboarding wizard (first run only; handler redirects others) ----
+	onboardH := &handlers.OnboardingHandler{Auth: authService, Renderer: renderer}
+	mux.Handle("GET /onboarding", middleware.RequireAuth(http.HandlerFunc(onboardH.Show)))
+	mux.Handle("POST /onboarding/complete", middleware.RequireAuth(http.HandlerFunc(onboardH.Complete)))
+	mux.Handle("POST /onboarding/skip", middleware.RequireAuth(http.HandlerFunc(onboardH.Skip)))
+
 	// ---- Customers (requires auth + tenant) ----
 	mux.Handle("GET /customers", gated("customers", http.HandlerFunc(customerH.Index)))
 	mux.Handle("GET /customers/new", gated("customers", http.HandlerFunc(customerH.New)))

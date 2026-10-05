@@ -31,6 +31,11 @@ func (h *DashboardHandler) Index(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	// First-run users belong in the wizard, even via a deep link.
+	if s.User != nil && s.User.NeedsOnboarding() {
+		http.Redirect(w, r, "/onboarding", http.StatusSeeOther)
+		return
+	}
 
 	scope := s.Scope
 	page := dashboardPage{

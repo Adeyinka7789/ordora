@@ -3,9 +3,28 @@ package handlers
 import (
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/Adeyinka7789/ordora/internal/domain/user"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
+
+// TestAfterLoginTarget locks first-run routing: unseen wizard → /onboarding,
+// everyone else → /dashboard.
+func TestAfterLoginTarget(t *testing.T) {
+	fresh := &user.User{}
+	if got := afterLoginTarget(fresh); got != "/onboarding" {
+		t.Errorf("fresh user should go to /onboarding, got %q", got)
+	}
+	if got := afterLoginTarget(nil); got != "/dashboard" {
+		t.Errorf("nil user should go to /dashboard, got %q", got)
+	}
+	done := &user.User{}
+	done.CompleteOnboarding(time.Now())
+	if got := afterLoginTarget(done); got != "/dashboard" {
+		t.Errorf("onboarded user should go to /dashboard, got %q", got)
+	}
+}
 
 // TestValidatePasswordConfirm locks the server-side gate: mismatched entries
 // are rejected even if the browser check is bypassed.
@@ -82,5 +101,35 @@ func TestRegisterPagePreservesOtherSelection(t *testing.T) {
 	}
 	if !strings.Contains(out, `id="reg-category-other-wrap" class="flex-col gap-1" style="display:flex;"`) {
 		t.Error("Other text input should be visible on re-render")
+	}
+}
+
+// TestOnboardingPageRenders ensures the wizard carries 4 steps, a skip path,
+// a finish path, progress UI and its assets.
+func TestOnboardingPageRenders(t *testing.T) {
+	r, err := render.New("../templates")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	out, err := r.Raw("onboarding/show.html", authPage{Title: "Welcome to Ordora", Name: "Ada"})
+	if err != nil {
+		t.Fatalf("onboarding/show.html: %v", err)
+	}
+	for _, want := range []string{
+		`data-step="0"`, `data-step="1"`, `data-step="2"`, `data-step="3"`,
+		`action="/onboarding/skip"`,
+		`action="/onboarding/complete"`,
+		`id="ob-progress-fill"`,
+		`data-goto="3"`,
+		`id="ob-next"`, `id="ob-back"`,
+		"/static/js/onboarding.js",
+		"/static/css/onboarding.css",
+		"Welcome, Ada",
+		"/customers/new",
+		"/orders/new",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("onboarding/show.html missing %q", want)
+		}
 	}
 }

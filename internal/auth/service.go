@@ -24,6 +24,7 @@ type UserStore interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*user.User, error)
 	MarkEmailVerified(ctx context.Context, id uuid.UUID, now time.Time) error
 	UpdatePasswordHash(ctx context.Context, id uuid.UUID, hash string, now time.Time) error
+	MarkOnboarded(ctx context.Context, id uuid.UUID, now time.Time) error
 }
 
 type OrgStore interface {
@@ -445,6 +446,12 @@ func (s *Service) VerifyEmail(ctx context.Context, rawToken string) (*user.User,
 		return nil, err
 	}
 	return s.users.GetByID(ctx, t.UserID)
+}
+
+// CompleteOnboarding records that the user finished or skipped the
+// first-run wizard, so it is never shown to them again.
+func (s *Service) CompleteOnboarding(ctx context.Context, userID uuid.UUID) error {
+	return s.users.MarkOnboarded(ctx, userID, s.now())
 }
 
 // -----------------------------------------------------------------------------

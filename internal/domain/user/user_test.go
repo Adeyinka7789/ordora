@@ -62,6 +62,25 @@ func TestNewUser(t *testing.T) {
 	}
 }
 
+func TestOnboardingFlag(t *testing.T) {
+	email, _ := NewEmail("a@b.com")
+	now := time.Now()
+	u, err := New(uuid.New(), email, "$argon2id$hash", "Alice", now)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if !u.NeedsOnboarding() {
+		t.Fatal("new user should need onboarding (never seen the wizard)")
+	}
+	u.CompleteOnboarding(now)
+	if u.NeedsOnboarding() {
+		t.Fatal("user should not need onboarding after completing/skipping")
+	}
+	if u.OnboardingCompletedAt == nil {
+		t.Fatal("completion timestamp should be set")
+	}
+}
+
 func TestNewUser_Validation(t *testing.T) {
 	email, _ := NewEmail("a@b.com")
 	if _, err := New(uuid.New(), email, "hash", "", time.Now()); !errors.Is(err, ErrNameRequired) {

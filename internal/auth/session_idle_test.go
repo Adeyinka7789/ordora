@@ -64,7 +64,12 @@ func (f *fakeUserStore) GetByID(ctx context.Context, id uuid.UUID) (*user.User, 
 func (f *fakeUserStore) MarkEmailVerified(ctx context.Context, id uuid.UUID, now time.Time) error {
 	return nil
 }
-func (f *fakeUserStore) UpdatePasswordHash(ctx context.Context, id uuid.UUID, hash string, now time.Time) error {
+func (f *fakeUserStore) UpdatePasswordHash(ctx context.Context, id uuid.UUID,
+	hash string, now time.Time) error {
+	return nil
+}
+
+func (f *fakeUserStore) MarkOnboarded(ctx context.Context, id uuid.UUID, now time.Time) error {
 	return nil
 }
 
