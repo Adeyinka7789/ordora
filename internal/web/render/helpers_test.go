@@ -57,3 +57,29 @@ func TestCurrency_Grouping(t *testing.T) {
 		t.Errorf("currency code passthrough: got %q", got)
 	}
 }
+
+// TestSub_MixedIntKinds locks the admin/ops.html fix: sub must accept int64
+// money fields as well as plain ints (reports/index.html passes ints).
+func TestSub_MixedIntKinds(t *testing.T) {
+	fm := templateFuncs()
+	sub, ok := fm["sub"].(func(any, any) int64)
+	if !ok {
+		t.Fatal("sub func has unexpected signature")
+	}
+	cases := []struct {
+		a, b any
+		want int64
+	}{
+		{50000, 20000, 30000},               // int, int (reports)
+		{int64(50000), int64(20000), 30000}, // int64, int64 (admin ops)
+		{int64(50000), 20000, 30000},        // mixed
+		{100, int64(30), 70},                // untyped-ish constant with int64
+		{0, 0, 0},
+		{100, 150, -50},
+	}
+	for _, tc := range cases {
+		if got := sub(tc.a, tc.b); got != tc.want {
+			t.Errorf("sub(%v, %v) = %d, want %d", tc.a, tc.b, got, tc.want)
+		}
+	}
+}

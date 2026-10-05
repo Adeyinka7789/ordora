@@ -12,6 +12,7 @@
   z-index: 30;
   display: flex;
   align-items: center;
+  overflow: hidden;
   background: #102e33;
   color: #e6f0f0;
   font-size: 12px;
@@ -160,6 +161,15 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   #pwa-install-banner { bottom: 5.25rem; }
   /* The bottom tab bar owns the menu on mobile: drop the topbar hamburger. */
   #sidebar-toggler { display: none; }
+
+  /* Mobile utility bar shows all contact items in a 2-row grid, so it is
+   * taller here — and every bar below it shifts accordingly. */
+  #utilbar, #utilbar-app { height: 3.25rem; }
+  body:not(.util-hidden) #landing-nav { top: 3.25rem; }
+  body:not(.util-hidden) #topbar { top: 3.25rem; }
+  body.impersonating:not(.util-hidden) #topbar { top: 5.75rem; }
+  body:not(.util-hidden) #content-wrapper main { padding-top: 7.25rem; }
+  body.impersonating:not(.util-hidden) #content-wrapper main { padding-top: 9.75rem; }
 }
 
 /* Desktop: no tab bar, ever. The topbar toggler owns the sidebar there. */

@@ -1,19 +1,4 @@
-# CI/CD pipeline — one file, three stages that run in order:
-#
-#   test   → gofmt, vet, build, migrate + full test suite on Postgres 16
-#   build  → linux/amd64 binaries (server, migrate, worker) + release tarball
-#   deploy → ship to the Truehost VPS, run migrations, flip the release,
-#             restart services, health-check (production only)
-#
-# Triggers:
-#   - push to main ......... test → build → deploy (full pipeline)
-#   - pull_request .......... test → build only (no deploy)
-#   - Run workflow (manual) . full pipeline on the selected branch
-#
-# Deploy needs GitHub secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY
-# (optional: VPS_PORT default 22, APP_PORT default 8080).
-# contact.json + uploads live in /opt/ordora/shared on the VPS and are
-# NEVER overwritten by deploys. See DEPLOY.md for server setup.
+# CI/CD pipeline — corrected for /var/www/ordora layout.
 
 name: CI/CD
 
@@ -116,6 +101,7 @@ jobs:
             CREATE EXTENSION IF NOT EXISTS citext;
             CREATE EXTENSION IF NOT EXISTS pg_trgm;
           SQL
+
       - name: Create roles for RLS
         run: |
           PGPASSWORD=postgres psql -h localhost -U postgres -d ordora_test <<'SQL'
@@ -144,7 +130,6 @@ jobs:
 
   # ------------------------------------------------------------------ #
   # Stage 2: build — production binaries + release tarball.            #
-  # Runs only if test passed. Artifact flows into deploy via `needs`.  #
   # ------------------------------------------------------------------ #
   build:
     name: Build release
@@ -163,19 +148,18 @@ jobs:
       - name: Build linux binaries
         run: |
           mkdir -p dist
-          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/server ./cmd/server
-          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/migrate ./cmd/migrate
-          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/worker ./cmd/worker
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/ordora-server ./cmd/server
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/ordora-migrate ./cmd/migrate
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/ordora-worker ./cmd/worker
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/ordora-seedadmin ./cmd/seedadmin
 
       - name: Package release
         run: |
           SHA="$(git rev-parse --short HEAD)"
           echo "RELEASE_SHA=$SHA" >> "$GITHUB_ENV"
           mkdir -p "release-$SHA"
-          cp dist/server dist/migrate dist/worker "release-$SHA/"
+          cp dist/ordora-server dist/ordora-migrate dist/ordora-worker dist/ordora-seedadmin "release-$SHA/"
           cp -r migrations "release-$SHA/"
-          mkdir -p "release-$SHA/internal/web"
-          cp -r internal/web/templates internal/web/static "release-$SHA/internal/web/"
           tar -czf "ordora-$SHA.tar.gz" -C "release-$SHA" .
 
       - name: Upload release artifact
@@ -186,8 +170,8 @@ jobs:
           retention-days: 7
 
   # ------------------------------------------------------------------ #
-  # Stage 3: deploy — Truehost VPS. Runs only on main (push or manual) #
-  # after build succeeded. Migrations run BEFORE the new code starts.  #
+  # Stage 3: deploy — Truehost VPS.                                    #
+  # Layout: /var/www/ordora/releases/<sha>/ + /var/www/ordora/current  #
   # ------------------------------------------------------------------ #
   deploy:
     name: Deploy to VPS
@@ -201,7 +185,7 @@ jobs:
       cancel-in-progress: false
 
     env:
-      APP_PORT: ${{ secrets.APP_PORT || '8080' }}
+      APP_PORT: ${{ secrets.APP_PORT || '8082' }}
 
     steps:
       - name: Download release artifact
@@ -234,23 +218,30 @@ jobs:
             set -euo pipefail
             TARBALL="$(ls -t /tmp/ordora-*.tar.gz | head -1)"
             SHA="$(basename "$TARBALL" .tar.gz | sed 's/^ordora-//')"
-            RELEASE="/opt/ordora/releases/$SHA"
-            mkdir -p /opt/ordora/releases "$RELEASE"
+            RELEASE="/var/www/ordora/releases/$SHA"
+            mkdir -p /var/www/ordora/releases "$RELEASE"
             tar -xzf "$TARBALL" -C "$RELEASE"
             rm -f "$TARBALL"
 
             # Migrations first: the new code never boots on an old schema.
             set -a
             # shellcheck disable=SC1091
-            source /etc/ordora/ordora.env
+            source /var/www/ordora/.env
             set +a
-            ( cd "$RELEASE" && ./migrate )
+            ( cd "$RELEASE" && ./ordora-migrate )
 
-            ln -sfn "$RELEASE" /opt/ordora/current
+            # Make sure binaries are executable by ordora user
+            chown -R ordora:ordora "$RELEASE"
+            chmod 750 "$RELEASE"
+
+            # Flip the symlink that systemd follows
+            ln -sfn "$RELEASE" /var/www/ordora/current
+            chown -h ordora:ordora /var/www/ordora/current
+
             sudo systemctl restart ordora-server ordora-worker
             sleep 4
-            curl -fsS "http://127.0.0.1:${APP_PORT:-8080}/health"
+            curl -fsS "http://127.0.0.1:${APP_PORT:-8082}/health"
 
             # Keep the last 5 releases for instant rollback.
-            ls -dt /opt/ordora/releases/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf
+            ls -dt /var/www/ordora/releases/*/ 2>/dev/null | tail -n +6 | xargs -r rm -rf
             echo "DEPLOYED $SHA"

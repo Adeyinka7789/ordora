@@ -120,6 +120,25 @@ func TestChromeCSSBarHeights(t *testing.T) {
 	}
 }
 
+// TestUtilbarShowsAllItemsOnMobile guards the regression where contact
+// items were hidden below sm/md breakpoints: the partial must not hide any
+// item on mobile (the bar is a 2-row grid there instead).
+func TestUtilbarShowsAllItemsOnMobile(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "templates", "partials", "utilbar.html"))
+	if err != nil {
+		t.Fatalf("read utilbar partial: %v", err)
+	}
+	body := string(raw)
+	for _, forbidden := range []string{"hidden sm:", "hidden md:"} {
+		if strings.Contains(body, forbidden) {
+			t.Errorf("utilbar.html must not hide items on mobile (%q found)", forbidden)
+		}
+	}
+	if !strings.Contains(body, "grid-cols-2") {
+		t.Error("utilbar.html should use a 2-column grid for mobile")
+	}
+}
+
 // TestAppChrome renders the authenticated layout and asserts the shared
 // chrome is wired for the app: content-area utility bar only — the floating
 // buttons are landing-only by design.

@@ -215,12 +215,42 @@ func templateFuncs() template.FuncMap {
 		},
 		"inc": func(i int) int { return i + 1 },
 		"dec": func(i int) int { return i - 1 },
-		"sub": func(a, b int) int { return a - b },
+		// sub subtracts two integers of any int kind. Templates require
+		// exact type matches for func args, and call sites mix int (page
+		// numbers, percentages) with int64 (money minor units), so a fixed
+		// (int, int) signature 500s on int64 callers (admin/ops.html).
+		"sub": func(a, b any) int64 { return toInt64(a) - toInt64(b) },
 
 		// contact returns the editable public contact details for the
 		// utility top bar and floating buttons. Usage: {{ with contact }}.
 		// Nil Contact renders nothing (safe in tests without wiring).
 		"contact": func() *contact.Info { return Contact },
+	}
+}
+
+// toInt64 coerces any integer value for template math.
+func toInt64(v any) int64 {
+	switch n := v.(type) {
+	case int:
+		return int64(n)
+	case int8:
+		return int64(n)
+	case int16:
+		return int64(n)
+	case int32:
+		return int64(n)
+	case int64:
+		return n
+	case uint:
+		return int64(n)
+	case uint32:
+		return int64(n)
+	case uint64:
+		return int64(n)
+	case float64:
+		return int64(n)
+	default:
+		return 0
 	}
 }
 
