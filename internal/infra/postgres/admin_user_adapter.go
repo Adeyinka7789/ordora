@@ -76,3 +76,7 @@ func (a *AdminUserAdapter) GetUser(ctx context.Context, id uuid.UUID) (*app.Admi
 func (a *AdminUserAdapter) RevokeAllSessions(ctx context.Context, userID uuid.UUID, now time.Time) (int64, error) {
 	return a.repo.RevokeAllSessions(ctx, userID, now)
 }
+
+func (a *AdminUserAdapter) SetMemberStatus(ctx context.Context, orgID, userID uuid.UUID, status string) error {
+	return a.repo.SetMemberStatus(ctx, orgID, userID, status)
+}

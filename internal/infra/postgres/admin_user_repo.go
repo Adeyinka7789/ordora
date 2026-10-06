@@ -195,3 +195,24 @@ func (r *AdminUserRepo) RevokeAllSessions(ctx context.Context, userID uuid.UUID,
 	})
 	return n, err
 }
+
+// SetMemberStatus flips one membership between ACTIVE and DISABLED.
+// Disabling takes effect on the next request: session resolution only
+// honors ACTIVE memberships, so live sessions stop resolving. Callers
+// should also revoke sessions for an immediate kick.
+func (r *AdminUserRepo) SetMemberStatus(ctx context.Context, orgID, userID uuid.UUID, status string) error {
+	const q = `
+		UPDATE organization_members
+		SET status = $3
+		WHERE organization_id = $1 AND user_id = $2
+		  AND status <> $3
+	`
+	ct, err := r.adminDB.Pool().Exec(ctx, q, orgID, userID, status)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}

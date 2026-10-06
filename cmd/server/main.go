@@ -366,6 +366,8 @@ func run() error {
 	}
 	adminUserH := &adminhandlers.UserHandler{
 		Service:  adminSvc,
+		Attempts: postgres.NewLoginAttemptRepo(adminDB),
+		Audit:    postgres.NewAdminAuditAdapter(adminAuditRepo),
 		Renderer: renderer,
 		Cfg:      cfg,
 	}
@@ -558,6 +560,12 @@ func run() error {
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.Show))))
 	mux.Handle("POST "+adminPath+"/users/{id}/logout",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.ForceLogout))))
+	mux.Handle("POST "+adminPath+"/users/{id}/lockout/clear",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.ClearLockout))))
+	mux.Handle("POST "+adminPath+"/users/{id}/memberships/{orgID}/disable",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.DisableMember))))
+	mux.Handle("POST "+adminPath+"/users/{id}/memberships/{orgID}/enable",
+		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminUserH.EnableMember))))
 
 	mux.Handle("POST "+adminPath+"/impersonate/{orgID}",
 		adminSessionMW(middleware.RequireAdmin(adminPath+"/login")(http.HandlerFunc(adminImpersonateH.Start))))

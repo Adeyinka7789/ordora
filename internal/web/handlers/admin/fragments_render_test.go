@@ -92,4 +92,38 @@ func TestFragmentsExecute(t *testing.T) {
 			}
 		}
 	})
+
+	// User detail must render the lockout panel and membership actions.
+	t.Run("user_detail", func(t *testing.T) {
+		out, err := r.Raw("admin/user_detail.html", userDetailPageData{
+			Title: "Ada", Path: "/ops-x9k2m",
+			User: &app.AdminUserDetail{
+				ID:    uuid.New(),
+				Name:  "Ada",
+				Email: "ada@example.com",
+				Memberships: []app.AdminMembershipRow{{
+					OrganizationID:   uuid.New(),
+					OrganizationName: "Test Shop",
+					OrganizationSlug: "test-shop",
+					Role:             "OWNER",
+					Status:           "DISABLED",
+				}},
+			},
+			Lockout: &userLockoutView{
+				Failures: 5, Locked: true,
+				LockedUntil: "05-10-2026 · 17:40", Remaining: "12m",
+			},
+		})
+		if err != nil {
+			t.Fatalf("admin/user_detail.html: %v", err)
+		}
+		for _, want := range []string{
+			"Login lockout", "locked out of login", "12m", "Clear lockout",
+			"Unblock", "Force logout",
+		} {
+			if !strings.Contains(out, want) {
+				t.Errorf("admin/user_detail.html missing %q", want)
+			}
+		}
+	})
 }

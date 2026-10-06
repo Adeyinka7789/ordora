@@ -18,6 +18,29 @@
 
   {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
 
+  {{ if .Lockout }}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+      <h2 class="font-headline-md text-headline-md font-bold">Login lockout</h2>
+      {{ if .Lockout.Locked }}
+        <div class="p-space-md rounded-lg bg-error-container text-on-error-container flex items-start gap-space-sm">
+          <span class="material-symbols-outlined text-[22px]">lock</span>
+          <div class="flex flex-col">
+            <span class="font-label-md font-bold">This user is locked out of login</span>
+            <span class="text-body-sm">{{ .Lockout.Failures }} failed attempts · unlocked {{ .Lockout.LockedUntil }} ({{ .Lockout.Remaining }} left)</span>
+          </div>
+        </div>
+        <div>
+          <form method="post" action="{{ .Path }}/users/{{ .User.ID }}/lockout/clear" class="inline">
+            <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+            <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Clear lockout — let them in now</button>
+          </form>
+        </div>
+      {{ else }}
+        <p class="text-body-sm text-on-surface-variant">{{ .Lockout.Failures }} recent failed login attempt(s). No active lockout.</p>
+      {{ end }}
+    </div>
+  {{ end }}
+
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
     <dl class="grid grid-cols-[160px_1fr] gap-x-space-md gap-y-space-sm">
       <dt class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Email verified</dt>
@@ -37,9 +60,10 @@
       <table class="w-full text-left font-body-md">
         <thead>
           <tr class="bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm uppercase tracking-wider">
-            <th class="py-2.5 px-space-md font-semibold">Organization</th>
-            <th class="py-2.5 px-space-md font-semibold">Role</th>
-            <th class="py-2.5 px-space-md font-semibold">Status</th>
+              <th class="py-2.5 px-space-md font-semibold">Organization</th>
+              <th class="py-2.5 px-space-md font-semibold">Role</th>
+              <th class="py-2.5 px-space-md font-semibold">Status</th>
+              <th class="py-2.5 px-space-md font-semibold">Access</th>
           </tr>
         </thead>
         <tbody>
@@ -49,8 +73,24 @@
                 <a href="{{ $.Path }}/orgs/{{ .OrganizationID }}" class="font-label-md text-label-md font-semibold hover:text-primary">{{ .OrganizationName }}</a>
                 <div class="font-code-md text-code-md text-on-surface-variant">{{ .OrganizationSlug }}</div>
               </td>
-              <td class="py-3 px-space-md font-code-md text-code-md">{{ .Role }}</td>
-              <td class="py-3 px-space-md font-code-md text-code-md">{{ .Status }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md">{{ .Role }}</td>
+                <td class="py-3 px-space-md font-code-md text-code-md">{{ .Status }}</td>
+                <td class="py-3 px-space-md">
+                  {{ if eq .Status "ACTIVE" }}
+                    <form method="post" action="{{ $.Path }}/users/{{ $.User.ID }}/memberships/{{ .OrganizationID }}/disable" class="inline"
+                          onsubmit="return confirm('Block this user from {{ .OrganizationName }}? They lose access on their next request.');">
+                      <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                      <button type="submit" class="h-8 px-3 rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-semibold">Block</button>
+                    </form>
+                  {{ else if eq .Status "DISABLED" }}
+                    <form method="post" action="{{ $.Path }}/users/{{ $.User.ID }}/memberships/{{ .OrganizationID }}/enable" class="inline">
+                      <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                      <button type="submit" class="h-8 px-3 rounded bg-tertiary text-on-tertiary font-label-sm text-label-sm font-semibold">Unblock</button>
+                    </form>
+                  {{ else }}
+                    <span class="text-on-surface-variant">—</span>
+                  {{ end }}
+                </td>
             </tr>
           {{ end }}
         </tbody>

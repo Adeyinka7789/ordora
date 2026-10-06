@@ -82,3 +82,29 @@ func (r *LoginAttemptRepo) Clear(ctx context.Context, email string) error {
 	_, err := r.db.Pool().Exec(ctx, q, email)
 	return err
 }
+
+// Attempt describes the lockout state of one email (admin display use).
+type Attempt struct {
+	Failures    int
+	LockedUntil *time.Time
+	Found       bool
+}
+
+// Get loads the lockout row for an email. found=false when the email has
+// no recorded failures.
+func (r *LoginAttemptRepo) Get(ctx context.Context, email string) (Attempt, error) {
+	const q = `SELECT failures, locked_until FROM login_attempts WHERE email = $1`
+	var a Attempt
+	var locked *time.Time
+	var failures int
+	if err := r.db.Pool().QueryRow(ctx, q, email).Scan(&failures, &locked); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Attempt{}, nil
+		}
+		return Attempt{}, err
+	}
+	a.Found = true
+	a.Failures = failures
+	a.LockedUntil = locked
+	return a, nil
+}

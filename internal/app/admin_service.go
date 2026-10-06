@@ -28,6 +28,7 @@ type AdminUserReader interface {
 	ListUsers(ctx context.Context, query string, limit, offset int) ([]AdminUserRow, int, error)
 	GetUser(ctx context.Context, id uuid.UUID) (*AdminUserDetail, error)
 	RevokeAllSessions(ctx context.Context, userID uuid.UUID, now time.Time) (int64, error)
+	SetMemberStatus(ctx context.Context, orgID, userID uuid.UUID, status string) error
 }
 
 // AdminImpersonationStore persists impersonation sessions.
@@ -211,6 +212,27 @@ func (s *AdminService) ForceLogoutUser(ctx context.Context, adminID uuid.UUID, u
 			map[string]any{"sessions_revoked": n}, ip)
 	}
 	return n, nil
+}
+
+// SetUserMemberStatus blocks (DISABLED) or unblocks (ACTIVE) one membership.
+// Blocking takes effect on the user's next request; live sessions are NOT
+// revoked here — pair with ForceLogoutUser for an immediate kick.
+func (s *AdminService) SetUserMemberStatus(ctx context.Context, adminID, userID, orgID uuid.UUID, status, ip string) error {
+	if status != "ACTIVE" && status != "DISABLED" {
+		return errors.New("admin: invalid member status")
+	}
+	if err := s.users.SetMemberStatus(ctx, orgID, userID, status); err != nil {
+		return err
+	}
+	if s.audit != nil {
+		action := "user.member_disabled"
+		if status == "ACTIVE" {
+			action = "user.member_enabled"
+		}
+		_ = s.audit.Record(ctx, adminID, action, "USER", userID,
+			map[string]any{"organization_id": orgID.String(), "status": status}, ip)
+	}
+	return nil
 }
 
 // ----- Impersonation -----
