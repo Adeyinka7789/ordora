@@ -8,13 +8,14 @@
 #utilbar, #utilbar-app {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 2.25rem;
+  height: 2rem;
   z-index: 30;
   display: flex;
   align-items: center;
   overflow: hidden;
-  background: #102e33;
-  color: #e6f0f0;
+  background: #ffffff;
+  color: #0B1C30;
+  border-bottom: 1px solid #C3D2DE;
   font-size: 12px;
   transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -22,7 +23,7 @@ body.util-hidden #utilbar, body.util-hidden #utilbar-app { transform: translateY
 
 /* App layout: slimmer and subtler than landing. */
 #utilbar-app {
-  height: 1.75rem;
+  height: 1.5rem;
   font-size: 11px;
 }
 @media (min-width: 768px) {
@@ -31,17 +32,17 @@ body.util-hidden #utilbar, body.util-hidden #utilbar-app { transform: translateY
 }
 body.impersonating #utilbar-app { top: 2.5rem; }
 
-/* Bars below the utility strip: visible state offsets (landing 2.25rem,
-   app 1.75rem). */
+/* Bars below the utility strip: visible state offsets (landing 2rem,
+   app 1.5rem). */
 #landing-nav, #topbar { transition: top 300ms cubic-bezier(0.16, 1, 0.3, 1); }
-body:not(.util-hidden) #landing-nav { top: 2.25rem; }
-body:not(.util-hidden) #topbar { top: 1.75rem; }
-body.impersonating:not(.util-hidden) #topbar { top: 4.25rem; }
+body:not(.util-hidden) #landing-nav { top: 2rem; }
+body:not(.util-hidden) #topbar { top: 1.5rem; }
+body.impersonating:not(.util-hidden) #topbar { top: 4rem; }
 body.impersonating.util-hidden #topbar { top: 2.5rem; }
 
-/* App content clears the fixed bars (topbar h-16 + util h-7). */
-body:not(.util-hidden) #content-wrapper main { padding-top: 5.75rem; }
-body.impersonating:not(.util-hidden) #content-wrapper main { padding-top: 8.25rem; }
+/* App content clears the fixed bars (topbar h-16 + util 1.5rem). */
+body:not(.util-hidden) #content-wrapper main { padding-top: 5.5rem; }
+body.impersonating:not(.util-hidden) #content-wrapper main { padding-top: 8rem; }
 body.impersonating.util-hidden #content-wrapper main { padding-top: 6.5rem; }
 
 /* ---- Scroll-up button (left) ---- */
@@ -52,7 +53,7 @@ body.impersonating.util-hidden #content-wrapper main { padding-top: 6.5rem; }
   width: 3rem; height: 3rem;
   border-radius: 9999px;
   display: flex; align-items: center; justify-content: center;
-  background: #005f6b; color: #fff;
+  background: #0077BE; color: #fff;
   box-shadow: 0 8px 20px -6px rgba(0, 65, 74, 0.5);
   opacity: 0; transform: translateY(1rem) scale(0.9);
   pointer-events: none;
@@ -63,7 +64,7 @@ body.scrolled-down #scroll-top-btn {
   opacity: 1; transform: translateY(0) scale(1);
   pointer-events: auto;
 }
-#scroll-top-btn:hover { background: #00414a; transform: translateY(-2px); }
+#scroll-top-btn:hover { background: #005A8C; transform: translateY(-2px); }
 body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
 
 /* ---- WhatsApp float (right, expands on hover/focus) ---- */
@@ -129,7 +130,7 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   justify-content: center;
   gap: 2px;
   padding: 0.55rem 0 0.5rem;
-  color: #455556;
+  color: #44566A;
   text-decoration: none;
   background: none;
   border: none;
@@ -138,10 +139,10 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   position: relative;
   transition: color 200ms ease;
 }
-.mnav-item:hover { color: #0c2226; }
+.mnav-item:hover { color: #0B1C30; }
 .mnav-icon { font-size: 24px; line-height: 1; }
 .mnav-label { font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }
-.mnav-item.is-active { color: #005f6b; }
+.mnav-item.is-active { color: #0077BE; }
 .mnav-item.is-active .mnav-icon {
   font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
 }
@@ -152,7 +153,7 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   transform: translateX(-50%);
   width: 2rem; height: 3px;
   border-radius: 0 0 4px 4px;
-  background: #005f6b;
+  background: #0077BE;
 }
 
 /* Keep page content + PWA banner clear of the tab bar on mobile. */
@@ -162,14 +163,14 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   /* The bottom tab bar owns the menu on mobile: drop the topbar hamburger. */
   #sidebar-toggler { display: none; }
 
-  /* Mobile utility bar shows all contact items in a 2-row grid, so it is
-   * taller here — and every bar below it shifts accordingly. */
-  #utilbar, #utilbar-app { height: 3.25rem; }
-  body:not(.util-hidden) #landing-nav { top: 3.25rem; }
-  body:not(.util-hidden) #topbar { top: 3.25rem; }
-  body.impersonating:not(.util-hidden) #topbar { top: 5.75rem; }
-  body:not(.util-hidden) #content-wrapper main { padding-top: 7.25rem; }
-  body.impersonating:not(.util-hidden) #content-wrapper main { padding-top: 9.75rem; }
+  /* Mobile utility bar shows email + website in a compact grid, so it is
+   * slightly taller here — and every bar below it shifts accordingly. */
+  #utilbar, #utilbar-app { height: 2.75rem; }
+  body:not(.util-hidden) #landing-nav { top: 2.75rem; }
+  body:not(.util-hidden) #topbar { top: 2.75rem; }
+  body.impersonating:not(.util-hidden) #topbar { top: 5.25rem; }
+  body:not(.util-hidden) #content-wrapper main { padding-top: 6.75rem; }
+  body.impersonating:not(.util-hidden) #content-wrapper main { padding-top: 9.25rem; }
 }
 
 /* Desktop: no tab bar, ever. The topbar toggler owns the sidebar there. */
@@ -194,3 +195,4 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   }
   [data-spotlight].is-past { filter: grayscale(1); }
 }
+

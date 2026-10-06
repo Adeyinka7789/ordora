@@ -35,7 +35,7 @@
         {
           label: 'Invoiced',
           data: invoiced,
-          backgroundColor: '#005f6b',
+          backgroundColor: '#0077BE',
           borderRadius: 4,
           barPercentage: 0.7,
           categoryPercentage: 0.6
@@ -71,16 +71,16 @@
           legend: {
             position: 'bottom',
             labels: {
-              color: '#455556',
+              color: '#44566A',
               font: { family: 'Inter', size: 12 },
               boxWidth: 10,
               usePointStyle: true
             }
           },
           tooltip: {
-            backgroundColor: '#102e33',
-            titleColor: '#e6f0f0',
-            bodyColor: '#e6f0f0',
+            backgroundColor: '#0E2A3D',
+            titleColor: '#EAF1F8',
+            bodyColor: '#EAF1F8',
             padding: 10,
             callbacks: {
               label: function (ctx) {
@@ -93,13 +93,13 @@
         scales: {
           x: {
             grid: { display: false },
-            ticks: { color: '#455556', font: { family: 'Inter', size: 11 } }
+            ticks: { color: '#44566A', font: { family: 'Inter', size: 11 } }
           },
           y: {
             beginAtZero: true,
-            grid: { color: '#e0ebeb' },
+            grid: { color: '#E1EAF2' },
             ticks: {
-              color: '#455556',
+              color: '#44566A',
               font: { family: 'Inter', size: 11 },
               callback: function (v) { return '₦' + v.toLocaleString(); }
             }
@@ -115,3 +115,4 @@
     loadChartJS(renderTrend);
   }
 })();
+

@@ -47,8 +47,7 @@ func TestLandingChrome(t *testing.T) {
 		`viewBox="0 0 24 24"`,         // real WhatsApp glyph (inline SVG)
 		`https://wa.me/2348012345678`, // configured number, not hardcoded
 		"hello@example.com",           // configured email
-		"&#43;234 801 234 5678",       // configured phone (html-escaped +)
-		"12 Allen Ave, Lagos",         // configured address
+		"example.com",                 // configured website
 		"/static/js/chrome.js",        // shared chrome behavior
 		"/static/css/chrome.css",      // shared chrome styles
 		`data-reveal="left"`,          // headings slide from the left
@@ -64,6 +63,13 @@ func TestLandingChrome(t *testing.T) {
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("landing page missing %q", want)
+		}
+	}
+	// The strip shows email + website only — phones and the street address
+	// live on the contact page and WhatsApp float instead.
+	for _, forbidden := range []string{"&#43;234 801 234 5678", "12 Allen Ave, Lagos", "tel:"} {
+		if strings.Contains(body, forbidden) {
+			t.Errorf("utility bar must not contain %q", forbidden)
 		}
 	}
 }
@@ -107,10 +113,12 @@ func TestChromeCSSBarHeights(t *testing.T) {
 	css := string(raw)
 	for _, want := range []string{
 		"#utilbar-app",
-		"height: 1.75rem",
-		"body:not(.util-hidden) #landing-nav { top: 2.25rem; }",
-		"body:not(.util-hidden) #topbar { top: 1.75rem; }",
-		"padding-top: 5.75rem",
+		"height: 1.5rem",
+		"background: #ffffff",
+		"border-bottom: 1px solid #C3D2DE",
+		"body:not(.util-hidden) #landing-nav { top: 2rem; }",
+		"body:not(.util-hidden) #topbar { top: 1.5rem; }",
+		"padding-top: 5.5rem",
 		"#mobile-bottomnav { display: none; }",
 		"#sidebar-toggler { display: none; }",
 	} {

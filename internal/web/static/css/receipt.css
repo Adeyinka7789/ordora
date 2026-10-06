@@ -9,10 +9,10 @@
 .rcpt-card {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
   background: #ffffff;
-  color: #0c2226;
+  color: #0B1C30;
   border-radius: 16px;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-  border: 1px solid #e0ebeb;
+  border: 1px solid #E1EAF2;
   padding: 28px;
   max-width: 640px;
   margin: 0 auto;
@@ -23,7 +23,7 @@
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 16px;
-  border-bottom: 2px dashed #c3cfd1;
+  border-bottom: 2px dashed #C3D2DE;
 }
 
 .rcpt-org-name {
@@ -34,7 +34,7 @@
 
 .rcpt-org-line {
   font-size: 12px;
-  color: #455556;
+  color: #44566A;
   margin-top: 2px;
 }
 
@@ -44,7 +44,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #767f80;
+  color: #707A88;
   font-weight: 600;
 }
 
@@ -61,8 +61,8 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: #e0ebeb;
-  color: #455556;
+  background: #E1EAF2;
+  color: #44566A;
 }
 
 .rcpt-badge-paid {
@@ -79,7 +79,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #767f80;
+  color: #707A88;
   font-weight: 600;
 }
 
@@ -93,12 +93,12 @@
 
 .rcpt-amount-sub {
   font-size: 13px;
-  color: #455556;
+  color: #44566A;
   margin-top: 2px;
 }
 
 .rcpt-meta {
-  background: #f7fafa;
+  background: #F7FAFD;
   border-radius: 10px;
   padding: 12px 16px;
   margin-bottom: 16px;
@@ -112,7 +112,7 @@
   padding: 3px 0;
 }
 
-.rcpt-meta-row span { color: #767f80; }
+.rcpt-meta-row span { color: #707A88; }
 .rcpt-meta-row strong { font-weight: 600; text-align: right; }
 
 .rcpt-section { margin-top: 18px; }
@@ -121,13 +121,13 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #767f80;
+  color: #707A88;
   font-weight: 700;
   margin-bottom: 8px;
 }
 
 .rcpt-customer-name { font-size: 16px; font-weight: 700; }
-.rcpt-customer-line { font-size: 13px; color: #455556; margin-top: 2px; }
+.rcpt-customer-line { font-size: 13px; color: #44566A; margin-top: 2px; }
 
 .rcpt-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .rcpt-table th {
@@ -135,15 +135,15 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #767f80;
+  color: #707A88;
   padding: 6px 4px;
-  border-bottom: 1px solid #e0ebeb;
+  border-bottom: 1px solid #E1EAF2;
 }
-.rcpt-table td { padding: 8px 4px; border-bottom: 1px solid #edf3f3; vertical-align: top; }
+.rcpt-table td { padding: 8px 4px; border-bottom: 1px solid #EDF3F8; vertical-align: top; }
 .rcpt-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .rcpt-pay {
-  border: 1px solid #e0ebeb;
+  border: 1px solid #E1EAF2;
   border-radius: 10px;
   padding: 10px 12px;
   margin-bottom: 8px;
@@ -164,8 +164,8 @@
 .rcpt-pay-method {
   font-size: 11px;
   font-weight: 700;
-  background: #d2e9ec;
-  color: #00414a;
+  background: #D9EDF8;
+  color: #005A8C;
   border-radius: 4px;
   padding: 1px 6px;
 }
@@ -179,23 +179,23 @@
   padding: 1px 6px;
 }
 
-.rcpt-pay-sub { font-size: 12px; color: #455556; margin-top: 4px; }
+.rcpt-pay-sub { font-size: 12px; color: #44566A; margin-top: 4px; }
 .rcpt-pay-notes { font-size: 13px; margin-top: 4px; white-space: pre-wrap; }
 
 .rcpt-proofs { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
 .rcpt-proof-link, .rcpt-proof-text {
   font-size: 12px;
-  background: #f7fafa;
-  border: 1px solid #e0ebeb;
+  background: #F7FAFD;
+  border: 1px solid #E1EAF2;
   border-radius: 6px;
   padding: 2px 8px;
-  color: #00414a;
+  color: #005A8C;
   text-decoration: none;
 }
 
-.rcpt-empty { font-size: 13px; color: #767f80; }
+.rcpt-empty { font-size: 13px; color: #707A88; }
 
-.rcpt-totals { margin-top: 18px; border-top: 2px dashed #c3cfd1; padding-top: 12px; }
+.rcpt-totals { margin-top: 18px; border-top: 2px dashed #C3D2DE; padding-top: 12px; }
 .rcpt-total-row {
   display: flex;
   justify-content: space-between;
@@ -208,10 +208,10 @@
 .rcpt-foot {
   margin-top: 18px;
   padding-top: 12px;
-  border-top: 1px solid #edf3f3;
+  border-top: 1px solid #EDF3F8;
   text-align: center;
   font-size: 12px;
-  color: #767f80;
+  color: #707A88;
 }
 
 .rcpt-url { margin-top: 4px; word-break: break-all; }
@@ -269,3 +269,4 @@
 
   @page { margin: 12mm; }
 }
+

@@ -3,29 +3,19 @@
   "app" so the bar spans the right area. Content comes from contact.json
   via the global "contact" func — renders nothing when unconfigured. */}}
 {{ with contact }}
-  {{ if .HasAny }}
+  {{/* The strip shows email + website only (phones/address live on the
+    contact page and WhatsApp float instead). */}}
+  {{ if or .Emails .Website }}
     <div id="{{ if eq $ "app" }}utilbar-app{{ else }}utilbar{{ end }}">
       <div class="w-full max-w-[1440px] mx-auto px-4 md:px-8 h-full grid grid-cols-2 items-center content-center gap-x-3 gap-y-0.5 md:flex md:justify-between md:gap-4 py-1 md:py-0 overflow-hidden text-[11px] md:text-xs">
         {{ range .Emails }}
-          <a href="mailto:{{ . }}" class="inline-flex items-center gap-1.5 hover:text-white transition-colors truncate min-w-0">
+          <a href="mailto:{{ . }}" class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors truncate min-w-0">
             <span class="material-symbols-outlined text-[14px] shrink-0">mail</span>
             <span class="truncate">{{ . }}</span>
           </a>
         {{ end }}
-        {{ range .Phones }}
-          <a href="tel:{{ . }}" class="inline-flex items-center gap-1.5 hover:text-white transition-colors truncate min-w-0">
-            <span class="material-symbols-outlined text-[14px] shrink-0">call</span>
-            <span class="truncate">{{ . }}</span>
-          </a>
-        {{ end }}
-        {{ if .Address }}
-          <span class="inline-flex items-center gap-1.5 opacity-90 truncate min-w-0">
-            <span class="material-symbols-outlined text-[14px] shrink-0">location_on</span>
-            <span class="truncate">{{ .Address }}</span>
-          </span>
-        {{ end }}
         {{ if .Website }}
-          <a href="{{ .WebsiteURL }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:text-white transition-colors truncate min-w-0">
+          <a href="{{ .WebsiteURL }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors truncate min-w-0">
             <span class="material-symbols-outlined text-[14px] shrink-0">language</span>
             <span class="truncate">{{ .Website }}</span>
           </a>

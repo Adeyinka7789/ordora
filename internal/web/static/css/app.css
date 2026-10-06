@@ -11,8 +11,8 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #b9cdd0; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #93adb1; }
+::-webkit-scrollbar-thumb { background: #B9CFE0; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #93AEC4; }
 
 /* Details/summary for reverse-payment UI */
 details > summary {
@@ -80,7 +80,7 @@ details > summary::-webkit-details-marker { display: none; }
   display: block;
   height: 0.85rem;
   border-radius: 0.375rem;
-  background: linear-gradient(90deg, #e0ebeb 25%, #edf3f3 50%, #e0ebeb 75%);
+  background: linear-gradient(90deg, #E1EAF2 25%, #EDF3F8 50%, #E1EAF2 75%);
   background-size: 200% 100%;
   animation: ordora-shimmer 1.2s ease-in-out infinite;
 }
@@ -161,7 +161,7 @@ select[aria-invalid="true"] {
  */
 .metric-card {
   background: #ffffff;
-  border: 1px solid #e0ebeb;
+  border: 1px solid #E1EAF2;
   border-radius: 1rem;
   padding: 1.25rem;
   display: flex;
@@ -191,10 +191,10 @@ select[aria-invalid="true"] {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #455556;
+  color: #44566A;
 }
 .accent-card {
-  border-left: 4px solid #005f6b;
+  border-left: 4px solid #0077BE;
   border-radius: 0.5rem;
 }
 .pill-badge {
@@ -232,3 +232,4 @@ select[aria-invalid="true"] {
   .ordora-shimmer { animation: none; }
   .ordora-loading { transition: none; }
 }
+

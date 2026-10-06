@@ -52,8 +52,8 @@
   // output is identical on every device and always fits a phone screen.
   function shareSVG(r) {
     var paid = r.status === 'PAID';
-    var badgeFill = paid ? '#6ffbbe' : '#e0ebeb';
-    var badgeText = paid ? '#002113' : '#455556';
+    var badgeFill = paid ? '#6ffbbe' : '#E1EAF2';
+    var badgeText = paid ? '#002113' : '#44566A';
 
     var rows = [
       ['Customer', r.customer],
@@ -66,26 +66,26 @@
     for (var i = 0; i < rows.length; i++) {
       var y = rowY + i * rowStep;
       rowSVG +=
-        '<text x="130" y="' + y + '" font-family="' + SHARE_FONT + '" font-size="28" fill="#767f80">' + esc(trunc(rows[i][0], 20)) + '</text>' +
-        '<text x="950" y="' + y + '" text-anchor="end" font-family="' + SHARE_FONT + '" font-size="30" font-weight="600" fill="#0c2226">' + esc(trunc(rows[i][1] || '—', 34)) + '</text>';
+        '<text x="130" y="' + y + '" font-family="' + SHARE_FONT + '" font-size="28" fill="#707A88">' + esc(trunc(rows[i][0], 20)) + '</text>' +
+        '<text x="950" y="' + y + '" text-anchor="end" font-family="' + SHARE_FONT + '" font-size="30" font-weight="600" fill="#0B1C30">' + esc(trunc(rows[i][1] || '—', 34)) + '</text>';
     }
 
     return '' +
       '<svg xmlns="http://www.w3.org/2000/svg" width="' + SHARE_W + '" height="' + SHARE_H + '" viewBox="0 0 ' + SHARE_W + ' ' + SHARE_H + '">' +
-      '<rect x="0" y="0" width="' + SHARE_W + '" height="' + SHARE_H + '" fill="#f7fafa"/>' +
-      '<rect x="54" y="54" width="972" height="1242" rx="40" fill="#ffffff" stroke="#e0ebeb" stroke-width="2"/>' +
-      '<text x="540" y="160" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="36" font-weight="700" fill="#0c2226">' + esc(trunc(r.org || 'Receipt', 30)) + '</text>' +
-      '<text x="540" y="206" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="24" letter-spacing="4" fill="#767f80">RECEIPT</text>' +
+      '<rect x="0" y="0" width="' + SHARE_W + '" height="' + SHARE_H + '" fill="#F7FAFD"/>' +
+      '<rect x="54" y="54" width="972" height="1242" rx="40" fill="#ffffff" stroke="#E1EAF2" stroke-width="2"/>' +
+      '<text x="540" y="160" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="36" font-weight="700" fill="#0B1C30">' + esc(trunc(r.org || 'Receipt', 30)) + '</text>' +
+      '<text x="540" y="206" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="24" letter-spacing="4" fill="#707A88">RECEIPT</text>' +
       '<rect x="430" y="238" width="220" height="52" rx="26" fill="' + badgeFill + '"/>' +
       '<text x="540" y="273" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="26" font-weight="700" fill="' + badgeText + '">' + esc(trunc(paid ? 'PAID' : (r.status || '—'), 16)) + '</text>' +
       '<text x="540" y="420" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="92" font-weight="700" fill="#005338">' + esc(trunc(r.amount || r.total, 24)) + '</text>' +
-      '<text x="540" y="468" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="28" fill="#455556">of ' + esc(trunc(r.total, 24)) + '</text>' +
-      '<line x1="130" y1="522" x2="950" y2="522" stroke="#c3cfd1" stroke-width="2" stroke-dasharray="10 8"/>' +
+      '<text x="540" y="468" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="28" fill="#44566A">of ' + esc(trunc(r.total, 24)) + '</text>' +
+      '<line x1="130" y1="522" x2="950" y2="522" stroke="#C3D2DE" stroke-width="2" stroke-dasharray="10 8"/>' +
       rowSVG +
-      '<line x1="130" y1="1070" x2="950" y2="1070" stroke="#c3cfd1" stroke-width="2" stroke-dasharray="10 8"/>' +
-      '<text x="540" y="1130" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="28" fill="#455556">Thank you for your patronage.</text>' +
-      '<text x="540" y="1178" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="24" fill="#005f6b">' + esc(trunc(r.link, 64)) + '</text>' +
-      '<text x="540" y="1222" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="24" fill="#767f80">Full breakdown available as PDF.</text>' +
+      '<line x1="130" y1="1070" x2="950" y2="1070" stroke="#C3D2DE" stroke-width="2" stroke-dasharray="10 8"/>' +
+      '<text x="540" y="1130" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="28" fill="#44566A">Thank you for your patronage.</text>' +
+      '<text x="540" y="1178" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="24" fill="#0077BE">' + esc(trunc(r.link, 64)) + '</text>' +
+      '<text x="540" y="1222" text-anchor="middle" font-family="' + SHARE_FONT + '" font-size="24" fill="#707A88">Full breakdown available as PDF.</text>' +
       '</svg>';
   }
 
@@ -111,7 +111,7 @@
       canvas.width = SHARE_W * SHARE_SCALE;
       canvas.height = SHARE_H * SHARE_SCALE;
       var ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#f7fafa';
+      ctx.fillStyle = '#F7FAFD';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
@@ -158,4 +158,5 @@
     });
   });
 })();
+
 
