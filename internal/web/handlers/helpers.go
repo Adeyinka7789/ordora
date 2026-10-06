@@ -126,6 +126,7 @@ func shellFromRequest(r *http.Request) render.Shell {
 		sh.OrgSlug = s.OrgSlug
 		sh.OrgCurrency = s.OrgCurrency
 		sh.OrgTimezone = s.OrgTimezone
+		sh.IsTailoring = s.IsTailoring
 	}
 	if middleware.IsImpersonating(r.Context()) {
 		sh.Impersonating = true

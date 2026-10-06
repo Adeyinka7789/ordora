@@ -1,0 +1,31 @@
+{{ define "groups/index.html" }}
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Aso-ebi Groups</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">One style, many members — track every outfit and balance per group.</p>
+    </div>
+    <a href="/groups/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span>New Group</span>
+    </a>
+  </div>
+
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+
+  <form class="relative w-full max-w-md flex items-center"
+        hx-get="/groups"
+        hx-trigger="input changed delay:300ms from:input[name='q'], submit"
+        hx-target="#groups-table"
+        hx-swap="outerHTML"
+        hx-push-url="true">
+    <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+    <input type="search" name="q" value="{{ .Query }}" placeholder="Search groups…" autocomplete="off"
+           class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
+  </form>
+
+  {{ template "groups/_table.html" . }}
+</div>
+{{ end }}

@@ -404,6 +404,80 @@ func buildOrderListWhere(opts OrderListOptions) (string, []any) {
 }
 
 // -----------------------------------------------------------------------------
+// Calendar: due-date projections (non-terminal orders only).
+// -----------------------------------------------------------------------------
+
+// DueOrder is one order on the occasion calendar.
+type DueOrder struct {
+	OrderID     uuid.UUID
+	OrderNumber string
+	Title       string
+	Customer    string
+	Phone       string
+	Status      string
+	Currency    string
+	TotalMinor  int64
+	PaidMinor   int64
+	Expected    time.Time
+}
+
+// dueOrdersTx runs a due-date projection with the given extra predicate.
+// extra/orderBy are repo-built fragments, never user input.
+func (r *OrderRepo) dueOrdersTx(ctx context.Context, tx pgx.Tx, extra string, args []any, orderBy string) ([]DueOrder, error) {
+	q := `
+		SELECT o.id, o.order_number, o.title, c.name, COALESCE(c.phone,''),
+		       o.status::text, o.currency, o.total_minor, o.amount_paid_minor,
+		       o.expected_completion
+		FROM orders o
+		JOIN customers c ON c.id = o.customer_id
+		WHERE o.status NOT IN ('COMPLETED','CANCELLED')
+		  AND o.expected_completion IS NOT NULL
+		  AND ` + extra + `
+		ORDER BY ` + orderBy
+	rows, err := tx.Query(ctx, q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("order_repo: due: %w", Classify(err))
+	}
+	defer rows.Close()
+	var out []DueOrder
+	for rows.Next() {
+		var d DueOrder
+		if err := rows.Scan(&d.OrderID, &d.OrderNumber, &d.Title, &d.Customer, &d.Phone,
+			&d.Status, &d.Currency, &d.TotalMinor, &d.PaidMinor, &d.Expected); err != nil {
+			return nil, fmt.Errorf("order_repo: scan due: %w", err)
+		}
+		out = append(out, d)
+	}
+	return out, rows.Err()
+}
+
+// DueBetween returns non-terminal orders due in [from, to] (date part).
+func (r *OrderRepo) DueBetween(ctx context.Context, scope tenant.TenantScope, from, to time.Time) ([]DueOrder, error) {
+	var out []DueOrder
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		var err error
+		out, err = r.dueOrdersTx(ctx, tx,
+			`o.expected_completion >= $1::date AND o.expected_completion <= $2::date`,
+			[]any{from, to}, `o.expected_completion ASC, o.created_at ASC`)
+		return err
+	})
+	return out, err
+}
+
+// Overdue returns non-terminal orders due before today, oldest first.
+func (r *OrderRepo) Overdue(ctx context.Context, scope tenant.TenantScope, today time.Time) ([]DueOrder, error) {
+	var out []DueOrder
+	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		var err error
+		out, err = r.dueOrdersTx(ctx, tx,
+			`o.expected_completion < $1::date`,
+			[]any{today}, `o.expected_completion ASC`)
+		return err
+	})
+	return out, err
+}
+
+// -----------------------------------------------------------------------------
 // Scanners
 // -----------------------------------------------------------------------------
 

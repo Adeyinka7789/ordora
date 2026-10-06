@@ -41,8 +41,32 @@ type Attachment struct {
 	Filename       string // original filename, for download header
 	MimeType       string
 	SizeBytes      int64
-	UploadedBy     uuid.UUID
-	CreatedAt      time.Time
+	// Purpose distinguishes style inspiration photos from generic files.
+	// See NormalizePurpose; defaults to PurposeGeneral.
+	Purpose    string
+	UploadedBy uuid.UUID
+	CreatedAt  time.Time
+}
+
+// Attachment purposes.
+const (
+	PurposeGeneral     = "general"
+	PurposeInspiration = "inspiration"
+)
+
+// NormalizePurpose maps arbitrary input to a valid purpose.
+func NormalizePurpose(p string) string {
+	switch strings.ToLower(strings.TrimSpace(p)) {
+	case PurposeInspiration:
+		return PurposeInspiration
+	default:
+		return PurposeGeneral
+	}
+}
+
+// IsInspiration reports whether the file is a style reference photo.
+func (a *Attachment) IsInspiration() bool {
+	return a.Purpose == PurposeInspiration
 }
 
 // Errors.

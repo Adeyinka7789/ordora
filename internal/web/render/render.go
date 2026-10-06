@@ -54,6 +54,8 @@ type Shell struct {
 	OrgCurrency  string
 	OrgTimezone  string
 	CSRFToken    string
+	// IsTailoring unlocks tailoring-only nav (aso-ebi groups).
+	IsTailoring bool
 
 	// Impersonation
 	Impersonating        bool

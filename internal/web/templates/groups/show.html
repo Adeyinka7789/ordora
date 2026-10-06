@@ -1,0 +1,124 @@
+{{ define "groups/show.html" }}
+<div class="p-space-lg lg:p-space-xl max-w-4xl mx-auto flex flex-col gap-space-lg">
+
+  <div class="flex items-center justify-between flex-wrap gap-space-sm">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">{{ .Detail.Group.Name }}</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">
+        {{ .Detail.MemberCount }} member(s)
+        {{ if .HasOccasion }}
+          · occasion {{ .Detail.Group.OccasionDate.Format "02-01-2006" }}
+          {{ if ge .DaysToGo 0 }}· <strong class="{{ if .OccasionSoon }}text-error{{ else }}text-on-surface{{ end }}">{{ .DaysToGo }} day(s) to go</strong>{{ end }}
+        {{ end }}
+      </p>
+    </div>
+    <div class="flex items-center gap-space-sm">
+      <a href="/groups" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        <span>All groups</span>
+      </a>
+      <form method="post" action="/groups/{{ .Detail.Group.ID }}/delete" class="inline"
+            data-confirm="Delete this group? Member orders are kept." data-confirm-title="Delete group" data-confirm-label="Delete">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
+    <div class="metric-card">
+      <div class="metric-icon bg-surface-container-low text-primary">
+        <span class="material-symbols-outlined text-[22px]">group</span>
+      </div>
+      <div class="flex flex-col">
+        <span class="metric-value">{{ .Detail.MemberCount }}</span>
+        <span class="metric-label">Members</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon bg-secondary-container/60 text-primary-container">
+        <span class="material-symbols-outlined text-[22px]">payments</span>
+      </div>
+      <div class="flex flex-col">
+        <span class="metric-value">{{ if .Detail.Currency }}{{ currency .Detail.TotalMinor .Detail.Currency }}{{ else }}—{{ end }}</span>
+        <span class="metric-label">Group total</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon {{ if gt .Detail.BalanceMinor 0 }}bg-error-container/60 text-error{{ else }}bg-surface-container-low text-on-surface-variant{{ end }}">
+        <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+      </div>
+      <div class="flex flex-col">
+        <span class="metric-value {{ if gt .Detail.BalanceMinor 0 }}text-error{{ end }}">{{ if .Detail.Currency }}{{ currency .Detail.BalanceMinor .Detail.Currency }}{{ else }}—{{ end }}</span>
+        <span class="metric-label">Outstanding</span>
+      </div>
+    </div>
+  </div>
+
+  {{ if .Detail.Group.Notes }}
+    <div class="accent-card bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold mb-space-xs">Style notes</h2>
+      <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Detail.Group.Notes }}</p>
+    </div>
+  {{ end }}
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <div class="flex items-center justify-between flex-wrap gap-space-sm">
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Members</h2>
+      <form method="post" action="/groups/{{ .Detail.Group.ID }}/orders" class="flex items-center gap-space-xs">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <input type="text" name="order_number" required placeholder="Order no. e.g. ORD-2026-000123" maxlength="32"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Add order</button>
+      </form>
+    </div>
+
+    {{ if not .Detail.Members }}
+      <p class="font-body-md text-body-md text-on-surface-variant">No members yet. Create an order first, then add it here by order number.</p>
+    {{ else }}
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-left font-body-md text-body-md">
+          <thead>
+            <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+              <th class="py-2.5 px-space-md font-semibold">Order</th>
+              <th class="py-2.5 px-space-md font-semibold">Customer</th>
+              <th class="py-2.5 px-space-md font-semibold">Status</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Total</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Paid</th>
+              <th class="py-2.5 px-space-md font-semibold text-right">Balance</th>
+              <th class="w-10"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range .Detail.Members }}
+              <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+                <td class="py-3 px-space-md">
+                  <a href="/orders/{{ .OrderID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline whitespace-nowrap">{{ .OrderNumber }}</a>
+                  <div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-[200px]">{{ .Title }}</div>
+                </td>
+                <td class="py-3 px-space-md font-label-md text-label-md font-semibold text-on-surface">{{ .Customer }}</td>
+                <td class="py-3 px-space-md">{{ template "partials/status_badge.html" .Status }}</td>
+                <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md">{{ currency .TotalMinor .Currency }}</td>
+                <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md">{{ currency .PaidMinor .Currency }}</td>
+                <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold {{ if gt .BalanceMinor 0 }}text-error{{ end }}">{{ currency .BalanceMinor .Currency }}</td>
+                <td class="py-3 px-space-md text-center">
+                  <form method="post" action="/groups/{{ $.Detail.Group.ID }}/orders/{{ .OrderID }}/remove" class="inline"
+                        data-confirm="Remove this order from the group? The order itself is kept." data-confirm-title="Remove member" data-confirm-label="Remove">
+                    <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                    <button type="submit" class="p-1 rounded hover:bg-error-container text-on-surface-variant hover:text-error transition-colors" aria-label="Remove member" title="Remove member">
+                      <span class="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {{ end }}
+          </tbody>
+        </table>
+      </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

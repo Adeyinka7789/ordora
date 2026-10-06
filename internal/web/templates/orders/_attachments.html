@@ -1,5 +1,27 @@
 {{ define "orders/_attachments.html" }}
 <div id="attachments" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+  {{ if .HasInspiration }}
+    <div class="flex flex-col gap-space-sm">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[20px]">photo_library</span>
+        <h3 class="font-label-md text-label-md font-bold text-on-surface uppercase tracking-wider">Style inspiration</h3>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-space-sm">
+        {{ range .Attachments }}{{ if .IsInspiration }}
+          <a href="/attachments/{{ .ID }}?view=1" target="_blank" rel="noopener" class="block rounded-lg overflow-hidden bg-surface-container-low hover:ring-2 hover:ring-primary-container transition-all" title="{{ .Filename }}">
+            {{ if .IsImage }}
+              <img src="/attachments/{{ .ID }}?view=1" alt="Style reference: {{ .Filename }}" loading="lazy" class="w-full h-28 object-cover">
+            {{ else }}
+              <span class="w-full h-28 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[36px] text-primary">description</span>
+              </span>
+            {{ end }}
+          </a>
+        {{ end }}{{ end }}
+      </div>
+    </div>
+  {{ end }}
+
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
       <span class="material-symbols-outlined text-primary text-[22px]">folder_open</span>
@@ -39,11 +61,18 @@
         hx-target="#attachments"
         hx-swap="outerHTML"
         hx-encoding="multipart/form-data"
-        class="flex items-center gap-space-sm pt-space-md border-t border-outline-variant/30">
+        class="flex flex-col gap-space-sm pt-space-md border-t border-outline-variant/30">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
-    <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required
-           class="flex-1 font-body-sm text-body-sm text-on-surface-variant">
-    <button type="submit" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold">Upload</button>
+    <div class="flex items-center gap-space-sm flex-wrap">
+      <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required
+             class="flex-1 min-w-52 font-body-sm text-body-sm text-on-surface-variant">
+      <select name="purpose" title="File purpose"
+              class="h-9 px-2 rounded bg-surface-container-low text-on-surface font-label-sm text-label-sm focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="general">General file</option>
+        <option value="inspiration">Style inspiration</option>
+      </select>
+      <button type="submit" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold">Upload</button>
+    </div>
   </form>
   <p class="font-label-sm text-label-sm text-outline">JPG, PNG, WEBP, GIF, or PDF · up to 10 MiB</p>
 </div>

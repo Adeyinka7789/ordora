@@ -58,6 +58,8 @@ type UploadInput struct {
 	MimeType   string
 	Size       int64
 	Body       io.Reader
+	// Purpose marks style inspiration photos; normalized, defaults general.
+	Purpose string
 }
 
 // Upload stores the bytes and records the metadata. On failure, best-effort
@@ -91,6 +93,7 @@ func (s *AttachmentService) Upload(ctx context.Context, scope tenant.TenantScope
 	if err != nil {
 		return nil, err
 	}
+	a.Purpose = attachment.NormalizePurpose(in.Purpose)
 
 	if err := s.blobs.Put(ctx, key, in.Body, in.Size); err != nil {
 		return nil, fmt.Errorf("attachment: store bytes: %w", err)

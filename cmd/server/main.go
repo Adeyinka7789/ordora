@@ -21,6 +21,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
 	"github.com/Adeyinka7789/ordora/internal/contact"
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/domain/user"
 	"github.com/Adeyinka7789/ordora/internal/flags"
@@ -280,6 +281,27 @@ func run() error {
 		Audit:        auditRepo,
 		Renderer:     renderer,
 		Costs:        costService,
+		Groups:       postgres.NewGroupRepo(db),
+	}
+
+	// ---- Aso-ebi groups + calendar ----
+	groupRepo := postgres.NewGroupRepo(db)
+	groupService := app.NewGroupService(app.GroupServiceDeps{
+		DB:     db,
+		Groups: groupRepo,
+		Audit:  auditRepo,
+		IDs:    id.Generator{},
+	})
+	groupH := &handlers.GroupHandler{
+		Service:  groupService,
+		Repo:     groupRepo,
+		Orders:   orderRepo,
+		Renderer: renderer,
+	}
+	calendarH := &handlers.CalendarHandler{
+		Orders:   orderRepo,
+		Groups:   groupRepo,
+		Renderer: renderer,
 	}
 
 	// ---- Settings + profile ----
@@ -450,11 +472,12 @@ func run() error {
 	// OWNER. Actions are attributed to the admin by the audit system.
 	buildImpersonatedSession := func(ctx context.Context, orgID uuid.UUID) (*auth.ResolvedSession, error) {
 		var ownerID uuid.UUID
-		var ownerName, ownerEmail, orgName, orgSlug, orgCurrency, orgTimezone string
+		var ownerName, ownerEmail, orgName, orgSlug, orgCurrency, orgTimezone, orgCategory string
 
 		err := adminDB.WithTx(ctx, func(tx pgx.Tx) error {
 			const q = `
-				SELECT m.user_id, u.name, u.email::text, o.name, o.slug::text, o.currency::text, o.timezone
+				SELECT m.user_id, u.name, u.email::text, o.name, o.slug::text, o.currency::text, o.timezone,
+				       COALESCE(o.business_category,'')
 				FROM organization_members m
 				JOIN users u ON u.id = m.user_id
 				JOIN organizations o ON o.id = m.organization_id
@@ -463,7 +486,7 @@ func run() error {
 				LIMIT 1
 			`
 			return tx.QueryRow(ctx, q, orgID).Scan(&ownerID, &ownerName, &ownerEmail,
-				&orgName, &orgSlug, &orgCurrency, &orgTimezone)
+				&orgName, &orgSlug, &orgCurrency, &orgTimezone, &orgCategory)
 		})
 		if err != nil {
 			return nil, err
@@ -487,6 +510,7 @@ func run() error {
 			OrgSlug:     orgSlug,
 			OrgCurrency: orgCurrency,
 			OrgTimezone: orgTimezone,
+			IsTailoring: org.IsTailoringCategory(orgCategory),
 		}, nil
 	}
 
@@ -794,6 +818,21 @@ func run() error {
 	mux.Handle("POST /orders/{id}/costs", gated("orders", http.HandlerFunc(costH.Add)))
 	mux.Handle("POST /costs/{id}", gated("orders", http.HandlerFunc(costH.Update)))
 	mux.Handle("POST /costs/{id}/delete", gated("orders", http.HandlerFunc(costH.Delete)))
+	// ---- Aso-ebi groups (requires auth + tenant + tailoring trade) ----
+	// Tailoring-only: hidden from other business types entirely.
+	tailored := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireTailoring(
+			middleware.RequireFlag(flagProvider, "orders")(h)))
+	}
+	mux.Handle("GET /groups", tailored(http.HandlerFunc(groupH.Index)))
+	mux.Handle("GET /groups/new", tailored(http.HandlerFunc(groupH.New)))
+	mux.Handle("POST /groups", tailored(http.HandlerFunc(groupH.Create)))
+	mux.Handle("GET /groups/{id}", tailored(http.HandlerFunc(groupH.Show)))
+	mux.Handle("POST /groups/{id}/orders", tailored(http.HandlerFunc(groupH.AddOrder)))
+	mux.Handle("POST /groups/{id}/orders/{orderID}/remove", tailored(http.HandlerFunc(groupH.RemoveOrder)))
+	mux.Handle("POST /groups/{id}/delete", tailored(http.HandlerFunc(groupH.Delete)))
+	// ---- Occasion calendar ----
+	mux.Handle("GET /calendar", gated("orders", http.HandlerFunc(calendarH.Index)))
 	// ---- Attachments ----
 	mux.Handle("POST /orders/{id}/attachments", gated("orders", http.HandlerFunc(attachH.UploadToOrder)))
 	mux.Handle("GET /attachments/{id}", gated("orders", http.HandlerFunc(attachH.Download)))

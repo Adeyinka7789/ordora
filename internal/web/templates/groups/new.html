@@ -1,0 +1,42 @@
+{{ define "groups/new.html" }}
+<div class="p-space-lg lg:p-space-xl max-w-2xl mx-auto flex flex-col gap-space-lg">
+
+  <div class="flex items-center justify-between">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">New Aso-ebi Group</h1>
+    <a href="/groups" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span>Back</span>
+    </a>
+  </div>
+
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  <form method="post" action="/groups" data-draft="group-new" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Group name *</span>
+      <input type="text" name="name" value="{{ .FormName }}" required autofocus maxlength="120" placeholder="e.g. Ada's Wedding Aso-ebi"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Occasion date</span>
+      <input type="date" name="occasion_date" value="{{ .FormOccasion }}"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">The party date — the group shows up on the calendar countdown.</span>
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Style notes</span>
+      <textarea name="notes" rows="3" maxlength="2000" placeholder="e.g. Teal ankara, senator for men, flare gown for women"
+                class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormNotes }}</textarea>
+    </label>
+
+    <div class="flex items-center gap-space-sm pt-space-xs">
+      <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Create Group</button>
+      <a href="/groups" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">Cancel</a>
+    </div>
+  </form>
+</div>
+{{ end }}

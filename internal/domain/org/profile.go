@@ -9,6 +9,16 @@ import (
 // never equal Other — the handler resolves it to the typed text first.
 const Other = "Other"
 
+// TailoringCategory is the business_category that unlocks tailoring
+// features: measurements on orders and aso-ebi groups.
+const TailoringCategory = "Tailoring & Fashion"
+
+// IsTailoringCategory reports whether a business category unlocks
+// tailoring features.
+func IsTailoringCategory(category string) bool {
+	return strings.TrimSpace(category) == TailoringCategory
+}
+
 // MaxCustomProfileLength caps free-text "Other" entries.
 const MaxCustomProfileLength = 120
 

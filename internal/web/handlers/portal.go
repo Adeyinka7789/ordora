@@ -300,6 +300,8 @@ func humanizePublicOrderError(err error) string {
 		return "Please enter your name."
 	case errors.Is(err, app.ErrPublicEmailRequired):
 		return "Please enter your email."
+	case errors.Is(err, app.ErrPublicContactRequired):
+		return "Please give an email or a phone/WhatsApp number so the shop can reach you."
 	case errors.Is(err, app.ErrPublicDescRequired):
 		return "Please tell us what you'd like to order."
 	case errors.Is(err, app.ErrPublicOrderEmpty):

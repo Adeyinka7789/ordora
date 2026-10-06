@@ -66,6 +66,41 @@ func withScope(r *http.Request, orgID uuid.UUID) *http.Request {
 	return r.WithContext(withSession(r.Context(), s))
 }
 
+func withTailoringScope(r *http.Request, orgID uuid.UUID, tailoring bool) *http.Request {
+	s := &auth.ResolvedSession{
+		Scope:       tenant.TenantScope{OrgID: orgID, Role: tenant.RoleOwner},
+		IsTailoring: tailoring,
+	}
+	return r.WithContext(withSession(r.Context(), s))
+}
+
+func TestRequireTailoring(t *testing.T) {
+	org := uuid.New()
+
+	// No session at all must 404.
+	rec := httptest.NewRecorder()
+	RequireTailoring(okHandler()).ServeHTTP(rec, httptest.NewRequest("GET", "/groups", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("no session: got %d, want 404", rec.Code)
+	}
+
+	// Non-tailoring org must 404 (feature hidden, not forbidden).
+	rec = httptest.NewRecorder()
+	RequireTailoring(okHandler()).ServeHTTP(rec,
+		withTailoringScope(httptest.NewRequest("GET", "/groups", nil), org, false))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("non-tailoring: got %d, want 404", rec.Code)
+	}
+
+	// Tailoring org passes through.
+	rec = httptest.NewRecorder()
+	RequireTailoring(okHandler()).ServeHTTP(rec,
+		withTailoringScope(httptest.NewRequest("GET", "/groups", nil), org, true))
+	if rec.Code != http.StatusOK {
+		t.Errorf("tailoring: got %d, want 200", rec.Code)
+	}
+}
+
 func TestRequireFlag(t *testing.T) {
 	// Nil provider must deny (fail closed), never pass through.
 	rec := httptest.NewRecorder()

@@ -73,13 +73,14 @@ const MaxPublicItems = 25
 
 // Errors.
 var (
-	ErrPublicOrgNotFound   = errors.New("public order: business not found")
-	ErrPublicNameRequired  = errors.New("public order: name is required")
-	ErrPublicEmailRequired = errors.New("public order: email is required")
-	ErrPublicDescRequired  = errors.New("public order: description is required")
-	ErrPublicOrderEmpty    = errors.New("public order: pick a product or describe what you need")
-	ErrPublicTooManyItems  = errors.New("public order: too many items")
-	ErrPublicQtyInvalid    = errors.New("public order: invalid quantity")
+	ErrPublicOrgNotFound     = errors.New("public order: business not found")
+	ErrPublicNameRequired    = errors.New("public order: name is required")
+	ErrPublicEmailRequired   = errors.New("public order: email is required")
+	ErrPublicContactRequired = errors.New("public order: email or phone is required")
+	ErrPublicDescRequired    = errors.New("public order: description is required")
+	ErrPublicOrderEmpty      = errors.New("public order: pick a product or describe what you need")
+	ErrPublicTooManyItems    = errors.New("public order: too many items")
+	ErrPublicQtyInvalid      = errors.New("public order: invalid quantity")
 )
 
 // PublicOrderService handles order submissions from the public form.
@@ -137,8 +138,10 @@ func (s *PublicOrderService) Submit(ctx context.Context, in PublicOrderInput) (*
 	if in.CustomerName == "" {
 		return nil, ErrPublicNameRequired
 	}
-	if in.CustomerEmail == "" {
-		return nil, ErrPublicEmailRequired
+	// Email is optional: phone/WhatsApp is a first-class customer key.
+	// At least one way to reach the customer is required.
+	if in.CustomerEmail == "" && in.CustomerPhone == "" {
+		return nil, ErrPublicContactRequired
 	}
 	if len(in.Items) > MaxPublicItems {
 		return nil, ErrPublicTooManyItems

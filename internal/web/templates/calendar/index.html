@@ -1,0 +1,73 @@
+{{ define "calendar/index.html" }}
+<div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+    <div class="flex flex-col">
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Occasion Calendar</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .WeekLabel }} · due dates, party occasions, overdue follow-ups.</p>
+    </div>
+    <div class="flex items-center gap-space-xs">
+      <a href="/calendar?date={{ .PrevWeek }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center">← Prev</a>
+      <a href="/calendar?date={{ .ThisWeek }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center">Today</a>
+      <a href="/calendar?date={{ .NextWeek }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center">Next →</a>
+    </div>
+  </div>
+
+  {{ if .Overdue }}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm accent-card" style="border-left-color:#ba1a1a">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-error text-[22px]">warning</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Overdue — {{ len .Overdue }} order(s) need attention</h2>
+      </div>
+      <div class="flex flex-col gap-space-xs">
+        {{ range .Overdue }}
+          <div class="flex items-center justify-between gap-space-sm p-space-sm rounded-lg bg-surface-container-low flex-wrap">
+            <div class="flex flex-col min-w-0">
+              <a href="/orders/{{ .OrderID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline">{{ .OrderNumber }} · {{ .Customer }}</a>
+              <span class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ .Title }} · due {{ .Expected.Format "02 Jan" }} · <strong class="text-error">{{ .DaysOverdue }} day(s) late</strong></span>
+            </div>
+            <div class="flex items-center gap-space-xs shrink-0">
+              {{ if .NudgeURL }}
+                <a href="{{ .NudgeURL }}" target="_blank" rel="noopener" class="h-8 px-3 rounded bg-tertiary text-on-tertiary font-label-sm text-label-sm font-semibold inline-flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[16px]">chat</span>
+                  <span>Nudge on WhatsApp</span>
+                </a>
+              {{ end }}
+              <a href="/orders/{{ .OrderID }}" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold inline-flex items-center">Open</a>
+            </div>
+          </div>
+        {{ end }}
+      </div>
+    </div>
+  {{ end }}
+
+  <div class="grid grid-cols-1 md:grid-cols-7 gap-space-sm">
+    {{ range .Days }}
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-xs min-h-[140px] {{ if .IsToday }}ring-2 ring-primary-container{{ end }}">
+        <div class="flex items-center justify-between">
+          <span class="font-label-md text-label-md font-bold {{ if .IsToday }}text-primary{{ else }}text-on-surface{{ end }}">{{ .Label }}</span>
+          {{ if .IsToday }}<span class="pill-badge bg-primary-container text-on-primary">Today</span>{{ end }}
+        </div>
+        {{ range .Occasion }}
+          <a href="/groups/{{ .ID }}" class="block p-space-xs rounded-lg bg-tertiary-fixed/40 border border-tertiary-fixed">
+            <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]">celebration</span>
+              <span class="truncate">{{ .Name }}</span>
+            </span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant">{{ .Members }} member(s)</span>
+          </a>
+        {{ end }}
+        {{ range .Due }}
+          <a href="/orders/{{ .OrderID }}" class="block p-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container">
+            <span class="font-code-md text-code-md font-semibold text-primary">{{ .OrderNumber }}</span>
+            <span class="block font-body-sm text-body-sm text-on-surface truncate">{{ .Customer }} · {{ .Title }}</span>
+          </a>
+        {{ else }}
+          {{ if not .Occasion }}<span class="font-body-sm text-body-sm text-outline">—</span>{{ end }}
+        {{ end }}
+      </div>
+    {{ end }}
+  </div>
+
+</div>
+{{ end }}

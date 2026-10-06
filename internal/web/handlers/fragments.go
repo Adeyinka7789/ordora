@@ -21,9 +21,20 @@ type timelineFragment struct {
 // attachmentsFragment is the data passed to orders/_attachments.html when
 // rendered standalone from an HTMX upload response.
 type attachmentsFragment struct {
-	OrderID     uuid.UUID
-	Attachments []*attachment.Attachment
-	CSRFToken   string
+	OrderID        uuid.UUID
+	Attachments    []*attachment.Attachment
+	HasInspiration bool
+	CSRFToken      string
+}
+
+// hasInspiration reports whether any attachment is a style reference.
+func hasInspiration(list []*attachment.Attachment) bool {
+	for _, a := range list {
+		if a.IsInspiration() {
+			return true
+		}
+	}
+	return false
 }
 
 // paymentsFragment is passed to orders/_payments.html.

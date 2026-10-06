@@ -34,6 +34,7 @@ type OrderHandler struct {
 	Audit        *postgres.AuditRepo
 	Renderer     *render.Renderer
 	Costs        *app.CostService
+	Groups       *postgres.GroupRepo
 }
 
 // -----------------------------------------------------------------------------
@@ -127,13 +128,21 @@ type orderShowPage struct {
 	Order                *order.Order
 	OrderID              uuid.UUID
 	Measurement          *measShowView
+	Group                *orderGroupBadge
 	Attachments          []*attachment.Attachment
+	HasInspiration       bool
 	Payments             []*payment.Payment
 	PayStatus            payment.Status
 	AttachmentsByPayment map[uuid.UUID][]*attachment.Attachment
 	AuditTrail           []postgres.AuditTrailRow
 	Costs                *app.OrderCostSummary
 	CostCategories       []cost.Category
+}
+
+// orderGroupBadge links an order to its aso-ebi group (nil when none).
+type orderGroupBadge struct {
+	ID   string
+	Name string
 }
 
 // -----------------------------------------------------------------------------
@@ -735,6 +744,7 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	// Load attachments (best-effort).
 	if list, err := h.Attachments.List(r.Context(), scope, attachment.EntityOrder, o.ID); err == nil {
 		page.Attachments = list
+		page.HasInspiration = hasInspiration(list)
 	}
 
 	// Load tailoring measurements (best-effort; absent for non-tailoring).
@@ -763,6 +773,13 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			page.Measurement = view
+		}
+	}
+
+	// Load the aso-ebi group badge (best-effort).
+	if h.Groups != nil {
+		if g, err := h.Groups.FindByOrder(r.Context(), scope, o.ID); err == nil {
+			page.Group = &orderGroupBadge{ID: g.ID.String(), Name: g.Name}
 		}
 	}
 

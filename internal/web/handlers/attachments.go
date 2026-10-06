@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -121,7 +122,14 @@ func (h *AttachmentHandler) Download(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", a.MimeType)
 	w.Header().Set("Content-Length", strconv.FormatInt(a.SizeBytes, 10))
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename=%q`, a.Filename))
+	// ?view=1 serves images inline for gallery previews; default stays a
+	// download so receipts and files behave as before.
+	if r.URL.Query().Get("view") == "1" && strings.HasPrefix(a.MimeType, "image/") {
+		w.Header().Set("Content-Disposition", "inline")
+		w.Header().Set("Cache-Control", "private, max-age=86400")
+	} else {
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename=%q`, a.Filename))
+	}
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	_, _ = io.Copy(w, body)
@@ -167,6 +175,7 @@ func (h *AttachmentHandler) readAndStore(r *http.Request, scope tenant.TenantSco
 		MimeType:   sniffed,
 		Size:       int64(len(full)),
 		Body:       bytes.NewReader(full),
+		Purpose:    r.PostFormValue("purpose"),
 	})
 }
 
@@ -177,9 +186,10 @@ func (h *AttachmentHandler) renderAttachmentsFragment(w http.ResponseWriter, r *
 		return
 	}
 	h.Renderer.Fragment(w, r, http.StatusOK, "orders/_attachments.html", attachmentsFragment{
-		OrderID:     orderID,
-		Attachments: list,
-		CSRFToken:   middleware.CSRFTokenFrom(r.Context()),
+		OrderID:        orderID,
+		Attachments:    list,
+		HasInspiration: hasInspiration(list),
+		CSRFToken:      middleware.CSRFTokenFrom(r.Context()),
 	})
 }
 

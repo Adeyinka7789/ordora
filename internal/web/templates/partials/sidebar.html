@@ -35,11 +35,11 @@
           <span class="sidebar-label">Dashboard</span>
         </div>
       </a>
-      {{ if flag "orders" .Shell.OrgID }}
-        <a href="/orders" title="Orders" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+      {{ if and (flag "orders" .Shell.OrgID) .Shell.IsTailoring }}
+        <a href="/groups" title="Aso-ebi groups" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
-            <span class="sidebar-label">Orders</span>
+            <span class="material-symbols-outlined text-[18px]">group_work</span>
+            <span class="sidebar-label">Aso-ebi Groups</span>
           </div>
         </a>
       {{ end }}
@@ -64,6 +64,20 @@
           <div class="flex items-center gap-space-sm">
             <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
             <span class="sidebar-label">Payments &amp; Ledger</span>
+          </div>
+        </a>
+      {{ end }}
+      {{ if flag "orders" .Shell.OrgID }}
+        <a href="/groups" title="Aso-ebi groups" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">group_work</span>
+            <span class="sidebar-label">Aso-ebi Groups</span>
+          </div>
+        </a>
+        <a href="/calendar" title="Occasion calendar" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+            <span class="sidebar-label">Calendar</span>
           </div>
         </a>
       {{ end }}

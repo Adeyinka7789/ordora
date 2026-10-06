@@ -14,11 +14,11 @@ import (
 )
 
 // TailoringCategory is the signup business_category that unlocks measurement
-// features on order forms.
-const TailoringCategory = "Tailoring & Fashion"
+// features on order forms (canonical value lives on org.TailoringCategory).
+const TailoringCategory = org.TailoringCategory
 
 func isTailoringOrg(o *org.Organization) bool {
-	return o != nil && o.BusinessCategory == TailoringCategory
+	return o != nil && org.IsTailoringCategory(o.BusinessCategory)
 }
 
 // measTemplateOption is one garment choice on the order form.

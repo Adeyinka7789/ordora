@@ -1,0 +1,67 @@
+{{ define "groups/_table.html" }}
+<div id="groups-table" class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
+  {{ if not .Rows }}
+    <div class="p-space-xl text-center">
+      {{ if .Query }}
+        <p class="font-body-md text-body-md text-on-surface-variant">No groups match <strong class="text-on-surface">{{ .Query }}</strong>.</p>
+      {{ else }}
+        <p class="font-body-md text-body-md text-on-surface-variant">No groups yet.</p>
+        <a href="/groups/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Start your first aso-ebi group</a>
+      {{ end }}
+    </div>
+  {{ else }}
+    <div class="w-full overflow-x-auto">
+      <table class="w-full text-left font-body-md text-body-md">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+            <th class="py-2.5 px-space-md font-semibold">Group</th>
+            <th class="py-2.5 px-space-md font-semibold">Occasion</th>
+            <th class="py-2.5 px-space-md font-semibold text-center">Members</th>
+            <th class="py-2.5 px-space-md font-semibold text-right">Collected</th>
+            <th class="py-2.5 px-space-md font-semibold text-right">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Rows }}
+            <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
+              <td class="py-3 px-space-md">
+                <a href="/groups/{{ .ID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
+              </td>
+              <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant whitespace-nowrap">
+                {{ if .OccasionDate }}{{ .OccasionDate.Format "02-01-2006" }}{{ else }}—{{ end }}
+              </td>
+              <td class="py-3 px-space-md text-center tabular-nums font-code-md text-code-md">{{ .MemberCount }}</td>
+              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold">
+                {{ if .Currency }}{{ currency .PaidMinor .Currency }}{{ else }}—{{ end }}
+              </td>
+              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold {{ if gt .BalanceMinor 0 }}text-error{{ end }}">
+                {{ if .Currency }}{{ currency .BalanceMinor .Currency }}{{ else }}—{{ end }}
+              </td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+
+    {{ if gt .Pagination.TotalPages 1 }}
+      <nav class="p-space-md flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant border-t border-outline-variant/20">
+        <span aria-live="polite">Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
+        <div class="flex gap-1">
+          {{ if .Pagination.HasPrev }}
+            <a href="/groups?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
+               hx-get="/groups?q={{ .Query }}&offset={{ .Pagination.PrevOffset }}"
+               hx-target="#groups-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Prev</a>
+          {{ end }}
+          {{ if .Pagination.HasNext }}
+            <a href="/groups?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
+               hx-get="/groups?q={{ .Query }}&offset={{ .Pagination.NextOffset }}"
+               hx-target="#groups-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Next</a>
+          {{ end }}
+        </div>
+      </nav>
+    {{ end }}
+  {{ end }}
+</div>
+{{ end }}

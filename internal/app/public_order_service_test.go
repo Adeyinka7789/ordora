@@ -64,6 +64,28 @@ func TestPublicSubmit_RequiresDescOrItems(t *testing.T) {
 	}
 }
 
+func TestPublicSubmit_PhoneOnlyContact(t *testing.T) {
+	f := &fakePublicDB{
+		org:    &PublicOrg{ID: uuid.New(), Name: "Shop", Currency: "NGN"},
+		result: &PublicOrderResult{OrderID: uuid.New(), OrderNumber: "ORD-2"},
+	}
+	svc := testPublicSvc(f)
+	_, err := svc.Submit(context.Background(), PublicOrderInput{
+		Slug: "shop", CustomerName: "Ada", CustomerPhone: "08031234567",
+		Description: "Agbada for Saturday",
+	})
+	if err != nil {
+		t.Fatalf("phone-only submit rejected: %v", err)
+	}
+
+	_, err = svc.Submit(context.Background(), PublicOrderInput{
+		Slug: "shop", CustomerName: "Ada", Description: "Agbada",
+	})
+	if err != ErrPublicContactRequired {
+		t.Errorf("expected ErrPublicContactRequired, got %v", err)
+	}
+}
+
 func TestPublicSubmit_RejectsBadItems(t *testing.T) {
 	svc := testPublicSvc(&fakePublicDB{})
 	_, err := svc.Submit(context.Background(), PublicOrderInput{

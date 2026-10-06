@@ -27,15 +27,16 @@
         </label>
 
         <label class="flex flex-col gap-1">
-          <span class="font-label-md text-label-md text-on-surface">Email *</span>
-          <input type="email" name="customer_email" value="{{ .Form.CustomerEmail }}" required maxlength="254"
+          <span class="font-label-md text-label-md text-on-surface">Email</span>
+          <input type="email" name="customer_email" value="{{ .Form.CustomerEmail }}" maxlength="254"
                  class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
         </label>
       </div>
+      <p class="font-label-sm text-label-sm text-on-surface-variant -mt-2">Email or phone — at least one, so the shop can reach you.</p>
 
       <label class="flex flex-col gap-1">
         <span class="font-label-md text-label-md text-on-surface">Phone / WhatsApp</span>
-        <input type="tel" name="customer_phone" value="{{ .Form.CustomerPhone }}" maxlength="40"
+        <input type="tel" name="customer_phone" value="{{ .Form.CustomerPhone }}" maxlength="40" placeholder="e.g. 0803 123 4567"
                class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
       </label>
     </div>

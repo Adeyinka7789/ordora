@@ -28,12 +28,12 @@ func (r *AttachmentRepo) Create(ctx context.Context, scope tenant.TenantScope, a
 	return r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		const q = `
 			INSERT INTO attachments
-				(id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, uploaded_by, created_at)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+				(id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, purpose, uploaded_by, created_at)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
 		`
 		_, err := tx.Exec(ctx, q,
 			a.ID, a.OrganizationID, string(a.EntityType), a.EntityID,
-			a.StorageKey, a.Filename, a.MimeType, a.SizeBytes, a.UploadedBy, a.CreatedAt,
+			a.StorageKey, a.Filename, a.MimeType, a.SizeBytes, a.Purpose, a.UploadedBy, a.CreatedAt,
 		)
 		if err != nil {
 			return fmt.Errorf("attachment_repo: create: %w", Classify(err))
@@ -47,7 +47,7 @@ func (r *AttachmentRepo) GetByID(ctx context.Context, scope tenant.TenantScope, 
 	var a *attachment.Attachment
 	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		const q = `
-			SELECT id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, uploaded_by, created_at
+			SELECT id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, purpose, uploaded_by, created_at
 			FROM attachments
 			WHERE id = $1
 		`
@@ -63,7 +63,7 @@ func (r *AttachmentRepo) ListForEntity(ctx context.Context, scope tenant.TenantS
 	var out []*attachment.Attachment
 	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		const q = `
-			SELECT id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, uploaded_by, created_at
+			SELECT id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, purpose, uploaded_by, created_at
 			FROM attachments
 			WHERE entity_type = $1 AND entity_id = $2
 			ORDER BY created_at DESC
@@ -95,7 +95,7 @@ func (r *AttachmentRepo) ListForEntities(ctx context.Context, scope tenant.Tenan
 	}
 	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		const q = `
-			SELECT id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, uploaded_by, created_at
+			SELECT id, organization_id, entity_type, entity_id, storage_key, filename, mime_type, size_bytes, purpose, uploaded_by, created_at
 			FROM attachments
 			WHERE entity_type = $1 AND entity_id = ANY($2)
 			ORDER BY created_at DESC
@@ -142,10 +142,11 @@ func scanAttachment(row scannable) (*attachment.Attachment, error) {
 		filename   string
 		mimeType   string
 		sizeBytes  int64
+		purpose    string
 		uploadedBy uuid.UUID
 		createdAt  time.Time
 	)
-	if err := row.Scan(&id, &orgID, &entityType, &entityID, &storageKey, &filename, &mimeType, &sizeBytes, &uploadedBy, &createdAt); err != nil {
+	if err := row.Scan(&id, &orgID, &entityType, &entityID, &storageKey, &filename, &mimeType, &sizeBytes, &purpose, &uploadedBy, &createdAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, attachment.ErrNotFound
 		}
@@ -160,6 +161,7 @@ func scanAttachment(row scannable) (*attachment.Attachment, error) {
 		Filename:       filename,
 		MimeType:       mimeType,
 		SizeBytes:      sizeBytes,
+		Purpose:        attachment.NormalizePurpose(purpose),
 		UploadedBy:     uploadedBy,
 		CreatedAt:      createdAt,
 	}, nil

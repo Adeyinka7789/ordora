@@ -554,6 +554,9 @@ type ResolvedSession struct {
 	// admin. Tenant middleware rejects suspended orgs (403); public
 	// intake treats them as not found.
 	OrgSuspended bool
+	// IsTailoring is true for fashion/tailoring businesses (unlocks
+	// measurements and aso-ebi groups).
+	IsTailoring bool
 }
 
 // ResolveSession loads a session by raw token and constructs a TenantScope.
@@ -595,12 +598,12 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 		}
 	}
 
-	var orgName, orgSlug, orgCurrency, orgTimezone string
+	var orgName, orgSlug, orgCurrency, orgTimezone, orgCategory string
 	var orgSuspended bool
 	if sess.OrganizationID != nil {
 		_ = s.db.WithTenant(ctx, *sess.OrganizationID, func(tx pgx.Tx) error {
-			const q = `SELECT name, slug::text, currency::text, timezone, suspended_at IS NOT NULL FROM organizations WHERE id = $1`
-			return tx.QueryRow(ctx, q, *sess.OrganizationID).Scan(&orgName, &orgSlug, &orgCurrency, &orgTimezone, &orgSuspended)
+			const q = `SELECT name, slug::text, currency::text, timezone, suspended_at IS NOT NULL, COALESCE(business_category,'') FROM organizations WHERE id = $1`
+			return tx.QueryRow(ctx, q, *sess.OrganizationID).Scan(&orgName, &orgSlug, &orgCurrency, &orgTimezone, &orgSuspended, &orgCategory)
 		})
 	}
 
@@ -613,6 +616,7 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 		OrgCurrency:  orgCurrency,
 		OrgTimezone:  orgTimezone,
 		OrgSuspended: orgSuspended,
+		IsTailoring:  org.IsTailoringCategory(orgCategory),
 	}, nil
 }
 
