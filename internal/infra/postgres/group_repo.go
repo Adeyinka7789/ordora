@@ -37,7 +37,7 @@ func (r *GroupRepo) Create(ctx context.Context, scope tenant.TenantScope, g *gro
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
 		`
 		_, err := tx.Exec(ctx, q, g.ID, g.OrganizationID, g.Name, g.OccasionDate,
-			nullIfEmpty(g.Notes), g.CreatedBy, g.CreatedAt, g.UpdatedAt)
+			g.Notes, g.CreatedBy, g.CreatedAt, g.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("group_repo: create: %w", Classify(err))
 		}
