@@ -45,6 +45,7 @@ type measShowView struct {
 	TemplateName string
 	Notes        string
 	Rows         []measFieldView
+	Extras       []measFieldView
 }
 
 // measTemplateList returns all visible templates (male + female genders,

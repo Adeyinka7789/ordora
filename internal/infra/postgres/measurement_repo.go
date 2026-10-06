@@ -220,10 +220,15 @@ func scanTemplate(row pgx.Row) (measurement.Template, error) {
 // the caller's transaction (used by OrderService create/update). The field
 // snapshot is stored alongside so later template edits never rewrite history.
 // A Nil TemplateID is persisted as NULL (template deleted after the fact).
+// ExtraValues (guest customs like cap/gele size) ride in extra_values JSONB.
 func (r *MeasurementRepo) SaveMeasurementTx(ctx context.Context, tx pgx.Tx, m measurement.Measurement) error {
 	values, err := json.Marshal(m.Values)
 	if err != nil {
-		return fmt.Errorf("measurement_repo: marshal values: %w", err)
+		return fmt.Errorf("measurement_repo: marshal values: %w", Classify(err))
+	}
+	extra, err := json.Marshal(m.ExtraValues)
+	if err != nil {
+		return fmt.Errorf("measurement_repo: marshal extra: %w", Classify(err))
 	}
 	snapshot, err := json.Marshal(map[string]any{
 		"name": m.TemplateName, "gender": string(m.Gender),
@@ -238,8 +243,8 @@ func (r *MeasurementRepo) SaveMeasurementTx(ctx context.Context, tx pgx.Tx, m me
 	}
 	const q = `
 		INSERT INTO order_measurements
-			(id, organization_id, order_id, template_id, gender, garment, template_name, values, notes, template_snapshot, created_by, created_at, updated_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+			(id, organization_id, order_id, template_id, gender, garment, template_name, values, notes, template_snapshot, extra_values, created_by, created_at, updated_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
 		ON CONFLICT (order_id) DO UPDATE SET
 			template_id = EXCLUDED.template_id,
 			gender = EXCLUDED.gender,
@@ -248,12 +253,13 @@ func (r *MeasurementRepo) SaveMeasurementTx(ctx context.Context, tx pgx.Tx, m me
 			values = EXCLUDED.values,
 			notes = EXCLUDED.notes,
 			template_snapshot = EXCLUDED.template_snapshot,
+			extra_values = EXCLUDED.extra_values,
 			updated_at = EXCLUDED.updated_at
 	`
 	_, err = tx.Exec(ctx, q,
 		m.ID, m.OrganizationID, m.OrderID, templateID,
 		string(m.Gender), m.Garment, m.TemplateName,
-		values, m.Notes, snapshot, m.CreatedBy, m.CreatedAt, m.UpdatedAt,
+		values, m.Notes, snapshot, extra, m.CreatedBy, m.CreatedAt, m.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("measurement_repo: save: %w", Classify(err))
@@ -268,7 +274,7 @@ func (r *MeasurementRepo) GetByOrder(ctx context.Context, scope tenant.TenantSco
 	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		const q = `
 			SELECT id, organization_id, order_id, template_id, gender, garment,
-			       template_name, values, notes, template_snapshot, created_by, created_at, updated_at
+			       template_name, values, notes, template_snapshot, COALESCE(extra_values,'{}'::jsonb), created_by, created_at, updated_at
 			FROM order_measurements
 			WHERE order_id = $1
 		`
@@ -276,6 +282,7 @@ func (r *MeasurementRepo) GetByOrder(ctx context.Context, scope tenant.TenantSco
 		var (
 			templateID *uuid.UUID
 			values     []byte
+			extraRaw   []byte
 			notes      string
 			snapshot   []byte
 			created    time.Time
@@ -283,7 +290,7 @@ func (r *MeasurementRepo) GetByOrder(ctx context.Context, scope tenant.TenantSco
 		)
 		var createdBy uuid.UUID
 		if err := row.Scan(&m.ID, &m.OrganizationID, &m.OrderID, &templateID,
-			&m.Gender, &m.Garment, &m.TemplateName, &values, &notes, &snapshot,
+			&m.Gender, &m.Garment, &m.TemplateName, &values, &notes, &snapshot, &extraRaw,
 			&createdBy, &created, &updated); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return measurement.ErrNotFound
@@ -295,6 +302,11 @@ func (r *MeasurementRepo) GetByOrder(ctx context.Context, scope tenant.TenantSco
 			return fmt.Errorf("measurement_repo: corrupt values: %w", err)
 		}
 		m.Values = vals
+		var extra map[string]string
+		if len(extraRaw) > 0 {
+			_ = json.Unmarshal(extraRaw, &extra)
+		}
+		m.ExtraValues = extra
 		m.Notes = notes
 		if templateID != nil {
 			m.TemplateID = *templateID

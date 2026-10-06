@@ -49,7 +49,7 @@ func (h *ImpersonateHandler) Start(w http.ResponseWriter, r *http.Request) {
 		Value:    result.RawToken,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   !h.Cfg.IsDev(),
+		Secure:   h.Cfg.SecureCookies(),
 		SameSite: http.SameSiteStrictMode,
 		Expires:  time.Now().Add(30 * time.Minute),
 	})
@@ -69,7 +69,7 @@ func (h *ImpersonateHandler) Stop(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   !h.Cfg.IsDev(),
+		Secure:   h.Cfg.SecureCookies(),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   -1,
 	})

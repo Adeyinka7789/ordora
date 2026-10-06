@@ -222,6 +222,12 @@
                 <dd class="font-code-md text-code-md font-bold text-on-surface tabular-nums">{{ .Value }}</dd>
               </div>
             {{ end }}
+            {{ range .Measurement.Extras }}
+              <div class="p-space-sm rounded-lg bg-tertiary-fixed/40 flex flex-col gap-0.5">
+                <dt class="font-label-sm text-label-sm uppercase tracking-wider">{{ .Label }} (custom)</dt>
+                <dd class="font-code-md text-code-md font-bold tabular-nums">{{ .Value }}</dd>
+              </div>
+            {{ end }}
           </dl>
           {{ if .Measurement.Notes }}
             <p class="font-body-sm text-body-sm text-on-surface-variant whitespace-pre-wrap">{{ .Measurement.Notes }}</p>

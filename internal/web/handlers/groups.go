@@ -19,6 +19,7 @@ type GroupHandler struct {
 	Service  *app.GroupService
 	Repo     *postgres.GroupRepo
 	Orders   *postgres.OrderRepo
+	Measure  *postgres.MeasurementRepo
 	Renderer *render.Renderer
 }
 
@@ -39,17 +40,30 @@ type groupFormPage struct {
 	FormName     string
 	FormOccasion string
 	FormNotes    string
+	FormPrice    string
+	FormFabric   string
+	FormTemplate string
+	Templates    []measTemplateOption
 }
 
 type groupShowPage struct {
-	Title        string
-	CSRFToken    string
-	Detail       *group.GroupDetail
-	DaysToGo     int
-	HasOccasion  bool
-	OccasionSoon bool
-	FlashNotice  string
-	FlashError   string
+	Title          string
+	CSRFToken      string
+	Detail         *group.GroupDetail
+	DaysToGo       int
+	HasOccasion    bool
+	OccasionSoon   bool
+	JoinURL        string
+	HasJoinLink    bool
+	ManageURL      string
+	HasManageURL   bool
+	JoinEnabled    bool
+	PaidCount      int
+	UnpaidCount    int
+	CollectedCount int
+	Filter         string
+	FlashNotice    string
+	FlashError     string
 }
 
 // Index lists groups.
@@ -86,11 +100,27 @@ func (h *GroupHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 // New renders the create form.
 func (h *GroupHandler) New(w http.ResponseWriter, r *http.Request) {
-	if _, ok := requireScope(w, r); !ok {
+	scope, ok := requireScope(w, r)
+	if !ok {
 		return
 	}
+	var tmpls []measTemplateOption
+	if h.Measure != nil {
+		// Best-effort template picker (male+female+unisex).
+		for _, g := range []string{"male", "female"} {
+			_ = g
+		}
+		if list, err := h.Measure.ListAll(r.Context(), scope); err == nil {
+			for _, t := range list {
+				tmpls = append(tmpls, measTemplateOption{
+					ID: t.ID.String(), Gender: string(t.Gender),
+					Garment: t.Garment, Name: t.Name,
+				})
+			}
+		}
+	}
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "groups/new.html", groupFormPage{
-		Title: "New group", CSRFToken: csrfFromCtx(r),
+		Title: "New group", CSRFToken: csrfFromCtx(r), Templates: tmpls,
 	})
 }
 
@@ -110,32 +140,71 @@ func (h *GroupHandler) Create(w http.ResponseWriter, r *http.Request) {
 		t, err := parseDateInput(occasionRaw)
 		if err != nil {
 			h.renderFormError(w, r, "Invalid occasion date. Use day-month-year.",
-				formValue(r, "name"), occasionRaw, formValue(r, "notes"))
+				formValue(r, "name"), occasionRaw, formValue(r, "notes"),
+				formValue(r, "price"), formValue(r, "fabric"), formValue(r, "template_id"))
 			return
 		}
 		occasion = &t
 	}
-	g, err := h.Service.CreateGroup(r.Context(), scope, app.CreateGroupInput{
+	var priceMinor int64
+	if raw := strings.TrimSpace(formValue(r, "price")); raw != "" {
+		v, err := parseMoneyMinor(raw)
+		if err != nil || v < 0 {
+			h.renderFormError(w, r, "Invalid price. Use numbers only, e.g. 25000.",
+				formValue(r, "name"), occasionRaw, formValue(r, "notes"),
+				formValue(r, "price"), formValue(r, "fabric"), formValue(r, "template_id"))
+			return
+		}
+		priceMinor = v
+	}
+	var templateID *uuid.UUID
+	if raw := strings.TrimSpace(formValue(r, "template_id")); raw != "" {
+		if id, err := uuid.Parse(raw); err == nil {
+			templateID = &id
+		}
+	}
+	g, slug, manageRaw, err := h.Service.CreateGroup(r.Context(), scope, app.CreateGroupInput{
 		Name:         formValue(r, "name"),
 		OccasionDate: occasion,
 		Notes:        formValue(r, "notes"),
+		PriceMinor:   priceMinor,
+		Currency:     "NGN",
+		Fabric:       strings.TrimSpace(formValue(r, "fabric")),
+		TemplateID:   templateID,
 	})
 	if err != nil {
 		h.renderFormError(w, r, humanizeGroupError(err),
-			formValue(r, "name"), occasionRaw, formValue(r, "notes"))
+			formValue(r, "name"), occasionRaw, formValue(r, "notes"),
+			formValue(r, "price"), formValue(r, "fabric"), formValue(r, "template_id"))
 		return
 	}
-	http.Redirect(w, r, "/groups/"+g.ID.String(), http.StatusSeeOther)
+	http.Redirect(w, r, "/groups/"+g.ID.String()+"?notice=Share+the+join+link+with+the+bride.&slug="+slug+"&mkey="+manageRaw, http.StatusSeeOther)
 }
 
-func (h *GroupHandler) renderFormError(w http.ResponseWriter, r *http.Request, msg, name, occasion, notes string) {
+func (h *GroupHandler) renderFormError(w http.ResponseWriter, r *http.Request, msg, name, occasion, notes, price, fabric, templateID string) {
+	scope, ok := requireScope(w, r)
+	var tmpls []measTemplateOption
+	if ok && h.Measure != nil {
+		if list, err := h.Measure.ListAll(r.Context(), scope); err == nil {
+			for _, t := range list {
+				tmpls = append(tmpls, measTemplateOption{
+					ID: t.ID.String(), Gender: string(t.Gender),
+					Garment: t.Garment, Name: t.Name,
+				})
+			}
+		}
+	}
 	renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "groups/new.html", groupFormPage{
 		Title: "New group", CSRFToken: csrfFromCtx(r), Error: msg,
 		FormName: name, FormOccasion: occasion, FormNotes: notes,
+		FormPrice: price, FormFabric: fabric, FormTemplate: templateID,
+		Templates: tmpls,
 	})
 }
 
 // Show renders one group with its members.
+// Tailor view: read-only paid ticks (bride manages money), join/manage links,
+// filters. Mints join+manage tokens on first view for old groups.
 func (h *GroupHandler) Show(w http.ResponseWriter, r *http.Request) {
 	scope, ok := requireScope(w, r)
 	if !ok {
@@ -154,13 +223,57 @@ func (h *GroupHandler) Show(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not load group", http.StatusInternalServerError)
 		return
 	}
+	if d.Group.JoinSlug == "" || d.Group.JoinTokenHash == nil || d.Group.ManageTokenHash == nil {
+		slugRaw, _, err1 := app.GeneratePublicToken()
+		_, joinHash, err2 := app.GeneratePublicToken()
+		_, manageHash, err3 := app.GeneratePublicToken()
+		if err1 == nil && err2 == nil && err3 == nil {
+			slug := slugRaw[:16]
+			if err := h.Repo.EnsureTokens(r.Context(), scope, id, slug, joinHash, manageHash); err == nil {
+				d, _ = h.Repo.Get(r.Context(), scope, id)
+			}
+		}
+	}
 	page := groupShowPage{
 		Title: d.Group.Name, CSRFToken: csrfFromCtx(r), Detail: d,
+		JoinEnabled: d.Group.JoinEnabled,
+		Filter:      strings.ToLower(strings.TrimSpace(queryValue(r, "filter"))),
+	}
+	if d.Group.JoinSlug != "" {
+		page.HasJoinLink = true
+		page.JoinURL = absoluteURL(r, "/g/"+d.Group.JoinSlug)
+		// One-time bride link right after creation (?slug=&mkey=).
+		if mk := strings.TrimSpace(queryValue(r, "mkey")); mk != "" {
+			if sl := strings.TrimSpace(queryValue(r, "slug")); sl == d.Group.JoinSlug {
+				page.HasManageURL = true
+				page.ManageURL = absoluteURL(r, "/g/"+sl+"/manage?key="+mk)
+			}
+		}
 	}
 	if days, ok := d.Group.DaysToOccasion(time.Now()); ok {
 		page.HasOccasion = true
 		page.DaysToGo = days
 		page.OccasionSoon = days >= 0 && days <= 14
+	}
+	for _, m := range d.Members {
+		if m.MemberPaid {
+			page.PaidCount++
+		} else {
+			page.UnpaidCount++
+		}
+		if m.Collected {
+			page.CollectedCount++
+		}
+	}
+	if page.Filter == "paid" || page.Filter == "unpaid" {
+		want := page.Filter == "paid"
+		var kept []group.GroupMember
+		for _, m := range d.Members {
+			if m.MemberPaid == want {
+				kept = append(kept, m)
+			}
+		}
+		page.Detail.Members = kept
 	}
 	if v := queryValue(r, "notice"); v != "" {
 		page.FlashNotice = v
@@ -169,6 +282,80 @@ func (h *GroupHandler) Show(w http.ResponseWriter, r *http.Request) {
 		page.FlashError = v
 	}
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "groups/show.html", page)
+}
+
+// SetPaid flips the manual Paid tick (tailor side; bride uses manage link).
+func (h *GroupHandler) SetPaid(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	orderID, ok := parseUUIDParam(w, r, "orderID")
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	paid := strings.TrimSpace(r.PostFormValue("paid")) == "1"
+	if err := h.Repo.SetMemberPaid(r.Context(), scope, id, orderID, paid); err != nil {
+		http.Redirect(w, r, "/groups/"+id.String()+"?error=Could+not+update.", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/groups/"+id.String()+"?notice=Updated.", http.StatusSeeOther)
+}
+
+// SetCollected flips pickup status.
+func (h *GroupHandler) SetCollected(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	orderID, ok := parseUUIDParam(w, r, "orderID")
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	collected := strings.TrimSpace(r.PostFormValue("collected")) == "1"
+	if err := h.Repo.SetCollected(r.Context(), scope, id, orderID, collected); err != nil {
+		http.Redirect(w, r, "/groups/"+id.String()+"?error=Could+not+update.", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/groups/"+id.String()+"?notice=Updated.", http.StatusSeeOther)
+}
+
+// ToggleJoin opens/closes public intake.
+func (h *GroupHandler) ToggleJoin(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	enabled := strings.TrimSpace(r.PostFormValue("enabled")) == "1"
+	if err := h.Repo.SetJoinEnabled(r.Context(), scope, id, enabled); err != nil {
+		http.Redirect(w, r, "/groups/"+id.String()+"?error=Could+not+update.", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/groups/"+id.String()+"?notice=Updated.", http.StatusSeeOther)
 }
 
 // AddOrder handles POST /groups/{id}/orders (order_number field).

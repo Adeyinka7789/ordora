@@ -1,0 +1,66 @@
+{{ define "groups/manage.html" }}
+<div class="w-full max-w-4xl mx-auto px-4 py-8 flex flex-col gap-6">
+  <div class="flex flex-col gap-1">
+    <span class="text-label-md uppercase tracking-wider text-primary font-semibold">Bride / Groom — manage</span>
+    <h1 class="text-display-md font-bold">{{ .Group.Name }}</h1>
+    <p class="text-body-sm text-on-surface-variant">{{ .OrgName }}{{ if .Group.Fabric }} · {{ .Group.Fabric }}{{ end }}{{ if gt .Group.PriceMinor 0 }} · {{ currency .Group.PriceMinor .Group.Currency }}/head{{ end }}</p>
+  </div>
+
+  {{ if .Notice }}<div role="status" class="p-3 rounded bg-tertiary-fixed">{{ .Notice }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-3 rounded bg-error-container">{{ .Error }}</div>{{ end }}
+
+  <div class="grid grid-cols-3 gap-3">
+    <div class="p-4 rounded-xl bg-surface-container-lowest text-center"><div class="text-headline-lg font-bold">{{ len .Members }}</div><div class="text-label-sm">Members</div></div>
+    <div class="p-4 rounded-xl bg-surface-container-lowest text-center"><div class="text-headline-lg font-bold text-tertiary">{{ .Paid }}</div><div class="text-label-sm">Paid</div></div>
+    <div class="p-4 rounded-xl bg-surface-container-lowest text-center"><div class="text-headline-lg font-bold text-error">{{ .Unpaid }}</div><div class="text-label-sm">Unpaid</div></div>
+  </div>
+
+  <div class="flex flex-col gap-3 bg-surface-container-lowest rounded-xl p-4">
+    <div class="text-label-sm font-semibold">Share this join link in your WhatsApp group:</div>
+    <div class="flex gap-2">
+      <input type="text" readonly value="{{ .JoinURL }}" onclick="this.select()" class="h-10 px-3 rounded bg-surface-container-low flex-1 text-sm">
+      <a href="https://wa.me/?text={{ .JoinURL }}" target="_blank" rel="noopener" class="h-10 px-4 rounded bg-tertiary font-bold flex items-center">WhatsApp</a>
+    </div>
+    <div class="flex gap-2 text-sm">
+      <a href="?key={{ .ManageKey }}" class="{{ if eq .Filter "" }}font-bold text-primary{{ end }}">All</a>
+      <a href="?key={{ .ManageKey }}&filter=paid" class="{{ if eq .Filter "paid" }}font-bold text-primary{{ end }}">Paid</a>
+      <a href="?key={{ .ManageKey }}&filter=unpaid" class="{{ if eq .Filter "unpaid" }}font-bold text-primary{{ end }}">Unpaid ({{ .Unpaid }})</a>
+    </div>
+  </div>
+
+  {{ if not .Members }}
+    <p class="text-center text-on-surface-variant">No members yet. Share the link above.</p>
+  {{ else }}
+  <div class="overflow-x-auto bg-surface-container-lowest rounded-xl">
+    <table class="w-full text-left text-sm">
+      <thead><tr class="uppercase text-label-sm text-on-surface-variant">
+        <th class="py-2 px-3">Name</th><th class="py-2 px-3">Phone</th><th class="py-2 px-3 text-center">Paid?</th><th class="py-2 px-3"></th>
+      </tr></thead>
+      <tbody>
+      {{ range .Members }}
+        <tr class="border-t border-outline-variant/20">
+          <td class="py-3 px-3 font-semibold">{{ .Customer }}</td>
+          <td class="py-3 px-3"><a href="https://wa.me/{{ .Phone }}" target="_blank" rel="noopener" class="text-primary hover:underline">{{ .Phone }}</a></td>
+          <td class="py-3 px-3 text-center">{{ if .MemberPaid }}<span class="px-2 py-0.5 rounded bg-tertiary-fixed font-bold">PAID</span>{{ else }}<span class="px-2 py-0.5 rounded bg-error-container font-bold">UNPAID</span>{{ end }}</td>
+          <td class="py-3 px-3 text-right">
+            <form method="post" action="/g/{{ $.Token }}/manage/paid?key={{ $.ManageKey }}" class="inline">
+              <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+              <input type="hidden" name="order_id" value="{{ .OrderID }}">
+              {{ if .MemberPaid }}
+                <input type="hidden" name="paid" value="0">
+                <button type="submit" class="px-3 py-1.5 rounded bg-surface-container font-semibold">Mark unpaid</button>
+              {{ else }}
+                <input type="hidden" name="paid" value="1">
+                <button type="submit" class="px-3 py-1.5 rounded bg-primary-container font-bold">Mark paid</button>
+              {{ end }}
+            </form>
+          </td>
+        </tr>
+      {{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ end }}
+  <p class="text-label-sm text-center text-on-surface-variant">No money moves here — tick Paid only after you collect cash/transfer offline. The tailor sees the ticks and sews.</p>
+</div>
+{{ end }}

@@ -1,0 +1,9 @@
+{{ define "groups/joined.html" }}
+<div class="w-full max-w-xl mx-auto px-4 py-16 text-center flex flex-col gap-4">
+  <span class="material-symbols-outlined text-[48px] text-tertiary">check_circle</span>
+  <h1 class="text-display-md font-bold">You're in, {{ .Name }}!</h1>
+  <p>Your Aso-ebi order <strong>{{ .OrderNumber }}</strong> for <strong>{{ .Group.Name }}</strong> is recorded.</p>
+  <p class="text-body-sm text-on-surface-variant">Pay {{ .OrgName }} / the bride offline. They will tick you as Paid.</p>
+  <a href="/" class="mt-4 inline-block px-6 py-3 rounded-xl bg-surface-container font-semibold">Done</a>
+</div>
+{{ end }}

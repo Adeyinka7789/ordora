@@ -14,15 +14,29 @@ import (
 )
 
 // Group is a named collection of orders for one occasion.
+// Deep Aso-ebi: the group is the master order. PriceMinor/Currency is the
+// fixed per-head price (0 = tailor quotes). Fabric is shown on the join
+// form (e.g. "Wine Lace"). TemplateID is the default measurement template
+// guests fill. JoinToken/ManageToken hashes back the public join link
+// (/g/{raw}) and the secret bride link (/g/{raw}/manage?key={raw}).
+// Paid/Collected are manual ticks only — no money moves on site.
 type Group struct {
-	ID             uuid.UUID
-	OrganizationID uuid.UUID
-	Name           string
-	OccasionDate   *time.Time
-	Notes          string
-	CreatedBy      uuid.UUID
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID              uuid.UUID
+	OrganizationID  uuid.UUID
+	Name            string
+	OccasionDate    *time.Time
+	Notes           string
+	PriceMinor      int64
+	Currency        string
+	Fabric          string
+	TemplateID      *uuid.UUID
+	JoinEnabled     bool
+	JoinSlug        string
+	JoinTokenHash   []byte
+	ManageTokenHash []byte
+	CreatedBy       uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 // Errors.
@@ -35,6 +49,11 @@ var (
 
 // New constructs a group. Occasion may be nil (no fixed party date).
 func New(id, orgID uuid.UUID, name string, occasion *time.Time, notes string, createdBy uuid.UUID, now time.Time) (*Group, error) {
+	return NewFull(id, orgID, name, occasion, notes, 0, "NGN", "", nil, createdBy, now)
+}
+
+// NewFull constructs a group with deep aso-ebi master fields.
+func NewFull(id, orgID uuid.UUID, name string, occasion *time.Time, notes string, priceMinor int64, currency, fabric string, templateID *uuid.UUID, createdBy uuid.UUID, now time.Time) (*Group, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, ErrNameRequired
@@ -46,12 +65,29 @@ func New(id, orgID uuid.UUID, name string, occasion *time.Time, notes string, cr
 	if len(notes) > 2000 {
 		return nil, ErrNotesTooLong
 	}
+	if priceMinor < 0 {
+		priceMinor = 0
+	}
+	currency = strings.ToUpper(strings.TrimSpace(currency))
+	if currency == "" {
+		currency = "NGN"
+	}
+	fabric = strings.TrimSpace(fabric)
+	if len(fabric) > 200 {
+		return nil, ErrNotesTooLong
+	}
 	return &Group{
 		ID:             id,
 		OrganizationID: orgID,
 		Name:           name,
 		OccasionDate:   occasion,
 		Notes:          notes,
+		PriceMinor:     priceMinor,
+		Currency:       currency,
+		Fabric:         fabric,
+		TemplateID:     templateID,
+		JoinEnabled:    true,
+		JoinSlug:       "",
 		CreatedBy:      createdBy,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -72,16 +108,22 @@ func (g *Group) DaysToOccasion(now time.Time) (days int, ok bool) {
 }
 
 // GroupMember is one member order of a group, with customer + money.
+// MemberPaid is the bride's manual tick (cash collected offline — no
+// gateway). PaidMinor is the tailor's ledger amount. Collected means the
+// garment was picked up.
 type GroupMember struct {
 	OrderID     uuid.UUID
 	OrderNumber string
 	CustomerID  uuid.UUID
 	Customer    string
+	Phone       string
 	Title       string
 	Status      string
 	Currency    string
 	TotalMinor  int64
 	PaidMinor   int64
+	MemberPaid  bool
+	Collected   bool
 	Expected    *time.Time
 }
 

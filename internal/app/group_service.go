@@ -54,16 +54,42 @@ type CreateGroupInput struct {
 	Name         string
 	OccasionDate *time.Time
 	Notes        string
+	PriceMinor   int64
+	Currency     string
+	Fabric       string
+	TemplateID   *uuid.UUID
 }
 
-// CreateGroup validates and persists a group.
-func (s *GroupService) CreateGroup(ctx context.Context, scope tenant.TenantScope, in CreateGroupInput) (*group.Group, error) {
+// CreateGroup validates and persists a group, minting join slug + manage key.
+// Returns the group plus join slug (public, /g/{slug}) and manage raw key
+// (secret, ?key= — shown once to the tailor for the bride).
+// The manage raw is never stored — only its SHA-256 hash.
+func (s *GroupService) CreateGroup(ctx context.Context, scope tenant.TenantScope, in CreateGroupInput) (*group.Group, string, string, error) {
 	now := s.now()
-	g, err := group.New(s.ids.New(), scope.OrgID, in.Name, in.OccasionDate,
-		strings.TrimSpace(in.Notes), scope.UserID, now)
+	g, err := group.NewFull(s.ids.New(), scope.OrgID, in.Name, in.OccasionDate,
+		strings.TrimSpace(in.Notes), in.PriceMinor, in.Currency, in.Fabric,
+		in.TemplateID, scope.UserID, now)
 	if err != nil {
-		return nil, err
+		return nil, "", "", err
 	}
+	slugRaw, _, err := GeneratePublicToken()
+	if err != nil {
+		return nil, "", "", err
+	}
+	// Short public slug (16 chars, URL-safe).
+	slug := slugRaw[:16]
+	_, joinHash, err := GeneratePublicToken()
+	if err != nil {
+		return nil, "", "", err
+	}
+	manageRaw, manageHash, err := GeneratePublicToken()
+	if err != nil {
+		return nil, "", "", err
+	}
+	g.JoinSlug = slug
+	g.JoinTokenHash = joinHash
+	g.ManageTokenHash = manageHash
+	g.JoinEnabled = true
 	var created *group.Group
 	err = s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		if err := s.groups.Create(ctx, scope, g); err != nil {
@@ -85,9 +111,9 @@ func (s *GroupService) CreateGroup(ctx context.Context, scope tenant.TenantScope
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, "", "", err
 	}
-	return created, nil
+	return created, slug, manageRaw, nil
 }
 
 // DeleteGroup removes a group; member orders are kept (unlinked).

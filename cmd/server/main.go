@@ -296,6 +296,12 @@ func run() error {
 		Service:  groupService,
 		Repo:     groupRepo,
 		Orders:   orderRepo,
+		Measure:  measurementRepo,
+		Renderer: renderer,
+	}
+	groupPublicH := &handlers.GroupPublicHandler{
+		Groups:   groupRepo,
+		Measure:  measurementRepo,
 		Renderer: renderer,
 	}
 	calendarH := &handlers.CalendarHandler{
@@ -830,7 +836,29 @@ func run() error {
 	mux.Handle("GET /groups/{id}", tailored(http.HandlerFunc(groupH.Show)))
 	mux.Handle("POST /groups/{id}/orders", tailored(http.HandlerFunc(groupH.AddOrder)))
 	mux.Handle("POST /groups/{id}/orders/{orderID}/remove", tailored(http.HandlerFunc(groupH.RemoveOrder)))
+	mux.Handle("POST /groups/{id}/orders/{orderID}/paid", tailored(http.HandlerFunc(groupH.SetPaid)))
+	mux.Handle("POST /groups/{id}/orders/{orderID}/collected", tailored(http.HandlerFunc(groupH.SetCollected)))
+	mux.Handle("POST /groups/{id}/join-toggle", tailored(http.HandlerFunc(groupH.ToggleJoin)))
 	mux.Handle("POST /groups/{id}/delete", tailored(http.HandlerFunc(groupH.Delete)))
+	// ---- Public Aso-ebi join + bride manage (no login) ----
+	// Join slug is public (WhatsApp groups); bride manage needs ?key=.
+	// Rate-limited like other public POSTs (abuse guard).
+	mux.Handle("GET /g/{token}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(http.HandlerFunc(groupPublicH.JoinForm)))
+	mux.Handle("POST /g/{token}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 10, Window: time.Minute,
+		Message: "Too many submission attempts. Please wait a minute.",
+	})(http.HandlerFunc(groupPublicH.JoinSubmit)))
+	mux.Handle("GET /g/{token}/manage", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(http.HandlerFunc(groupPublicH.Manage)))
+	mux.Handle("POST /g/{token}/manage/paid", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 30, Window: time.Minute,
+		Message: "Too many attempts. Please wait a minute.",
+	})(http.HandlerFunc(groupPublicH.ManagePaid)))
 	// ---- Occasion calendar ----
 	mux.Handle("GET /calendar", gated("orders", http.HandlerFunc(calendarH.Index)))
 	// ---- Attachments ----
@@ -853,7 +881,7 @@ func run() error {
 		),
 		middleware.CSRF(middleware.CSRFConfig{
 			CookieName: cfg.Session.CSRFCookieName,
-			Secure:     !cfg.IsDev(),
+			Secure:     cfg.SecureCookies(),
 		}),
 		middleware.NotFoundInterceptor(renderer),
 	)

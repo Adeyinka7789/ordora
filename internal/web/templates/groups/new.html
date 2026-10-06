@@ -28,6 +28,30 @@
     </label>
 
     <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Price per head (NGN, optional)</span>
+      <input type="text" name="price" value="{{ .FormPrice }}" inputmode="numeric" placeholder="e.g. 25000 — leave empty if tailor quotes"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Fixed amount each guest pays the bride offline. No money moves on this site.</span>
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Fabric / style</span>
+      <input type="text" name="fabric" value="{{ .FormFabric }}" maxlength="200" placeholder="e.g. Wine Lace"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Measurement template</span>
+      <select name="template_id" class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md">
+        <option value="">No fixed template</option>
+        {{ range .Templates }}
+          <option value="{{ .ID }}" {{ if eq $.FormTemplate .ID }}selected{{ end }}>{{ .Name }} ({{ .Gender }} · {{ .Garment }})</option>
+        {{ end }}
+      </select>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Guests fill this + can add their own extras (cap size, gele size).</span>
+    </label>
+
+    <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Style notes</span>
       <textarea name="notes" rows="3" maxlength="2000" placeholder="e.g. Teal ankara, senator for men, flare gown for women"
                 class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormNotes }}</textarea>

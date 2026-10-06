@@ -302,7 +302,7 @@ func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, raw string) {
 		Value:    raw,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   !h.Cfg.IsDev(),
+		Secure:   h.Cfg.SecureCookies(),
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Now().Add(h.Cfg.Session.TTL),
 	})
@@ -314,7 +314,7 @@ func (h *AuthHandler) clearSessionCookie(w http.ResponseWriter) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   !h.Cfg.IsDev(),
+		Secure:   h.Cfg.SecureCookies(),
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 	})

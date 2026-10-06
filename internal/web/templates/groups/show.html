@@ -60,10 +60,52 @@
 
   {{ if .Detail.Group.Notes }}
     <div class="accent-card bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
-      <h2 class="font-headline-md text-headline-md text-on-surface font-bold mb-space-xs">Style notes</h2>
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold mb-space-xs">Style notes{{ if .Detail.Group.Fabric }} · {{ .Detail.Group.Fabric }}{{ end }}</h2>
       <p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Detail.Group.Notes }}</p>
+      {{ if gt .Detail.Group.PriceMinor 0 }}<p class="mt-2 font-bold">{{ currency .Detail.Group.PriceMinor .Detail.Group.Currency }} per head — bride collects offline, ticks Paid.</p>{{ end }}
     </div>
   {{ end }}
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <h2 class="font-bold">Share links (give both to the bride)</h2>
+    {{ if .HasJoinLink }}
+      <div class="flex flex-col gap-2">
+        <label class="text-sm">1. Guests join here — bride posts in WhatsApp group:
+          <input type="text" readonly value="{{ .JoinURL }}" onclick="this.select()" class="w-full h-9 px-3 rounded bg-surface-container-low text-sm">
+        </label>
+        {{ if .HasManageURL }}
+        <label class="text-sm">2. Bride manages Paid here (secret — send once):
+          <input type="text" readonly value="{{ .ManageURL }}" onclick="this.select()" class="w-full h-9 px-3 rounded bg-surface-container-low text-sm">
+        </label>
+        {{ else }}
+        <p class="text-label-sm text-on-surface-variant">2. Bride manage link was shown once at creation. If lost, reset tokens in DB (v1) — rotation UI coming.</p>
+        {{ end }}
+        <p class="text-label-sm text-on-surface-variant">Guests: no login. Bride: secret key, no login. Intake {{ if .JoinEnabled }}open{{ else }}closed{{ end }}. No money moves here.</p>
+        <form method="post" action="/groups/{{ .Detail.Group.ID }}/join-toggle" class="inline">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          {{ if .JoinEnabled }}
+            <input type="hidden" name="enabled" value="0">
+            <button type="submit" class="px-3 py-1.5 rounded bg-surface-container font-semibold">Close intake</button>
+          {{ else }}
+            <input type="hidden" name="enabled" value="1">
+            <button type="submit" class="px-3 py-1.5 rounded bg-primary-container font-bold">Open intake</button>
+          {{ end }}
+        </form>
+      </div>
+    {{ else }}
+      <p class="text-sm text-on-surface-variant">Links appear after first view (tokens minted).</p>
+    {{ end }}
+    <div class="flex gap-3 text-sm">
+      <span>Paid: <strong class="text-tertiary">{{ .PaidCount }}</strong></span>
+      <span>Unpaid: <strong class="text-error">{{ .UnpaidCount }}</strong></span>
+      <span>Collected: <strong>{{ .CollectedCount }}</strong></span>
+    </div>
+    <div class="flex gap-2 text-sm">
+      <a href="/groups/{{ .Detail.Group.ID }}" class="{{ if eq .Filter "" }}font-bold text-primary{{ end }}">All</a>
+      <a href="/groups/{{ .Detail.Group.ID }}?filter=paid" class="{{ if eq .Filter "paid" }}font-bold text-primary{{ end }}">Paid</a>
+      <a href="/groups/{{ .Detail.Group.ID }}?filter=unpaid" class="{{ if eq .Filter "unpaid" }}font-bold text-primary{{ end }}">Unpaid</a>
+    </div>
+  </div>
 
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
     <div class="flex items-center justify-between flex-wrap gap-space-sm">
@@ -85,10 +127,9 @@
             <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
               <th class="py-2.5 px-space-md font-semibold">Order</th>
               <th class="py-2.5 px-space-md font-semibold">Customer</th>
-              <th class="py-2.5 px-space-md font-semibold">Status</th>
+              <th class="py-2.5 px-space-md font-semibold">Bride tick</th>
+              <th class="py-2.5 px-space-md font-semibold">Collected</th>
               <th class="py-2.5 px-space-md font-semibold text-right">Total</th>
-              <th class="py-2.5 px-space-md font-semibold text-right">Paid</th>
-              <th class="py-2.5 px-space-md font-semibold text-right">Balance</th>
               <th class="w-10"></th>
             </tr>
           </thead>
@@ -99,11 +140,30 @@
                   <a href="/orders/{{ .OrderID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline whitespace-nowrap">{{ .OrderNumber }}</a>
                   <div class="font-body-sm text-body-sm text-on-surface-variant truncate max-w-[200px]">{{ .Title }}</div>
                 </td>
-                <td class="py-3 px-space-md font-label-md text-label-md font-semibold text-on-surface">{{ .Customer }}</td>
-                <td class="py-3 px-space-md">{{ template "partials/status_badge.html" .Status }}</td>
+                <td class="py-3 px-space-md font-label-md text-label-md font-semibold text-on-surface">{{ .Customer }}{{ if .Phone }}<div class="text-sm font-normal"><a href="https://wa.me/{{ .Phone }}" target="_blank" rel="noopener" class="text-primary hover:underline">{{ .Phone }}</a></div>{{ end }}</td>
+                <td class="py-3 px-space-md text-center">
+                  {{ if .MemberPaid }}<span class="px-2 py-0.5 rounded bg-tertiary-fixed font-bold">PAID</span>{{ else }}<span class="px-2 py-0.5 rounded bg-error-container font-bold">UNPAID</span>{{ end }}
+                  <form method="post" action="/groups/{{ $.Detail.Group.ID }}/orders/{{ .OrderID }}/paid" class="inline ml-2">
+                    <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                    {{ if .MemberPaid }}
+                      <input type="hidden" name="paid" value="0"><button type="submit" class="text-xs underline">unmark</button>
+                    {{ else }}
+                      <input type="hidden" name="paid" value="1"><button type="submit" class="text-xs underline font-bold">mark paid</button>
+                    {{ end }}
+                  </form>
+                </td>
+                <td class="py-3 px-space-md text-center">
+                  {{ if .Collected }}<span>✓</span>{{ else }}<span>—</span>{{ end }}
+                  <form method="post" action="/groups/{{ $.Detail.Group.ID }}/orders/{{ .OrderID }}/collected" class="inline ml-2">
+                    <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                    {{ if .Collected }}
+                      <input type="hidden" name="collected" value="0"><button type="submit" class="text-xs underline">unmark</button>
+                    {{ else }}
+                      <input type="hidden" name="collected" value="1"><button type="submit" class="text-xs underline font-bold">collect</button>
+                    {{ end }}
+                  </form>
+                </td>
                 <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md">{{ currency .TotalMinor .Currency }}</td>
-                <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md">{{ currency .PaidMinor .Currency }}</td>
-                <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold {{ if gt .BalanceMinor 0 }}text-error{{ end }}">{{ currency .BalanceMinor .Currency }}</td>
                 <td class="py-3 px-space-md text-center">
                   <form method="post" action="/groups/{{ $.Detail.Group.ID }}/orders/{{ .OrderID }}/remove" class="inline"
                         data-confirm="Remove this order from the group? The order itself is kept." data-confirm-title="Remove member" data-confirm-label="Remove">

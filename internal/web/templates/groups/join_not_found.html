@@ -1,0 +1,12 @@
+{{ define "groups/join_not_found.html" }}
+<div class="w-full max-w-md mx-auto px-4 py-16 flex flex-col items-center text-center gap-4">
+  <div class="w-16 h-16 rounded-full bg-error-container flex items-center justify-center text-error">
+    <span class="material-symbols-outlined text-[32px]">link_off</span>
+  </div>
+  <h1 class="font-bold text-xl">This Aso-ebi link doesn't work</h1>
+  <p class="text-body-md text-on-surface-variant">
+    {{ if .Reason }}{{ .Reason }}{{ else }}This invite link is invalid or intake is closed.{{ end }}
+  </p>
+  <p class="text-body-sm text-on-surface-variant">Ask the bride/groom or tailor for a fresh invite link. Note: per-order tracking links (/o/...) are different — Aso-ebi guests must use the <strong>/g/...</strong> join link.</p>
+</div>
+{{ end }}

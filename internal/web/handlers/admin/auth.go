@@ -86,13 +86,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set admin session cookie. HttpOnly, Secure in production, SameSite=Strict.
+	// Set admin session cookie. HttpOnly, Secure on https, SameSite=Strict.
 	http.SetCookie(w, &http.Cookie{
 		Name:     h.Cfg.Admin.CookieName,
 		Value:    result.RawToken,
 		Path:     h.Cfg.Admin.Path, // scoped to admin path only
 		HttpOnly: true,
-		Secure:   !h.Cfg.IsDev(),
+		Secure:   h.Cfg.SecureCookies(),
 		SameSite: http.SameSiteStrictMode,
 		Expires:  time.Now().Add(h.Cfg.Admin.SessionTTL),
 	})
@@ -110,7 +110,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Path:     h.Cfg.Admin.Path,
 		HttpOnly: true,
-		Secure:   !h.Cfg.IsDev(),
+		Secure:   h.Cfg.SecureCookies(),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   -1,
 	})

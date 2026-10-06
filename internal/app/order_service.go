@@ -144,11 +144,13 @@ type CreateOrderInput struct {
 
 // CreateMeasurementInput carries one tailoring measurement set for an order.
 // TemplateID must reference a template visible to the org; Values maps field
-// keys to entered values.
+// keys to entered values. ExtraValues holds guest-added customs (cap size,
+// gele size...) — free-form, never validated against the template.
 type CreateMeasurementInput struct {
-	TemplateID uuid.UUID
-	Values     map[string]string
-	Notes      string
+	TemplateID  uuid.UUID
+	Values      map[string]string
+	ExtraValues map[string]string
+	Notes       string
 }
 
 type CreateOrderItemInput struct {
@@ -418,6 +420,7 @@ func (s *OrderService) saveMeasurementTx(ctx context.Context, tx pgx.Tx, scope t
 		Garment:        tmpl.Garment,
 		TemplateName:   tmpl.Name,
 		Values:         in.Values,
+		ExtraValues:    in.ExtraValues,
 		Notes:          strings.TrimSpace(in.Notes),
 		SnapshotFields: tmpl.Fields,
 		CreatedBy:      scope.UserID,

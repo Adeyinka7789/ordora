@@ -218,6 +218,18 @@ func (c *Config) validate() error {
 
 func (c *Config) IsDev() bool { return c.Env == "development" }
 
+// SecureCookies reports whether cookies should carry the Secure flag.
+// True only in non-dev environments serving over https: local prod-mode
+// testing over plain http://localhost keeps working (browsers drop Secure
+// cookies on non-trustworthy http origins, which breaks every POST with a
+// misleading "invalid CSRF token").
+func (c *Config) SecureCookies() bool {
+	if c.IsDev() {
+		return false
+	}
+	return strings.HasPrefix(strings.ToLower(strings.TrimSpace(c.BaseURL)), "https://")
+}
+
 // ---- helpers ----
 
 func getEnv(key, fallback string) string {

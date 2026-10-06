@@ -772,6 +772,12 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 					})
 				}
 			}
+			for k, v := range m.ExtraValues {
+				if strings.TrimSpace(v) == "" && strings.TrimSpace(k) == "" {
+					continue
+				}
+				view.Extras = append(view.Extras, measFieldView{Label: k, Value: v})
+			}
 			page.Measurement = view
 		}
 	}

@@ -213,6 +213,8 @@ func (t Template) ValidateValues(values map[string]string) error {
 // edited or removed later. TemplateID is uuid.Nil when the template was
 // deleted after the order was taken — the snapshot still renders.
 // SnapshotFields holds the field definitions at order time (labels/units).
+// ExtraValues holds guest-added customs (cap size, gele size...) — free-form,
+// never validated against the template (max 20 keys, 40 chars each).
 type Measurement struct {
 	ID             uuid.UUID
 	OrganizationID uuid.UUID
@@ -222,6 +224,7 @@ type Measurement struct {
 	Garment        string
 	TemplateName   string
 	Values         map[string]string
+	ExtraValues    map[string]string
 	Notes          string
 	SnapshotFields []TemplateField
 	CreatedBy      uuid.UUID
@@ -240,5 +243,29 @@ func (m Measurement) Validate(t Template) error {
 	if len(m.Notes) > MaxNotesLen {
 		return ErrNotesTooLong
 	}
+	if err := ValidateExtraValues(m.ExtraValues); err != nil {
+		return err
+	}
 	return t.ValidateValues(m.Values)
+}
+
+// MaxExtraKeys caps guest-added customs so the form stays usable.
+const MaxExtraKeys = 20
+
+// ValidateExtraValues checks guest-added customs: free-form labels/values,
+// length-capped, never checked against the template.
+func ValidateExtraValues(extra map[string]string) error {
+	if len(extra) > MaxExtraKeys {
+		return fmt.Errorf("%w: too many custom fields", ErrInvalidFields)
+	}
+	for k, v := range extra {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			return fmt.Errorf("%w: custom label required", ErrFieldLabelRequired)
+		}
+		if len(k) > 80 || len(v) > MaxValueLen {
+			return fmt.Errorf("%w: custom %q", ErrValueTooLong, k)
+		}
+	}
+	return nil
 }

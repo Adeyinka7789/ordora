@@ -1,0 +1,70 @@
+{{ define "groups/join.html" }}
+<div class="w-full max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6">
+  <div class="flex flex-col gap-1">
+    <span class="text-label-md uppercase tracking-wider text-primary font-semibold">Aso-ebi</span>
+    <h1 class="text-display-md font-bold text-on-surface">{{ .Group.Name }}</h1>
+    <p class="text-body-md text-on-surface-variant">by {{ .OrgName }}</p>
+    {{ if .Group.Fabric }}<p class="text-body-md text-on-surface"><strong>Fabric:</strong> {{ .Group.Fabric }}</p>{{ end }}
+    {{ if .Group.OccasionDate }}<p class="text-body-md text-on-surface-variant">Occasion: {{ .Group.OccasionDate.Format "02-01-2006" }}</p>{{ end }}
+    {{ if gt .Group.PriceMinor 0 }}<p class="text-headline-md font-bold text-primary">{{ currency .Group.PriceMinor .Group.Currency }} per head</p>{{ end }}
+    {{ if .Group.Notes }}<p class="text-body-sm text-on-surface-variant whitespace-pre-wrap">{{ .Group.Notes }}</p>{{ end }}
+  </div>
+
+  {{ if .Error }}<div role="alert" class="p-3 rounded bg-error-container text-on-error-container">{{ .Error }}</div>{{ end }}
+
+  <form method="post" action="/g/{{ .Token }}" class="flex flex-col gap-6">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-5 flex flex-col gap-4">
+      <h2 class="font-bold">Your details</h2>
+      <label class="flex flex-col gap-1">
+        <span>Full name *</span>
+        <input type="text" name="name" value="{{ .FormName }}" required maxlength="200" class="h-10 px-3 rounded bg-surface-container-low">
+      </label>
+      <label class="flex flex-col gap-1">
+        <span>Phone / WhatsApp *</span>
+        <input type="tel" name="phone" value="{{ .FormPhone }}" required maxlength="40" placeholder="e.g. 0803 123 4567" class="h-10 px-3 rounded bg-surface-container-low">
+      </label>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-5 flex flex-col gap-4">
+      <h2 class="font-bold">Measurements{{ if .Template }} — {{ .Template.Name }}{{ end }}</h2>
+      {{ if .Fields }}
+        {{ range .Fields }}
+          <label class="flex flex-col gap-1">
+            <span>{{ .Label }}{{ if .Unit }} ({{ .Unit }}){{ end }}{{ if .Required }} *{{ end }}</span>
+            <input type="text" name="measure[{{ .Key }}]" value="{{ .Value }}" maxlength="40" {{ if .Required }}required{{ end }} class="h-10 px-3 rounded bg-surface-container-low">
+          </label>
+        {{ end }}
+      {{ else }}
+        <p class="text-body-sm text-on-surface-variant">No fixed template — add your sizes below.</p>
+      {{ end }}
+
+      <div class="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
+        <span class="font-semibold">Your extras — e.g. cap size, gele size</span>
+        <p class="text-body-sm text-on-surface-variant">Anything unique to you the template didn't ask for.</p>
+        <div id="extra-rows" class="flex flex-col gap-2">
+          {{ range .FormExtra }}
+            <div class="flex gap-2">
+              <input type="text" name="extra_label" value="{{ .Label }}" maxlength="80" placeholder="e.g. Cap size" class="h-10 px-3 rounded bg-surface-container-low flex-1">
+              <input type="text" name="extra_value" value="{{ .Value }}" maxlength="40" placeholder="e.g. 58cm" class="h-10 px-3 rounded bg-surface-container-low flex-1">
+            </div>
+          {{ end }}
+          <div class="flex gap-2">
+            <input type="text" name="extra_label" maxlength="80" placeholder="e.g. Cap size" class="h-10 px-3 rounded bg-surface-container-low flex-1">
+            <input type="text" name="extra_value" maxlength="40" placeholder="e.g. 58cm" class="h-10 px-3 rounded bg-surface-container-low flex-1">
+          </div>
+        </div>
+        <button type="button" onclick="var d=document.createElement('div');d.className='flex gap-2';d.innerHTML='<input type=text name=extra_label maxlength=80 placeholder=\'e.g. Gele size\' class=\'h-10 px-3 rounded bg-surface-container-low flex-1\'><input type=text name=extra_value maxlength=40 placeholder=\'value\' class=\'h-10 px-3 rounded bg-surface-container-low flex-1\'>';document.getElementById('extra-rows').appendChild(d);" class="text-primary font-semibold text-left">+ Add another</button>
+      </div>
+
+      <label class="flex flex-col gap-1">
+        <span>What do you want? (style, extras)</span>
+        <textarea name="style_notes" rows="3" maxlength="2000" placeholder="e.g. Senator with long sleeve, no embroidery" class="p-3 rounded bg-surface-container-low">{{ .FormNotes }}</textarea>
+      </label>
+    </div>
+
+    <button type="submit" class="h-11 rounded-xl bg-primary-container font-bold">Submit my Aso-ebi order</button>
+    {{ if gt .Group.PriceMinor 0 }}<p class="text-label-sm text-center text-on-surface-variant">You pay the bride/groom offline. This site never takes money.</p>{{ end }}
+  </form>
+</div>
+{{ end }}
