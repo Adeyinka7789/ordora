@@ -7,7 +7,7 @@
     <p class="font-body-md text-body-md text-on-surface-variant">Tell us what you need. Your request will be reviewed by the business before it's confirmed.</p>
   </div>
 
-  {{ if .Error }}<div class="p-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
   <form method="post" action="/order/{{ .Slug }}" class="flex flex-col gap-space-lg">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">

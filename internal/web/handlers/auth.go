@@ -11,6 +11,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/config"
 	"github.com/Adeyinka7789/ordora/internal/domain/org"
+	"github.com/Adeyinka7789/ordora/internal/domain/user"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
@@ -31,6 +32,11 @@ type authPage struct {
 	Name         string
 	BusinessName string
 	VerifyLink   string
+
+	// FieldErrors maps form field names to inline messages. Templates
+	// render them under the field (partials/field_error.html) and mark
+	// the input aria-invalid; js/forms.js moves focus to the first one.
+	FieldErrors map[string]string
 
 	// Registration analytics fields (raw select values + Other free text,
 	// so error re-renders show exactly what the user picked).
@@ -112,13 +118,18 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := validatePasswordConfirm(in.Password, r.PostFormValue("password_confirm")); err != nil {
 		page.Error = err.Error()
+		page.FieldErrors = map[string]string{"password_confirm": err.Error()}
 		h.renderAuth(w, r, http.StatusBadRequest, "auth/register.html", page)
 		return
 	}
 
 	result, err := h.Auth.Register(r.Context(), in)
 	if err != nil {
-		page.Error = humanizeAuthError(err)
+		msg := humanizeAuthError(err)
+		page.Error = msg
+		if f := fieldForAuthError(err); f != "" {
+			page.FieldErrors = map[string]string{f: msg}
+		}
 		h.renderAuth(w, r, http.StatusBadRequest, "auth/register.html", page)
 		return
 	}
@@ -161,10 +172,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := h.Auth.Login(r.Context(), in)
 	if err != nil {
+		msg := humanizeAuthError(err)
 		page := authPage{
 			Title: "Sign in",
-			Error: humanizeAuthError(err),
+			Error: msg,
 			Email: in.Email,
+		}
+		// Credentials/lockout errors point at the password field (the
+		// email stays filled so a typo doesn't cost retyping).
+		if f := fieldForAuthError(err); f != "" {
+			page.FieldErrors = map[string]string{f: msg}
 		}
 		h.renderAuth(w, r, http.StatusUnauthorized, "auth/login.html", page)
 		return
@@ -258,10 +275,15 @@ func (h *AuthHandler) Reset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.Auth.ResetPassword(r.Context(), token, password); err != nil {
-		h.renderAuthWithToken(w, r, http.StatusBadRequest, "auth/reset.html", authPage{
+		msg := humanizeAuthError(err)
+		page := authPage{
 			Title: "Choose a new password",
-			Error: humanizeAuthError(err),
-		}, token)
+			Error: msg,
+		}
+		if f := fieldForAuthError(err); f != "" {
+			page.FieldErrors = map[string]string{f: msg}
+		}
+		h.renderAuthWithToken(w, r, http.StatusBadRequest, "auth/reset.html", page, token)
 		return
 	}
 	h.renderAuth(w, r, http.StatusOK, "auth/login.html", authPage{
@@ -339,9 +361,45 @@ func humanizeAuthError(err error) string {
 		return "Please choose a valid option for how you heard about us."
 	case errors.Is(err, org.ErrProfilePhoneInvalid):
 		return "Please enter a valid business phone number."
+	case errors.Is(err, user.ErrEmailTaken):
+		return "That email is already registered. Try signing in."
+	case errors.Is(err, user.ErrEmailInvalid):
+		return "Please enter a valid email address."
+	case errors.Is(err, user.ErrNameRequired):
+		return "Please enter your name."
 	default:
 		slog.Error("auth: unhandled error", "err", err)
 		return "Something went wrong. Please try again."
+	}
+}
+
+// fieldForAuthError maps an auth error to the form field it belongs to
+// ("" = banner only). Keeps focus and messaging next to the problem.
+func fieldForAuthError(err error) string {
+	switch {
+	case errors.Is(err, auth.ErrInvalidCredentials),
+		errors.Is(err, auth.ErrAccountLocked),
+		errors.Is(err, auth.ErrPasswordTooShort),
+		errors.Is(err, auth.ErrPasswordTooLong):
+		return "password"
+	case errors.Is(err, user.ErrEmailTaken),
+		errors.Is(err, user.ErrEmailInvalid):
+		return "email"
+	case errors.Is(err, user.ErrNameRequired):
+		return "name"
+	case errors.Is(err, org.ErrProfileCategoryRequired),
+		errors.Is(err, org.ErrProfileCategoryInvalid):
+		return "business_category"
+	case errors.Is(err, org.ErrProfileTypeInvalid):
+		return "business_type"
+	case errors.Is(err, org.ErrProfileTeamSizeInvalid):
+		return "team_size"
+	case errors.Is(err, org.ErrProfileReferralInvalid):
+		return "referral_source"
+	case errors.Is(err, org.ErrProfilePhoneInvalid):
+		return "business_phone"
+	default:
+		return ""
 	}
 }
 

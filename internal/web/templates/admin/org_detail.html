@@ -66,7 +66,7 @@
     </div>
   </div>
 
-  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .Flash }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
     {{ if .Org.SuspendedAt }}
     <div class="p-space-md rounded-lg bg-error-container text-on-error-container flex items-start gap-space-sm">
       <span class="material-symbols-outlined text-[22px]">block</span>

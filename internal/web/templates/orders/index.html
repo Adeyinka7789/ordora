@@ -12,8 +12,8 @@
     </a>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   <form class="flex flex-col sm:flex-row items-center gap-space-sm"
         hx-get="/orders"

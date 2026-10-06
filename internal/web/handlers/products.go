@@ -3,6 +3,9 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/product"
@@ -28,18 +31,21 @@ type productsIndexPage struct {
 	Pagination  Pagination
 	FlashNotice string
 	FlashError  string
+	// UndoID carries an archived product id so the notice can offer Undo.
+	UndoID string
 }
 
 type productFormPage struct {
-	Title     string
-	CSRFToken string
-	Product   *product.Product
-	Error     string
-	IsEdit    bool
-	FormName  string
-	FormDesc  string
-	FormSKU   string
-	FormPrice string
+	Title       string
+	CSRFToken   string
+	Product     *product.Product
+	Error       string
+	FieldErrors map[string]string
+	IsEdit      bool
+	FormName    string
+	FormDesc    string
+	FormSKU     string
+	FormPrice   string
 }
 
 type productShowPage struct {
@@ -86,6 +92,11 @@ func (h *ProductHandler) Index(w http.ResponseWriter, r *http.Request) {
 	if v := queryValue(r, "error"); v != "" {
 		page.FlashError = v
 	}
+	if v := queryValue(r, "undo"); v != "" {
+		if _, err := uuid.Parse(strings.TrimSpace(v)); err == nil {
+			page.UndoID = strings.TrimSpace(v)
+		}
+	}
 
 	if isHTMX(r) {
 		page.CSRFToken = csrfFromCtx(r)
@@ -125,14 +136,16 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	price, err := parseMoneyMinor(formValue(r, "unit_price"))
 	if err != nil {
+		msg := "Please enter a valid price."
 		page := productFormPage{
-			Title:     "New product",
-			CSRFToken: csrfFromCtx(r),
-			Error:     "Please enter a valid price.",
-			FormName:  formValue(r, "name"),
-			FormDesc:  formValue(r, "description"),
-			FormSKU:   formValue(r, "sku"),
-			FormPrice: formValue(r, "unit_price"),
+			Title:       "New product",
+			CSRFToken:   csrfFromCtx(r),
+			Error:       msg,
+			FieldErrors: map[string]string{"unit_price": msg},
+			FormName:    formValue(r, "name"),
+			FormDesc:    formValue(r, "description"),
+			FormSKU:     formValue(r, "sku"),
+			FormPrice:   formValue(r, "unit_price"),
 		}
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
 		return
@@ -147,14 +160,20 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		msg := humanizeProductError(err)
+		fields := map[string]string{}
+		if f := fieldForProductError(err); f != "" {
+			fields[f] = msg
+		}
 		page := productFormPage{
-			Title:     "New product",
-			CSRFToken: csrfFromCtx(r),
-			Error:     humanizeProductError(err),
-			FormName:  formValue(r, "name"),
-			FormDesc:  formValue(r, "description"),
-			FormSKU:   formValue(r, "sku"),
-			FormPrice: formValue(r, "unit_price"),
+			Title:       "New product",
+			CSRFToken:   csrfFromCtx(r),
+			Error:       msg,
+			FieldErrors: fields,
+			FormName:    formValue(r, "name"),
+			FormDesc:    formValue(r, "description"),
+			FormSKU:     formValue(r, "sku"),
+			FormPrice:   formValue(r, "unit_price"),
 		}
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
 		return
@@ -238,7 +257,21 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	price, err := parseMoneyMinor(formValue(r, "unit_price"))
 	if err != nil {
-		http.Error(w, "invalid price", http.StatusBadRequest)
+		msg := "Please enter a valid price."
+		p, _ := h.Service.Get(r.Context(), scope, id)
+		page := productFormPage{
+			Title:       "Edit product",
+			CSRFToken:   csrfFromCtx(r),
+			Product:     p,
+			IsEdit:      true,
+			Error:       msg,
+			FieldErrors: map[string]string{"unit_price": msg},
+			FormName:    formValue(r, "name"),
+			FormDesc:    formValue(r, "description"),
+			FormSKU:     formValue(r, "sku"),
+			FormPrice:   formValue(r, "unit_price"),
+		}
+		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/edit.html", page)
 		return
 	}
 
@@ -253,7 +286,25 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-		http.Error(w, humanizeProductError(err), http.StatusBadRequest)
+		msg := humanizeProductError(err)
+		fields := map[string]string{}
+		if f := fieldForProductError(err); f != "" {
+			fields[f] = msg
+		}
+		p, _ := h.Service.Get(r.Context(), scope, id)
+		page := productFormPage{
+			Title:       "Edit product",
+			CSRFToken:   csrfFromCtx(r),
+			Product:     p,
+			IsEdit:      true,
+			Error:       msg,
+			FieldErrors: fields,
+			FormName:    formValue(r, "name"),
+			FormDesc:    formValue(r, "description"),
+			FormSKU:     formValue(r, "sku"),
+			FormPrice:   formValue(r, "unit_price"),
+		}
+		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/edit.html", page)
 		return
 	}
 	http.Redirect(w, r, "/products?notice=Product+updated.", http.StatusSeeOther)
@@ -272,7 +323,24 @@ func (h *ProductHandler) Archive(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/products?error=Could+not+archive+product.", http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/products?notice=Product+archived.", http.StatusSeeOther)
+	http.Redirect(w, r, "/products?notice=Product+archived.&undo="+id.String(), http.StatusSeeOther)
+}
+
+// Unarchive handles POST /products/{id}/unarchive (undo for Archive).
+func (h *ProductHandler) Unarchive(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return
+	}
+	id, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	if err := h.Service.Unarchive(r.Context(), scope, id); err != nil {
+		http.Redirect(w, r, "/products?error=Could+not+restore+product.", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/products?notice=Product+restored.", http.StatusSeeOther)
 }
 
 // Picker: GET /products/picker
@@ -316,5 +384,22 @@ func humanizeProductError(err error) string {
 		return "SKU is too long."
 	default:
 		return "Something went wrong."
+	}
+}
+
+// fieldForProductError maps a product validation error to its form field.
+func fieldForProductError(err error) string {
+	switch {
+	case errors.Is(err, app.ErrProductNameRequired),
+		errors.Is(err, product.ErrNameTooLong):
+		return "name"
+	case errors.Is(err, app.ErrProductPriceNegative):
+		return "unit_price"
+	case errors.Is(err, product.ErrDescriptionTooLong):
+		return "description"
+	case errors.Is(err, product.ErrSKUTooLong):
+		return "sku"
+	default:
+		return ""
 	}
 }

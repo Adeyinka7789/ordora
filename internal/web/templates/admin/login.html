@@ -1,7 +1,7 @@
 {{ define "admin/login.html" }}
 <h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-lg">Admin sign in</h1>
 
-{{ if .Error }}<div class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .Error }}</div>{{ end }}
+{{ if .Error }}<div role="alert" class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .Error }}</div>{{ end }}
 
 <form method="post" action="{{ .Path }}/login" class="flex flex-col gap-space-md">
   <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">

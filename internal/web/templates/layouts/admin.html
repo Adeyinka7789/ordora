@@ -8,6 +8,7 @@
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <meta name="csrf-token" content="{{ csrfToken .Data }}">
   <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="/static/css/app.css">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,6 +105,9 @@
   <main class="w-full">
     {{ .Content }}
   </main>
+
+  <script src="/static/js/forms.js" defer></script>
+  {{ template "partials/confirm_modal.html" . }}
 </body>
 </html>
 {{ end }}

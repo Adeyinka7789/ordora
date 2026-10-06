@@ -9,39 +9,49 @@
     </a>
   </div>
 
-  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
-  <form method="post" action="/customers/{{ .Customer.ID }}" class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col gap-space-md">
+  <form method="post" action="/customers/{{ .Customer.ID }}" data-draft="customer-{{ .Customer.ID }}" class="bg-surface-container-lowest rounded shadow-sm p-space-lg flex flex-col gap-space-md">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Name *</span>
       <input type="text" name="name" value="{{ .Customer.Name }}" required maxlength="200" autofocus
+             {{ if index .FieldErrors "name" }}aria-invalid="true" aria-describedby="err-name"{{ end }}
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "name") }}
     </label>
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Email</span>
       <input type="email" name="email" value="{{ .Customer.Email }}" maxlength="254"
+             {{ if index .FieldErrors "email" }}aria-invalid="true" aria-describedby="err-email"{{ end }}
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "email") }}
     </label>
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Phone</span>
       <input type="tel" name="phone" value="{{ .Customer.Phone }}" maxlength="40"
+             {{ if index .FieldErrors "phone" }}aria-invalid="true" aria-describedby="err-phone"{{ end }}
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "phone") }}
     </label>
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Address</span>
       <textarea name="address" rows="2" maxlength="500"
+                {{ if index .FieldErrors "address" }}aria-invalid="true" aria-describedby="err-address"{{ end }}
                 class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Customer.Address }}</textarea>
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "address") }}
     </label>
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Notes</span>
       <textarea name="notes" rows="4" maxlength="5000"
+                {{ if index .FieldErrors "notes" }}aria-invalid="true" aria-describedby="err-notes"{{ end }}
                 class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Customer.Notes }}</textarea>
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "notes") }}
     </label>
 
     <div class="flex items-center gap-space-sm pt-space-xs">

@@ -25,75 +25,53 @@
     </div>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   {{ if .Stats }}
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
-      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all">
-        <div class="flex items-start justify-between">
-          <div class="flex flex-col">
-            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Active Orders</span>
-            <div class="font-display-lg text-display-lg text-on-surface mt-1 font-bold tracking-tight tabular-nums">{{ .Stats.TotalOrders }}</div>
-          </div>
-          <div class="w-9 h-9 rounded bg-secondary-container/60 flex items-center justify-center text-primary-container">
-            <span class="material-symbols-outlined text-[20px]">inventory_2</span>
-          </div>
+      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all">
+        <div class="metric-icon bg-secondary-container/60 text-primary-container">
+          <span class="material-symbols-outlined text-[22px]">inventory_2</span>
         </div>
-        <div class="flex items-center gap-2 mt-space-md pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
-          <span class="text-on-surface-variant">Total orders in system</span>
+        <div class="flex flex-col min-w-0">
+          <span class="metric-value">{{ .Stats.TotalOrders }}</span>
+          <span class="metric-label">Active orders</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 truncate">Total orders in system</span>
         </div>
       </a>
 
-      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all">
-        <div class="flex items-start justify-between">
-          <div class="flex flex-col">
-            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Outstanding Balance</span>
-            <div class="font-headline-lg text-headline-lg text-on-surface mt-1 font-bold tracking-tight tabular-nums">{{ currency .Stats.OutstandingMinor .Stats.Currency }}</div>
-          </div>
-          <div class="w-9 h-9 rounded bg-surface-container-low flex items-center justify-center text-primary">
-            <span class="material-symbols-outlined text-[20px]">payments</span>
-          </div>
+      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all">
+        <div class="metric-icon bg-surface-container-low text-primary">
+          <span class="material-symbols-outlined text-[22px]">payments</span>
         </div>
-        <div class="flex items-center justify-between mt-space-md pt-space-xs font-label-sm text-label-sm text-on-surface-variant">
-          <span>Pending payments</span>
-          <span class="text-error font-medium">{{ .Stats.PendingOrders }} orders open</span>
+        <div class="flex flex-col min-w-0">
+          <span class="metric-value">{{ currency .Stats.OutstandingMinor .Stats.Currency }}</span>
+          <span class="metric-label">Outstanding balance</span>
+          <span class="font-body-sm text-body-sm mt-0.5 truncate {{ if gt .Stats.PendingOrders 0 }}text-error font-medium{{ else }}text-on-surface-variant{{ end }}">{{ .Stats.PendingOrders }} orders open</span>
         </div>
       </a>
 
-      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all">
-        <div class="flex items-start justify-between">
-          <div class="flex flex-col">
-            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Due Today</span>
-            <div class="font-display-lg text-display-lg text-on-surface mt-1 font-bold tracking-tight tabular-nums">{{ .Stats.DueToday }} <span class="font-headline-md text-headline-md font-medium text-on-surface-variant">Orders</span></div>
-          </div>
-          <div class="w-9 h-9 rounded bg-amber-50 flex items-center justify-center text-amber-700">
-            <span class="material-symbols-outlined text-[20px]">schedule</span>
-          </div>
+      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all">
+        <div class="metric-icon bg-amber-50 text-amber-700">
+          <span class="material-symbols-outlined text-[22px]">schedule</span>
         </div>
-        <div class="flex items-center justify-between mt-space-md pt-space-xs font-body-sm text-body-sm text-on-surface-variant">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>Expected completions</span>
-          </div>
+        <div class="flex flex-col min-w-0">
+          <span class="metric-value">{{ .Stats.DueToday }}</span>
+          <span class="metric-label">Due today</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 truncate">Expected completions</span>
         </div>
       </a>
 
-      <a href="/orders" class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col justify-between hover:ring-1 hover:ring-primary-container/30 transition-all {{ if gt .Stats.Overdue 0 }}ring-1 ring-error-container{{ end }}">
-        <div class="flex items-start justify-between">
-          <div class="flex flex-col">
-            <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Overdue / Action</span>
-            <div class="font-display-lg text-display-lg {{ if gt .Stats.Overdue 0 }}text-error{{ else }}text-on-surface{{ end }} mt-1 font-bold tracking-tight tabular-nums">
-              {{ .Stats.Overdue }} <span class="font-headline-md text-headline-md font-medium {{ if gt .Stats.Overdue 0 }}text-error{{ else }}text-on-surface-variant{{ end }}">Orders</span>
-            </div>
-          </div>
-          <div class="w-9 h-9 rounded {{ if gt .Stats.Overdue 0 }}bg-error-container/60 text-error{{ else }}bg-surface-container-low text-on-surface-variant{{ end }} flex items-center justify-center">
-            <span class="material-symbols-outlined text-[20px]">warning</span>
-          </div>
+      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all {{ if gt .Stats.Overdue 0 }}accent-card{{ end }}" {{ if gt .Stats.Overdue 0 }}style="border-left-color:#ba1a1a"{{ end }}>
+        <div class="metric-icon {{ if gt .Stats.Overdue 0 }}bg-error-container/60 text-error{{ else }}bg-surface-container-low text-on-surface-variant{{ end }}">
+          <span class="material-symbols-outlined text-[22px]">warning</span>
         </div>
-        <div class="flex items-center justify-between mt-space-md pt-space-xs font-body-sm text-body-sm">
-          <span class="{{ if gt .Stats.Overdue 0 }}text-error font-medium{{ else }}text-on-surface-variant{{ end }}">Past expected date</span>
+        <div class="flex flex-col min-w-0">
+          <span class="metric-value {{ if gt .Stats.Overdue 0 }}text-error{{ else }}text-on-surface{{ end }}">{{ .Stats.Overdue }}</span>
+          <span class="metric-label">Overdue · action needed</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 truncate">Past expected date</span>
         </div>
       </a>
     </div>

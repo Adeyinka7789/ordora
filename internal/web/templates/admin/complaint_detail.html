@@ -6,7 +6,7 @@
     <span>All complaints</span>
   </a>
 
-  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .Flash }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
 
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-2">
     <div class="flex items-center justify-between gap-space-sm flex-wrap">

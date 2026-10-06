@@ -8,7 +8,7 @@
     {{ template "partials/payment_status_badge.html" .PayStatus }}
   </div>
 
-  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
   <!-- Balance tri-split -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
@@ -74,7 +74,7 @@
                   <input type="text" name="reason" placeholder="Reason (required)" required maxlength="500"
                          class="h-8 px-2 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm">
                   <button type="submit" class="h-8 px-2 rounded bg-error text-on-error font-label-sm text-label-sm font-semibold"
-                          onclick="return confirm('Reverse this payment? This cannot be undone.');">Confirm reversal</button>
+                          data-confirm-btn="Reverse this payment? This cannot be undone." data-confirm-title="Reverse payment" data-confirm-label="Reverse">Confirm reversal</button>
                 </form>
               </details>
             </div>
@@ -97,7 +97,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface">Amount</span>
-          <input type="text" name="amount" placeholder="0.00" required
+          <input type="text" name="amount" placeholder="0.00" required inputmode="decimal"
                  class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
         </label>
         <label class="flex flex-col gap-1">

@@ -76,11 +76,20 @@ func (r *ProductRepo) Update(ctx context.Context, scope tenant.TenantScope, p *p
 
 // Archive sets active = false. Soft delete.
 func (r *ProductRepo) Archive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, now time.Time) error {
+	return r.setActive(ctx, scope, id, false, now)
+}
+
+// Unarchive sets active = true (undo for Archive).
+func (r *ProductRepo) Unarchive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, now time.Time) error {
+	return r.setActive(ctx, scope, id, true, now)
+}
+
+func (r *ProductRepo) setActive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, active bool, now time.Time) error {
 	return r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
-		const q = `UPDATE products SET active = false, updated_at = $2 WHERE id = $1`
-		ct, err := tx.Exec(ctx, q, id, now)
+		const q = `UPDATE products SET active = $2, updated_at = $3 WHERE id = $1`
+		ct, err := tx.Exec(ctx, q, id, active, now)
 		if err != nil {
-			return fmt.Errorf("product_repo: archive: %w", Classify(err))
+			return fmt.Errorf("product_repo: set active: %w", Classify(err))
 		}
 		if ct.RowsAffected() == 0 {
 			return product.ErrNotFound

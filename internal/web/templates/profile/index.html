@@ -6,8 +6,8 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Manage your account, password, and active sessions.</p>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   <!-- Basic info -->
   <form method="post" action="/profile" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
@@ -64,7 +64,7 @@
     <div class="flex items-center justify-between">
       <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Active sessions</h2>
       <form method="post" action="/profile/sign-out-everywhere"
-            onsubmit="return confirm('Sign out of every device? You will need to log in again.');">
+            data-confirm="Sign out of every device? You will need to log in again." data-confirm-title="Sign out everywhere" data-confirm-label="Sign out">
         <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
         <button type="submit" class="h-8 px-3 rounded bg-error-container hover:bg-error hover:text-on-error text-on-error-container font-label-sm text-label-sm font-semibold">
           Sign out everywhere
@@ -85,7 +85,7 @@
             </div>
             {{ if not .Current }}
               <form method="post" action="/profile/sessions/{{ .ID }}/revoke" class="shrink-0"
-                    onsubmit="return confirm('Sign out this device?');">
+                    data-confirm="Sign out this device?" data-confirm-title="Sign out device" data-confirm-label="Sign out">
                 <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                 <button type="submit" class="h-8 px-3 rounded bg-surface-container-low border border-outline-variant/30 hover:bg-error-container hover:text-on-error-container font-label-sm text-label-sm font-semibold transition-colors">
                   Sign out

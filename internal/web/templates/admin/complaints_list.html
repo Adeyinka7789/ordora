@@ -12,7 +12,7 @@
         <input type="search" name="q" value="{{ .Query }}" placeholder="Search subject, user, business…" autocomplete="off"
                class="h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm focus:outline-none focus:border-primary-container w-64">
       </div>
-      <select name="status" onchange="this.form.submit()"
+      <select name="status" data-autosubmit
               class="h-9 px-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-label-md text-label-md focus:outline-none focus:border-primary-container">
         <option value="">All statuses</option>
         <option value="OPEN" {{ if eq .Status "OPEN" }}selected{{ end }}>Open</option>
@@ -21,7 +21,7 @@
     </form>
   </div>
 
-  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .Flash }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
 
   <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
     {{ if .Rows }}

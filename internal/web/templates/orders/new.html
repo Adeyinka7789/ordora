@@ -12,7 +12,7 @@
     </a>
   </div>
 
-  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
   {{ if not .Customers }}
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center flex flex-col items-center gap-space-md">
@@ -27,7 +27,7 @@
       </a>
     </div>
   {{ else }}
-    <form method="post" action="/orders" id="order-form" class="flex flex-col gap-space-lg">
+    <form method="post" action="/orders" id="order-form" data-draft="order-new" class="flex flex-col gap-space-lg">
       <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
       <input type="hidden" name="item_count" id="item-count" value="{{ len .FormItems }}">
 
@@ -42,25 +42,31 @@
           <label class="flex flex-col gap-1">
             <span class="font-label-md text-label-md text-on-surface">Customer *</span>
             <select name="customer_id" required
+                    {{ if index .FieldErrors "customer_id" }}aria-invalid="true" aria-describedby="err-customer_id"{{ end }}
                     class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
               <option value="">— Choose a customer —</option>
               {{ range .Customers }}
                 <option value="{{ .ID }}" {{ if eq $.FormCustID (printf "%s" .ID) }}selected{{ end }}>{{ .Name }}</option>
               {{ end }}
             </select>
+            {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "customer_id") }}
           </label>
 
           <label class="flex flex-col gap-1">
             <span class="font-label-md text-label-md text-on-surface">Expected completion</span>
             <input type="date" name="expected_completion" value="{{ .FormDueDate }}"
+                   {{ if index .FieldErrors "expected_completion" }}aria-invalid="true" aria-describedby="err-expected_completion"{{ end }}
                    class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+            {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "expected_completion") }}
           </label>
         </div>
 
         <label class="flex flex-col gap-1">
           <span class="font-label-md text-label-md text-on-surface">Title *</span>
           <input type="text" name="title" value="{{ .FormTitle }}" required maxlength="200" placeholder="e.g. 2 Senator Outfits"
+                 {{ if index .FieldErrors "title" }}aria-invalid="true" aria-describedby="err-title"{{ end }}
                  class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "title") }}
         </label>
 
         <label class="flex flex-col gap-1">
@@ -88,6 +94,7 @@
             </button>
           </div>
         </div>
+        {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "items") }}
 
         <div id="product-picker" class="hidden rounded-lg bg-surface-container-low border border-outline-variant/30 overflow-hidden">
           <div class="p-space-sm border-b border-outline-variant/30 flex items-center gap-2">
@@ -127,10 +134,10 @@
                            class="w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
                   </td>
                   <td class="py-2 px-space-sm">
-                    <input type="text" name="items[{{ $i }}][quantity]" value="{{ $it.Quantity }}" placeholder="1" required class="qty-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-center focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                    <input type="text" name="items[{{ $i }}][quantity]" value="{{ $it.Quantity }}" placeholder="1" required inputmode="decimal" class="qty-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-center focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
                   </td>
                   <td class="py-2 px-space-sm">
-                    <input type="text" name="items[{{ $i }}][unit_price]" value="{{ $it.UnitPrice }}" placeholder="0.00" required class="price-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-right focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                    <input type="text" name="items[{{ $i }}][unit_price]" value="{{ $it.UnitPrice }}" placeholder="0.00" required inputmode="decimal" class="price-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-right focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
                   </td>
                   <td class="py-2 px-space-sm text-right font-code-md text-code-md text-on-surface-variant tabular-nums subtotal-cell">—</td>
                   <td class="py-2 px-space-sm text-center">

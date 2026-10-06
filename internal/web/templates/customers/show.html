@@ -11,7 +11,8 @@
         <span class="material-symbols-outlined text-[16px]">edit</span>
         <span>Edit</span>
       </a>
-      <form method="post" action="/customers/{{ .Customer.ID }}/delete" class="inline" onsubmit="return confirm('Delete this customer? This cannot be undone.');">
+      <form method="post" action="/customers/{{ .Customer.ID }}/delete" class="inline"
+            data-confirm="Delete this customer? This cannot be undone." data-confirm-title="Delete customer" data-confirm-label="Delete">
         <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
         <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold flex items-center gap-1">
           <span class="material-symbols-outlined text-[16px]">delete</span>

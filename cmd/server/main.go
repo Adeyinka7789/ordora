@@ -769,6 +769,7 @@ func run() error {
 	mux.Handle("GET /products/{id}/edit", gated("products", http.HandlerFunc(productH.Edit)))
 	mux.Handle("POST /products/{id}", gated("products", http.HandlerFunc(productH.Update)))
 	mux.Handle("POST /products/{id}/archive", gated("products", http.HandlerFunc(productH.Archive)))
+	mux.Handle("POST /products/{id}/unarchive", gated("products", http.HandlerFunc(productH.Unarchive)))
 	//
 	// Order (outermost to innermost):
 	//   Recover -> RequestID -> Logger -> Session -> CSRF -> mux

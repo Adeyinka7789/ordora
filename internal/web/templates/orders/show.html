@@ -22,8 +22,9 @@
       </div>
       <div class="flex items-center gap-2">
         <code class="font-code-md text-code-md bg-surface-container-lowest px-2 py-1 rounded">{{ .PortalURL }}</code>
-        <button onclick="navigator.clipboard.writeText('{{ .PortalURL }}')" class="h-7 px-2 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold">
-          Copy
+        <button type="button" data-copy-value="{{ .PortalURL }}" class="h-7 px-2 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold flex items-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">content_copy</span>
+          <span>Copy</span>
         </button>
       </div>
     </div>
@@ -88,8 +89,8 @@
     </div>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   <!-- Lifecycle Stepper -->
   <div id="order-timeline" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">

@@ -237,6 +237,7 @@
 
   <script src="/static/js/pwa.js" defer></script>
   <script src="/static/js/chrome.js" defer></script>
+  <script src="/static/js/forms.js" defer></script>
 
   {{ template "partials/bottomnav.html" . }}
   <script src="/static/js/skeleton.js" defer></script>
@@ -244,6 +245,9 @@
   {{/* Central HTMX skeletons. Rendered once per full page, outside every
       hx-target, so no swap can remove the <template> definitions. */}}
   {{ template "partials/skeleton.html" . }}
+
+  {{/* Central dialogs (confirm + session-expired). Rendered once per page. */}}
+  {{ template "partials/confirm_modal.html" . }}
 
   <script>
     (function () {

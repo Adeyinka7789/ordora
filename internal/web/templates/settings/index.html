@@ -8,8 +8,8 @@
     </div>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   <form method="post" action="/settings" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
@@ -145,8 +145,11 @@
     <p class="font-body-sm text-body-sm text-on-surface-variant">Share this URL with customers so they can submit orders directly.</p>
     <div class="flex items-center gap-2">
       <code class="flex-1 font-code-md text-code-md bg-surface-container-low px-3 py-2 rounded">/order/{{ .FormSlug }}</code>
-      <button type="button" onclick="navigator.clipboard.writeText(window.location.origin + '/order/{{ .FormSlug }}')"
-              class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Copy</button>
+      <button type="button" data-copy-path="/order/{{ .FormSlug }}"
+              class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">content_copy</span>
+        <span>Copy</span>
+      </button>
     </div>
   </div>
 </div>

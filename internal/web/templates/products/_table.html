@@ -48,6 +48,26 @@
         </tbody>
       </table>
     </div>
+
+    {{ if gt .Pagination.TotalPages 1 }}
+      <nav class="p-space-md flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant border-t border-outline-variant/20">
+        <span aria-live="polite">Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
+        <div class="flex gap-1">
+          {{ if .Pagination.HasPrev }}
+            <a href="/products?q={{ .Query }}{{ if .IncludeArch }}&archived=1{{ end }}&offset={{ .Pagination.PrevOffset }}"
+               hx-get="/products?q={{ .Query }}{{ if .IncludeArch }}&archived=1{{ end }}&offset={{ .Pagination.PrevOffset }}"
+               hx-target="#products-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Prev</a>
+          {{ end }}
+          {{ if .Pagination.HasNext }}
+            <a href="/products?q={{ .Query }}{{ if .IncludeArch }}&archived=1{{ end }}&offset={{ .Pagination.NextOffset }}"
+               hx-get="/products?q={{ .Query }}{{ if .IncludeArch }}&archived=1{{ end }}&offset={{ .Pagination.NextOffset }}"
+               hx-target="#products-table" hx-swap="outerHTML" hx-push-url="true"
+               class="h-7 px-2 rounded bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container">Next</a>
+          {{ end }}
+        </div>
+      </nav>
+    {{ end }}
   {{ end }}
 </div>
 {{ end }}

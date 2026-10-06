@@ -1,8 +1,8 @@
 {{ define "auth/login.html" }}
 <h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-lg">Sign in</h1>
 
-{{ if .Error }}<div class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
-{{ if .Notice }}<div class="mb-space-md p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Notice }}</div>{{ end }}
+{{ if .Error }}<div role="alert" class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+{{ if .Notice }}<div role="status" class="mb-space-md p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Notice }}</div>{{ end }}
 
 <form method="post" action="/login" class="flex flex-col gap-space-md">
   <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
@@ -10,13 +10,17 @@
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Email</span>
     <input type="email" name="email" value="{{ .Email }}" required autofocus
+           {{ if index .FieldErrors "email" }}aria-invalid="true" aria-describedby="err-email"{{ end }}
            class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "email") }}
   </label>
 
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Password</span>
     <input type="password" name="password" required
+           {{ if index .FieldErrors "password" }}aria-invalid="true" aria-describedby="err-password"{{ end }}
            class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "password") }}
   </label>
 
   <button type="submit" class="h-10 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors">Sign in</button>

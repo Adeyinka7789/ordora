@@ -2,8 +2,8 @@
 <h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-sm">Reset your password</h1>
 <p class="font-body-md text-body-md text-on-surface-variant mb-space-lg">Enter the email you registered with. If it matches an account, we'll send a reset link.</p>
 
-{{ if .Error }}<div class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
-{{ if .Notice }}<div class="mb-space-md p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Notice }}</div>{{ end }}
+{{ if .Error }}<div role="alert" class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+{{ if .Notice }}<div role="status" class="mb-space-md p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Notice }}</div>{{ end }}
 
 <form method="post" action="/password/forgot" class="flex flex-col gap-space-md">
   <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">

@@ -1,0 +1,34 @@
+{{ define "partials/confirm_modal.html" }}
+{{/* Central destructive-action confirm dialog (see js/forms.js).
+    Forms opt in with data-confirm="message" + optional
+    data-confirm-title / data-confirm-label. No-JS behavior is unchanged
+    (the form submits directly), same as the old inline confirm(). */}}
+<div id="ordora-confirm-backdrop" class="ordora-modal-backdrop" hidden>
+  <div class="ordora-modal" role="alertdialog" aria-modal="true" aria-labelledby="ordora-confirm-title" aria-describedby="ordora-confirm-body">
+    <div class="flex items-center gap-2 text-error">
+      <span class="material-symbols-outlined text-[22px]">warning</span>
+      <h2 id="ordora-confirm-title" class="font-headline-md text-headline-md font-bold text-on-surface">Are you sure?</h2>
+    </div>
+    <p id="ordora-confirm-body" class="font-body-md text-body-md text-on-surface-variant"></p>
+    <div class="flex items-center justify-end gap-space-sm pt-space-xs">
+      <button type="button" id="ordora-confirm-cancel" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold">Cancel</button>
+      <button type="button" id="ordora-confirm-ok" class="h-9 px-space-md rounded bg-error hover:bg-error text-on-error font-label-md text-label-md font-semibold"><span class="btn-label">Confirm</span></button>
+    </div>
+  </div>
+</div>
+
+{{/* Session-expiry dialog: drafts are autosaved (data-draft forms), so the
+    user loses nothing by logging in again. */}}
+<div id="ordora-expired-backdrop" class="ordora-modal-backdrop" hidden>
+  <div class="ordora-modal" role="alertdialog" aria-modal="true" aria-labelledby="ordora-expired-title" aria-describedby="ordora-expired-body">
+    <div class="flex items-center gap-2 text-primary">
+      <span class="material-symbols-outlined text-[22px]">lock_clock</span>
+      <h2 id="ordora-expired-title" class="font-headline-md text-headline-md font-bold text-on-surface">Session expired</h2>
+    </div>
+    <p id="ordora-expired-body" class="font-body-md text-body-md text-on-surface-variant">You've been signed out. Anything you typed is saved on this device — log in again to continue where you left off.</p>
+    <div class="flex items-center justify-end gap-space-sm pt-space-xs">
+      <a href="/login" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold inline-flex items-center">Log in again</a>
+    </div>
+  </div>
+</div>
+{{ end }}

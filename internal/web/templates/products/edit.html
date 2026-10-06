@@ -12,34 +12,42 @@
     </a>
   </div>
 
-  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
-  <form method="post" action="/products/{{ .Product.ID }}" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+  <form method="post" action="/products/{{ .Product.ID }}" data-draft="product-{{ .Product.ID }}" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Name *</span>
       <input type="text" name="name" value="{{ .FormName }}" required maxlength="200"
+             {{ if index .FieldErrors "name" }}aria-invalid="true" aria-describedby="err-name"{{ end }}
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "name") }}
     </label>
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">SKU</span>
       <input type="text" name="sku" value="{{ .FormSKU }}" maxlength="64"
+             {{ if index .FieldErrors "sku" }}aria-invalid="true" aria-describedby="err-sku"{{ end }}
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "sku") }}
     </label>
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Unit price *</span>
-      <input type="text" name="unit_price" value="{{ .FormPrice }}" required
+      <input type="text" name="unit_price" value="{{ .FormPrice }}" required inputmode="decimal"
+             {{ if index .FieldErrors "unit_price" }}aria-invalid="true" aria-describedby="err-unit_price"{{ end }}
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
       <span class="font-label-sm text-label-sm text-on-surface-variant">Existing orders keep their original price snapshot.</span>
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "unit_price") }}
     </label>
 
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Description</span>
       <textarea name="description" rows="3" maxlength="5000"
+                {{ if index .FieldErrors "description" }}aria-invalid="true" aria-describedby="err-description"{{ end }}
                 class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormDesc }}</textarea>
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "description") }}
     </label>
 
     <div class="flex items-center gap-space-sm pt-space-xs">

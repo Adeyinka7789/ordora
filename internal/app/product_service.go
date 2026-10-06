@@ -18,6 +18,7 @@ type ProductStore interface {
 	Create(ctx context.Context, scope tenant.TenantScope, p *product.Product) error
 	Update(ctx context.Context, scope tenant.TenantScope, p *product.Product) error
 	Archive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, now time.Time) error
+	Unarchive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, now time.Time) error
 	GetByID(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*product.Product, error)
 }
 
@@ -125,6 +126,11 @@ func (s *ProductService) Update(ctx context.Context, scope tenant.TenantScope, i
 // Archive soft-deletes a product.
 func (s *ProductService) Archive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {
 	return s.store.Archive(ctx, scope, id, s.now())
+}
+
+// Unarchive restores an archived product (undo for Archive).
+func (s *ProductService) Unarchive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {
+	return s.store.Unarchive(ctx, scope, id, s.now())
 }
 
 // Get loads a single product.

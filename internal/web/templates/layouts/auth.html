@@ -7,6 +7,7 @@
   <title>{{ with .Data }}{{ if .Title }}{{ .Title }} — Ordora{{ else }}Ordora{{ end }}{{ else }}Ordora{{ end }}</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <meta name="csrf-token" content="{{ csrfToken .Data }}">
+  <link rel="stylesheet" href="/static/css/app.css">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -99,6 +100,7 @@
     </div>
   </div>
 
+  <script src="/static/js/forms.js" defer></script>
 </body>
 </html>
 {{ end }}

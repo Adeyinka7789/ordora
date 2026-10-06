@@ -19,11 +19,20 @@
         <span>Edit</span>
       </a>
       {{ if .Product.Active }}
-        <form method="post" action="/products/{{ .Product.ID }}/archive" class="inline" onsubmit="return confirm('Archive this product? It won\'t be selectable in new orders.');">
+        <form method="post" action="/products/{{ .Product.ID }}/archive" class="inline"
+              data-confirm="Archive this product? It won't be selectable in new orders. You can undo this afterwards." data-confirm-title="Archive product" data-confirm-label="Archive">
           <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
           <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">archive</span>
             <span>Archive</span>
+          </button>
+        </form>
+      {{ else }}
+        <form method="post" action="/products/{{ .Product.ID }}/unarchive" class="inline">
+          <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+          <button type="submit" class="h-9 px-space-md rounded bg-tertiary text-on-tertiary font-label-md text-label-md font-semibold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">unarchive</span>
+            <span>Restore</span>
           </button>
         </form>
       {{ end }}

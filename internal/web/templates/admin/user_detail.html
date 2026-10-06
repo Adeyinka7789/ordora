@@ -8,7 +8,7 @@
     </div>
     <div class="flex items-center gap-space-sm">
       <form method="post" action="{{ .Path }}/users/{{ .User.ID }}/logout"
-            onsubmit="return confirm('Force-logout this user from all devices?');">
+            data-confirm="Force-logout this user from all devices?" data-confirm-title="Force logout" data-confirm-label="Force logout">
         <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
         <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold">Force logout</button>
       </form>
@@ -16,7 +16,7 @@
     </div>
   </div>
 
-  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .Flash }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
 
   {{ if .Lockout }}
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
@@ -78,7 +78,7 @@
                 <td class="py-3 px-space-md">
                   {{ if eq .Status "ACTIVE" }}
                     <form method="post" action="{{ $.Path }}/users/{{ $.User.ID }}/memberships/{{ .OrganizationID }}/disable" class="inline"
-                          onsubmit="return confirm('Block this user from {{ .OrganizationName }}? They lose access on their next request.');">
+                          data-confirm="Block this user from {{ .OrganizationName }}? They lose access on their next request." data-confirm-title="Block user" data-confirm-label="Block">
                       <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                       <button type="submit" class="h-8 px-3 rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-sm text-label-sm font-semibold">Block</button>
                     </form>

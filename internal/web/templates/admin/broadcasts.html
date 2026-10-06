@@ -6,8 +6,8 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Send an in-app announcement to every tenant. It lands in each user's notification feed.</p>
   </div>
 
-  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
-  {{ if .FormError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FormError }}</div>{{ end }}
+  {{ if .Flash }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .FormError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FormError }}</div>{{ end }}
 
   <form method="post" action="{{ .Path }}/broadcasts" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-sm">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">

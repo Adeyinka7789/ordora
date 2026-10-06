@@ -6,8 +6,8 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Find orders, customers, and stuck jobs.</p>
   </div>
 
-  {{ if .Flash }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
-  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .Flash }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .Error }}</div>{{ end }}
 
   <!-- Search form -->
   <form method="get" action="{{ .Path }}/lookup" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col md:flex-row md:items-end gap-space-md">

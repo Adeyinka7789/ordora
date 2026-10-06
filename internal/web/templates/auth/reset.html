@@ -1,7 +1,7 @@
 {{ define "auth/reset.html" }}
 <h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-lg">Choose a new password</h1>
 
-{{ if .Error }}<div class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+{{ if .Error }}<div role="alert" class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
 <form method="post" action="/password/reset" class="flex flex-col gap-space-md">
   <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
@@ -10,8 +10,10 @@
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">New password</span>
     <input type="password" name="password" minlength="10" required autofocus
+           {{ if index .FieldErrors "password" }}aria-invalid="true" aria-describedby="err-password"{{ end }}
            class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
     <span class="font-label-sm text-label-sm text-on-surface-variant">At least 10 characters.</span>
+    {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "password") }}
   </label>
 
   <button type="submit" class="h-10 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors">Set new password</button>

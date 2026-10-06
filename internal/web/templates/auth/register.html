@@ -1,7 +1,7 @@
 {{ define "auth/register.html" }}
 <h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-lg">Create your account</h1>
 
-{{ if .Error }}<div class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+{{ if .Error }}<div role="alert" class="mb-space-md p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
 <form method="post" action="/register" class="flex flex-col gap-space-md">
   <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
@@ -9,7 +9,9 @@
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Your name</span>
     <input type="text" name="name" value="{{ .Name }}" required autofocus
+           {{ if index .FieldErrors "name" }}aria-invalid="true" aria-describedby="err-name"{{ end }}
            class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "name") }}
   </label>
 
   <label class="flex flex-col gap-1">
@@ -22,12 +24,14 @@
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Business category *</span>
       <select id="reg-category" name="business_category" required
+              {{ if index .FieldErrors "business_category" }}aria-invalid="true" aria-describedby="err-business_category"{{ end }}
               class="h-10 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
         <option value="">Choose…</option>
         {{ range .Categories }}
           <option value="{{ . }}" {{ if eq $.BusinessCategory . }}selected{{ end }}>{{ . }}</option>
         {{ end }}
       </select>
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "business_category") }}
     </label>
 
     <label class="flex flex-col gap-1">
@@ -58,7 +62,9 @@
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Business phone *</span>
       <input type="tel" name="business_phone" value="{{ .BusinessPhone }}" required maxlength="40" placeholder="+234…"
+             {{ if index .FieldErrors "business_phone" }}aria-invalid="true" aria-describedby="err-business_phone"{{ end }}
              class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "business_phone") }}
     </label>
 
     <label class="flex flex-col gap-1">
@@ -99,13 +105,16 @@
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Email</span>
     <input type="email" name="email" value="{{ .Email }}" required
+           {{ if index .FieldErrors "email" }}aria-invalid="true" aria-describedby="err-email"{{ end }}
            class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "email") }}
   </label>
 
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Password</span>
     <span class="relative flex items-center">
       <input id="reg-password" type="password" name="password" minlength="10" required autocomplete="new-password"
+             {{ if index .FieldErrors "password" }}aria-invalid="true" aria-describedby="err-password"{{ end }}
              class="w-full h-10 pl-3 pr-10 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
       <button type="button" data-toggle-password="reg-password" aria-label="Show password" aria-pressed="false"
               class="absolute right-2 p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
@@ -113,12 +122,14 @@
       </button>
     </span>
     <span class="font-label-sm text-label-sm text-on-surface-variant">At least 10 characters.</span>
+    {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "password") }}
   </label>
 
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Confirm password</span>
     <span class="relative flex items-center">
       <input id="reg-password-confirm" type="password" name="password_confirm" minlength="10" required autocomplete="new-password"
+             {{ if index .FieldErrors "password_confirm" }}aria-invalid="true" aria-describedby="err-password_confirm"{{ end }}
              class="w-full h-10 pl-3 pr-10 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
       <button type="button" data-toggle-password="reg-password-confirm" aria-label="Show password" aria-pressed="false"
               class="absolute right-2 p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
@@ -126,6 +137,7 @@
       </button>
     </span>
     <span id="reg-match-hint" class="font-label-sm text-label-sm text-on-surface-variant" aria-live="polite"></span>
+    {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "password_confirm") }}
   </label>
 
   <button type="submit" class="h-10 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors">Create account</button>

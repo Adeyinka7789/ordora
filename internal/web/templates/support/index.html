@@ -6,10 +6,10 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">File a complaint or ask for help. Our team replies here — you'll also get a notification.</p>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
-  <form method="post" action="/support" class="bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-space-sm">
+  <form method="post" action="/support" data-draft="support-new" class="bg-surface-container-lowest rounded shadow-sm p-space-md flex flex-col gap-space-sm">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
     <h2 class="font-headline-md text-headline-md font-bold text-on-surface">New request</h2>
     <label class="flex flex-col gap-1">

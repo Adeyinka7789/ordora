@@ -1,0 +1,6 @@
+{{ define "partials/field_error.html" }}
+{{/* Field-level error message. Expects a dict: {"Errors" map, "Field" key}.
+    Renders nothing when the field has no error. Pair the input with
+    aria-invalid + aria-describedby="err-<field>" (see login form). */}}
+{{ with index .Errors .Field }}<p class="field-error" id="err-{{ $.Field }}" role="alert">{{ . }}</p>{{ end }}
+{{ end }}

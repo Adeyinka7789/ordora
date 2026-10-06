@@ -6,8 +6,8 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Let customers submit orders without an account — then share a live tracking link per order.</p>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
     <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
@@ -17,8 +17,11 @@
     <p class="font-body-sm text-body-sm text-on-surface-variant">Share this URL anywhere — WhatsApp, Instagram bio, flyers. Anyone who opens it can send an order request straight into your workspace.</p>
     <div class="flex items-center gap-2 flex-wrap">
       <code class="flex-1 min-w-52 font-code-md text-code-md bg-surface-container-low px-3 py-2 rounded">/order/{{ .Slug }}</code>
-      <button type="button" onclick="navigator.clipboard.writeText(window.location.origin + '/order/{{ .Slug }}')"
-              class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Copy</button>
+      <button type="button" data-copy-path="/order/{{ .Slug }}"
+              class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">content_copy</span>
+        <span>Copy</span>
+      </button>
       <a href="/order/{{ .Slug }}" target="_blank" rel="noopener"
          class="h-9 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold inline-flex items-center gap-1">
         <span class="material-symbols-outlined text-[16px]">open_in_new</span>
@@ -42,15 +45,15 @@
       <h2 class="font-headline-md text-headline-md text-on-surface font-bold">How it works</h2>
     </div>
     <ol class="flex flex-col gap-space-sm">
-      <li class="flex gap-space-sm">
+      <li class="accent-card bg-surface-container-low p-space-sm flex gap-space-sm">
         <span class="shrink-0 w-7 h-7 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center">1</span>
         <p class="font-body-sm text-body-sm text-on-surface"><strong>Share your link.</strong> The customer opens your form and tells you what they need — name, contact, description, date, budget.</p>
       </li>
-      <li class="flex gap-space-sm">
+      <li class="accent-card bg-surface-container-low p-space-sm flex gap-space-sm">
         <span class="shrink-0 w-7 h-7 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center">2</span>
         <p class="font-body-sm text-body-sm text-on-surface"><strong>You get notified.</strong> Every submission lands in your orders list as NEW, and you get an in-app notification.</p>
       </li>
-      <li class="flex gap-space-sm">
+      <li class="accent-card bg-surface-container-low p-space-sm flex gap-space-sm">
         <span class="shrink-0 w-7 h-7 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center">3</span>
         <p class="font-body-sm text-body-sm text-on-surface"><strong>Confirm and track.</strong> Review the request, add items and pricing, then share the order's tracking link so the customer can follow progress and download their receipt.</p>
       </li>

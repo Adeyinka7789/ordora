@@ -48,11 +48,12 @@ type customersIndexPage struct {
 }
 
 type customerFormPage struct {
-	Title     string
-	CSRFToken string
-	Customer  *customer.Customer
-	Error     string
-	IsEdit    bool
+	Title       string
+	CSRFToken   string
+	Customer    *customer.Customer
+	Error       string
+	FieldErrors map[string]string
+	IsEdit      bool
 }
 
 type customerShowPage struct {
@@ -153,10 +154,16 @@ func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 		h.Now(),
 	)
 	if err != nil {
+		msg := humanizeCustomerError(err)
+		fields := map[string]string{}
+		if f := fieldForCustomerError(err); f != "" {
+			fields[f] = msg
+		}
 		page := customerFormPage{
-			Title:     "New customer",
-			CSRFToken: csrfFromCtx(r),
-			Error:     humanizeCustomerError(err),
+			Title:       "New customer",
+			CSRFToken:   csrfFromCtx(r),
+			Error:       msg,
+			FieldErrors: fields,
 			Customer: &customer.Customer{
 				Name:    formValue(r, "name"),
 				Email:   formValue(r, "email"),
@@ -290,12 +297,18 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 		formValue(r, "notes"),
 		h.Now(),
 	); err != nil {
+		msg := humanizeCustomerError(err)
+		fields := map[string]string{}
+		if f := fieldForCustomerError(err); f != "" {
+			fields[f] = msg
+		}
 		page := customerFormPage{
-			Title:     "Edit customer",
-			CSRFToken: csrfFromCtx(r),
-			Error:     humanizeCustomerError(err),
-			Customer:  c,
-			IsEdit:    true,
+			Title:       "Edit customer",
+			CSRFToken:   csrfFromCtx(r),
+			Error:       msg,
+			FieldErrors: fields,
+			Customer:    c,
+			IsEdit:      true,
 		}
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "customers/edit.html", page)
 		return
@@ -396,5 +409,25 @@ func humanizeCustomerError(err error) string {
 		return "Notes are too long."
 	default:
 		return "Something went wrong. Please try again."
+	}
+}
+
+// fieldForCustomerError maps a customer validation error to its form field.
+func fieldForCustomerError(err error) string {
+	switch {
+	case errors.Is(err, customer.ErrNameRequired),
+		errors.Is(err, customer.ErrNameTooLong):
+		return "name"
+	case errors.Is(err, customer.ErrEmailInvalid),
+		errors.Is(err, customer.ErrEmailTooLong):
+		return "email"
+	case errors.Is(err, customer.ErrPhoneTooLong):
+		return "phone"
+	case errors.Is(err, customer.ErrAddressTooLong):
+		return "address"
+	case errors.Is(err, customer.ErrNotesTooLong):
+		return "notes"
+	default:
+		return ""
 	}
 }

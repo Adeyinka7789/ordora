@@ -8,6 +8,7 @@
     <p class="font-body-md text-body-md text-on-surface-variant">
       Check your internet connection and try again. Any data you've already loaded is still available.
     </p>
+    {{/* Inline handler is intentional: this fragment renders without layout scripts. */}}
     <button onclick="location.reload()" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
       <span class="material-symbols-outlined text-[18px]">refresh</span>
       <span>Try again</span>

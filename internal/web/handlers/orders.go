@@ -74,6 +74,7 @@ type orderNewPage struct {
 	FormMeasTemplateID string
 	FormMeasFields     []measFieldView
 	FormMeasNotes      string
+	FieldErrors        map[string]string
 }
 
 type orderFormItem struct {
@@ -103,6 +104,7 @@ type orderEditPage struct {
 	FormMeasTemplateID string
 	FormMeasFields     []measFieldView
 	FormMeasNotes      string
+	FieldErrors        map[string]string
 }
 
 // orderShowPage is passed to orders/show.html. The timeline and attachments
@@ -486,15 +488,16 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 			errMsg = humanizeOrderError(err)
 		}
 		page := orderEditPage{
-			Title:     "Edit order",
-			CSRFToken: csrfFromCtx(r),
-			Order:     o,
-			Customers: customers.Customers,
-			Error:     errMsg,
-			FormTitle: in.Title,
-			FormDesc:  in.Description,
-			FormDisc:  formatMoneyMinor(in.DiscountMinor),
-			FormTax:   formatMoneyMinor(in.TaxMinor),
+			Title:       "Edit order",
+			CSRFToken:   csrfFromCtx(r),
+			Order:       o,
+			Customers:   customers.Customers,
+			Error:       errMsg,
+			FieldErrors: fieldErrorsForOrderForm(errMsg),
+			FormTitle:   in.Title,
+			FormDesc:    in.Description,
+			FormDisc:    formatMoneyMinor(in.DiscountMinor),
+			FormTax:     formatMoneyMinor(in.TaxMinor),
 		}
 		for _, it := range in.Items {
 			page.FormItems = append(page.FormItems, orderFormItem{
@@ -635,10 +638,11 @@ func (h *OrderHandler) respondCreateError(w http.ResponseWriter, r *http.Request
 	customers, _ := h.CustRepo.List(r.Context(), scope, postgres.ListOptions{Limit: 500})
 
 	page := orderNewPage{
-		Title:     "New order",
-		CSRFToken: csrfFromCtx(r),
-		Customers: customers.Customers,
-		Error:     msg,
+		Title:       "New order",
+		CSRFToken:   csrfFromCtx(r),
+		Customers:   customers.Customers,
+		Error:       msg,
+		FieldErrors: fieldErrorsForOrderForm(msg),
 	}
 	if in != nil {
 		page.FormCustID = in.CustomerID.String()
@@ -910,6 +914,34 @@ func humanizeOrderError(err error) string {
 	default:
 		return "Something went wrong. Please try again."
 	}
+}
+
+// fieldErrorsForOrderForm maps an order-form error message to the field it
+// belongs to. Title/date/customer errors point at their input; item,
+// money, and measurement problems point at the items section.
+func fieldErrorsForOrderForm(msg string) map[string]string {
+	lower := strings.ToLower(msg)
+	field := ""
+	switch {
+	case strings.Contains(lower, "title"):
+		field = "title"
+	case strings.Contains(lower, "customer"):
+		field = "customer_id"
+	case strings.Contains(lower, "completion date"),
+		strings.Contains(lower, "expected completion"):
+		field = "expected_completion"
+	case strings.Contains(lower, "item"),
+		strings.Contains(lower, "quantity"),
+		strings.Contains(lower, "unit price"),
+		strings.Contains(lower, "line "),
+		strings.Contains(lower, "discount"),
+		strings.Contains(lower, "measurement"):
+		field = "items"
+	}
+	if field == "" {
+		return nil
+	}
+	return map[string]string{field: msg}
 }
 
 // costsFragment builds the map passed to the orders/_costs.html fragment.

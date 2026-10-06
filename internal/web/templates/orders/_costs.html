@@ -10,8 +10,8 @@
     <span class="font-label-sm text-label-sm text-outline">Internal only</span>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container text-label-md font-label-md">{{ .FlashError }}</div>{{ end }}
 
   {{ if $s }}
     <!-- Profit tiles -->
@@ -73,7 +73,7 @@
             <div class="flex items-center gap-2 shrink-0">
               <span class="font-code-md font-bold text-on-surface tabular-nums">{{ currency .Amount.Amount .Amount.Currency }}</span>
               <form method="post" action="/costs/{{ .ID }}/delete?order_id={{ $s.OrderID }}" class="inline"
-                    onsubmit="return confirm('Delete this cost?');">
+                    data-confirm="Delete this cost?" data-confirm-title="Delete cost" data-confirm-label="Delete">
                 <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                 <button type="submit" class="p-1 rounded hover:bg-error-container text-on-surface-variant hover:text-error transition-colors" title="Delete">
                   <span class="material-symbols-outlined text-[16px]">close</span>
@@ -111,7 +111,7 @@
           </label>
           <label class="flex flex-col gap-1">
             <span class="text-label-md text-on-surface">Amount</span>
-            <input type="text" name="amount" placeholder="0.00" required
+            <input type="text" name="amount" placeholder="0.00" required inputmode="decimal"
                    class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
           </label>
         </div>

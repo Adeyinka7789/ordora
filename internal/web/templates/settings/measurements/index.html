@@ -10,8 +10,8 @@
        class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold inline-flex items-center">New template</a>
   </div>
 
-  {{ if .FlashNotice }}<div class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
-  {{ if .FlashError }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
 
   {{ if not .IsTailoring }}
     <div class="p-space-sm rounded bg-surface-container-high text-on-surface-variant font-body-sm text-body-sm">
@@ -34,7 +34,8 @@
             <div class="flex items-center gap-space-xs">
               <a href="/settings/measurements/{{ .ID }}/edit"
                  class="h-8 px-3 rounded bg-surface-container-high hover:bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold inline-flex items-center">Edit</a>
-              <form method="post" action="/settings/measurements/{{ .ID }}/delete" onsubmit="return confirm('Delete this template? Past orders keep their measurements.')">
+              <form method="post" action="/settings/measurements/{{ .ID }}/delete"
+                    data-confirm="Delete this template? Past orders keep their measurements." data-confirm-title="Delete template" data-confirm-label="Delete">
                 <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                 <button type="submit" class="h-8 px-3 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Delete</button>
               </form>

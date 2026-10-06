@@ -62,7 +62,7 @@
 
     {{ if gt .Pagination.TotalPages 1 }}
       <nav class="p-space-md flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant border-t border-outline-variant/20">
-        <span>Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
+        <span aria-live="polite">Showing {{ .Pagination.From }}–{{ .Pagination.To }} of {{ .Pagination.Total }}</span>
         <div class="flex gap-1">
           {{ if .Pagination.HasPrev }}
             <a href="/payments?q={{ .Query }}&method={{ .Method }}&from={{ .From }}&to={{ .To }}{{ if .HideReversed }}&hide=1{{ end }}&offset={{ .Pagination.PrevOffset }}"

@@ -6,7 +6,7 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Rename fields, drop ones you don't take, or add extras for your style. Units are display hints (in/cm).</p>
   </div>
 
-  {{ if .Error }}<div class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+  {{ if .Error }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
   <form method="post" action="{{ if .IsEdit }}/settings/measurements/{{ .TemplateID }}{{ else }}/settings/measurements{{ end }}"
         class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
