@@ -34,78 +34,64 @@
   <!-- KPI cards -->
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
     <!-- Gross invoiced -->
-    <a href="/orders" class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
-      <div class="flex items-center justify-between">
-        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Gross invoiced</span>
-        <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
-      </div>
-      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.GrossInvoicedMinor $.Currency }}</div>
-      <div class="text-label-sm text-on-surface-variant">
+    <a href="/orders" data-tip="Total value of all orders created in this period, before any payments. Click to see them." class="metric-card-stacked hover:ring-1 hover:ring-primary-container/40 transition-all">
+      <span class="metric-label hl-blue">Gross invoiced</span>
+      <span class="metric-number">{{ currency $k.GrossInvoicedMinor $.Currency }}</span>
+      <span class="metric-sub">
         {{ $k.BookedOrders }} orders · avg {{ currency $k.AvgTicketMinor $.Currency }}
-      </div>
+      </span>
     </a>
 
     <!-- Cash settled -->
-    <a href="/orders" class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
-      <div class="flex items-center justify-between">
-        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Cash settled</span>
-        <span class="material-symbols-outlined text-tertiary text-[18px]">price_check</span>
-      </div>
-      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ currency $k.CashSettledMinor $.Currency }}</div>
-      <div class="w-full h-1.5 rounded-full bg-surface-container-low overflow-hidden flex">
-        <div class="h-full bg-tertiary-container" style="width: {{ $k.CollectionRatePct }}%;"></div>
-        <div class="h-full bg-error" style="width: {{ sub 100 $k.CollectionRatePct }}%;"></div>
-      </div>
-      <div class="text-label-sm text-on-surface-variant">{{ $k.CollectionRatePct }}% collected · {{ currency $k.OutstandingMinor $.Currency }} outstanding</div>
+    <a href="/orders" data-tip="Money actually received in this period. The bar shows your collection rate." class="metric-card-stacked hover:ring-1 hover:ring-primary-container/40 transition-all">
+      <span class="metric-label hl-green">Cash settled</span>
+      <span class="metric-number">{{ currency $k.CashSettledMinor $.Currency }}</span>
+      <span class="w-full h-1.5 rounded-full bg-surface-container-low overflow-hidden flex">
+        <span class="h-full bg-tertiary-container" style="width: {{ $k.CollectionRatePct }}%;"></span>
+        <span class="h-full bg-error" style="width: {{ sub 100 $k.CollectionRatePct }}%;"></span>
+      </span>
+      <span class="metric-sub">{{ $k.CollectionRatePct }}% collected · {{ currency $k.OutstandingMinor $.Currency }} outstanding</span>
     </a>
 
     <!-- Velocity -->
-    <div class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
-      <div class="flex items-center justify-between">
-        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Velocity</span>
-        <span class="material-symbols-outlined text-primary text-[18px]">speed</span>
-      </div>
-      <div class="text-headline-lg font-bold text-on-surface tabular-nums">
+    <div class="metric-card-stacked" tabindex="0" data-tip="Average days from order creation to delivery. Lower means faster turnaround.">
+      <span class="metric-label hl-amber">Velocity</span>
+      <span class="metric-number">
         {{ printf "%.1f" $k.VelocityDays }} days
-      </div>
-      <div class="text-label-sm text-on-surface-variant">Average time from creation to delivery</div>
+      </span>
+      <span class="metric-sub">Average time from creation to delivery</span>
     </div>
 
     <!-- Repeat customers -->
-    <div class="card-lift bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-3">
-      <div class="flex items-center justify-between">
-        <span class="text-label-sm uppercase tracking-wider text-outline font-semibold">Repeat customers</span>
-        <span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
-      </div>
-      <div class="text-headline-lg font-bold text-on-surface tabular-nums">{{ $k.RepeatCustomerPct }}%</div>
-      <div class="text-label-sm text-on-surface-variant">{{ $k.RepeatCustomers }} of {{ $k.TotalCustomers }} customers</div>
+    <div class="metric-card-stacked" tabindex="0" data-tip="Share of customers with more than one order. Repeat business is your cheapest growth.">
+      <span class="metric-label hl-purple">Repeat customers</span>
+      <span class="metric-number">{{ $k.RepeatCustomerPct }}%</span>
+      <span class="metric-sub">{{ $k.RepeatCustomers }} of {{ $k.TotalCustomers }} customers</span>
     </div>
   </div>
 
     <!-- Profit KPIs -->
   {{ if $b.Profit }}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
-      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
-        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Revenue</div>
-        <div class="text-headline-lg font-bold text-on-surface tabular-nums mt-1">{{ currency $b.Profit.TotalRevenueMinor $.Currency }}</div>
-        <div class="text-label-sm text-on-surface-variant mt-1">{{ $b.Profit.OrdersWithCosts }} orders</div>
+      <div class="metric-card-stacked" tabindex="0" data-tip="Total invoiced on orders that have costs recorded.">
+        <span class="metric-label hl-blue">Revenue</span>
+        <span class="metric-number">{{ currency $b.Profit.TotalRevenueMinor $.Currency }}</span>
+        <span class="metric-sub">{{ $b.Profit.OrdersWithCosts }} orders</span>
       </div>
-      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
-        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Costs</div>
-        <div class="text-headline-lg font-bold text-error tabular-nums mt-1">{{ currency $b.Profit.TotalCostsMinor $.Currency }}</div>
-        <div class="text-label-sm text-on-surface-variant mt-1">Materials, labor, delivery, overhead</div>
+      <div class="metric-card-stacked" tabindex="0" data-tip="Materials, labor, delivery and overhead recorded against orders. Track costs on each order to sharpen this.">
+        <span class="metric-label hl-red">Costs</span>
+        <span class="metric-number"><span class="text-error">{{ currency $b.Profit.TotalCostsMinor $.Currency }}</span></span>
+        <span class="metric-sub">Materials, labor, delivery, overhead</span>
       </div>
-      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm {{ if gt $b.Profit.ProfitMinor 0 }}ring-1 ring-tertiary-container{{ end }}">
-        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Gross profit</div>
-        <div class="text-headline-lg font-bold {{ if gt $b.Profit.ProfitMinor 0 }}text-tertiary{{ else if lt $b.Profit.ProfitMinor 0 }}text-error{{ else }}text-on-surface{{ end }} tabular-nums mt-1">
-          {{ currency $b.Profit.ProfitMinor $.Currency }}
-        </div>
-        <div class="text-label-sm text-on-surface-variant mt-1">{{ printf "%.1f" $b.Profit.MarginPercent }}% margin</div>
+      <div class="metric-card-stacked {{ if gt $b.Profit.ProfitMinor 0 }}ring-1 ring-tertiary-container{{ end }}" tabindex="0" data-tip="Revenue minus costs, with margin percentage. Green ring means profitable.">
+        <span class="metric-label hl-green">Gross profit</span>
+        <span class="metric-number">{{ if gt $b.Profit.ProfitMinor 0 }}<span class="text-tertiary">{{ currency $b.Profit.ProfitMinor $.Currency }}</span>{{ else if lt $b.Profit.ProfitMinor 0 }}<span class="text-error">{{ currency $b.Profit.ProfitMinor $.Currency }}</span>{{ else }}{{ currency $b.Profit.ProfitMinor $.Currency }}{{ end }}</span>
+        <span class="metric-sub">{{ printf "%.1f" $b.Profit.MarginPercent }}% margin</span>
       </div>
-      <div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
-        <div class="text-label-sm uppercase tracking-wider text-outline font-semibold">Avg margin per order</div>
-        <div class="text-headline-lg font-bold text-on-surface tabular-nums mt-1">{{ printf "%.1f" $b.Profit.AvgMarginPercent }}%</div>
-        <div class="text-label-sm text-on-surface-variant mt-1">Across orders with costs</div>
+      <div class="metric-card-stacked" tabindex="0" data-tip="Average profit margin across orders that have costs recorded.">
+        <span class="metric-label hl-purple">Avg margin per order</span>
+        <span class="metric-number">{{ printf "%.1f" $b.Profit.AvgMarginPercent }}%</span>
+        <span class="metric-sub">Across orders with costs</span>
       </div>
     </div>
   {{ end }}

@@ -31,48 +31,28 @@
   {{ if .Stats }}
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
-      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all">
-        <div class="metric-icon bg-secondary-container/60 text-primary-container">
-          <span class="material-symbols-outlined text-[22px]">inventory_2</span>
-        </div>
-        <div class="flex flex-col min-w-0">
-          <span class="metric-value">{{ .Stats.TotalOrders }}</span>
-          <span class="metric-label">Active orders</span>
-          <span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 truncate">Total orders in system</span>
-        </div>
+      <a href="/orders" data-tip="Orders still in progress — everything not yet delivered or cancelled. Click to see them." class="metric-card-stacked hover:ring-1 hover:ring-primary-container/40 transition-all">
+        <span class="metric-label hl-blue">Active orders</span>
+        <span class="metric-number">{{ .Stats.TotalOrders }}</span>
+        <span class="metric-sub">Total orders in system</span>
       </a>
 
-      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all">
-        <div class="metric-icon bg-surface-container-low text-primary">
-          <span class="material-symbols-outlined text-[22px]">payments</span>
-        </div>
-        <div class="flex flex-col min-w-0">
-          <span class="metric-value">{{ currency .Stats.OutstandingMinor .Stats.Currency }}</span>
-          <span class="metric-label">Outstanding balance</span>
-          <span class="font-body-sm text-body-sm mt-0.5 truncate {{ if gt .Stats.PendingOrders 0 }}text-error font-medium{{ else }}text-on-surface-variant{{ end }}">{{ .Stats.PendingOrders }} orders open</span>
-        </div>
+      <a href="/orders" data-tip="Total unpaid balance across open orders. Collect before delivery — click to follow up." class="metric-card-stacked hover:ring-1 hover:ring-primary-container/40 transition-all">
+        <span class="metric-label hl-red">Outstanding balance</span>
+        <span class="metric-number">{{ currency .Stats.OutstandingMinor .Stats.Currency }}</span>
+        <span class="metric-sub">{{ if gt .Stats.PendingOrders 0 }}<span class="text-error font-medium">{{ .Stats.PendingOrders }} orders open</span>{{ else }}{{ .Stats.PendingOrders }} orders open{{ end }}</span>
       </a>
 
-      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all">
-        <div class="metric-icon bg-amber-50 text-amber-700">
-          <span class="material-symbols-outlined text-[22px]">schedule</span>
-        </div>
-        <div class="flex flex-col min-w-0">
-          <span class="metric-value">{{ .Stats.DueToday }}</span>
-          <span class="metric-label">Due today</span>
-          <span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 truncate">Expected completions</span>
-        </div>
+      <a href="/orders" data-tip="Orders promised for today. Deliver them or renegotiate the date." class="metric-card-stacked hover:ring-1 hover:ring-primary-container/40 transition-all">
+        <span class="metric-label hl-amber">Due today</span>
+        <span class="metric-number">{{ .Stats.DueToday }}</span>
+        <span class="metric-sub">Expected completions</span>
       </a>
 
-      <a href="/orders" class="metric-card hover:ring-1 hover:ring-primary-container/40 transition-all {{ if gt .Stats.Overdue 0 }}accent-card{{ end }}" {{ if gt .Stats.Overdue 0 }}style="border-left-color:#ba1a1a"{{ end }}>
-        <div class="metric-icon {{ if gt .Stats.Overdue 0 }}bg-error-container/60 text-error{{ else }}bg-surface-container-low text-on-surface-variant{{ end }}">
-          <span class="material-symbols-outlined text-[22px]">warning</span>
-        </div>
-        <div class="flex flex-col min-w-0">
-          <span class="metric-value {{ if gt .Stats.Overdue 0 }}text-error{{ else }}text-on-surface{{ end }}">{{ .Stats.Overdue }}</span>
-          <span class="metric-label">Overdue · action needed</span>
-          <span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 truncate">Past expected date</span>
-        </div>
+      <a href="/orders" data-tip="Past expected date and still open. Contact these customers first." class="metric-card-stacked hover:ring-1 hover:ring-primary-container/40 transition-all {{ if gt .Stats.Overdue 0 }}accent-card{{ end }}" {{ if gt .Stats.Overdue 0 }}style="border-left-color:#ba1a1a"{{ end }}>
+        <span class="metric-label hl-red">Overdue · action needed</span>
+        <span class="metric-number">{{ if gt .Stats.Overdue 0 }}<span class="text-error">{{ .Stats.Overdue }}</span>{{ else }}{{ .Stats.Overdue }}{{ end }}</span>
+        <span class="metric-sub">Past expected date</span>
       </a>
     </div>
 

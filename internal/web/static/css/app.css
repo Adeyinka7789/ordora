@@ -221,6 +221,96 @@ select[aria-invalid="true"] {
   flex-shrink: 0;
 }
 
+/* ---- Stacked KPI cards (dashboard + reports): label on top, refined
+ * numeral below, supporting line last. Numerals stay semibold and
+ * tabular so columns of money scan cleanly without shouting. */
+.metric-card-stacked {
+  background: #ffffff;
+  border: 1px solid #E1EAF2;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  box-shadow: 0 4px 12px rgba(0, 90, 140, 0.05);
+}
+.metric-number {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #0B1C30;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.metric-sub {
+  font-size: 12px;
+  line-height: 16px;
+  color: #44566A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Categorical heading hues: one hue per card so cards are findable at a
+ * glance. Deep shades only (all pass 4.5:1 on white). Red stays reserved
+ * for risk/problems, green for money-in — color always means something. */
+.hl-blue { color: #005A8C; }
+.hl-green { color: #006E4B; }
+.hl-amber { color: #92400E; }
+.hl-red { color: #B91C1C; }
+.hl-purple { color: #6D28D9; }
+
+/* ---- Hover tooltips (aaPanel-style): any card with data-tip explains
+ * itself on hover or keyboard focus. Pure CSS — no JS, nothing to break.
+ * Non-focusable cards get tabindex="0" in markup so keyboard and touch
+ * users can summon the tip too. */
+[data-tip] { position: relative; }
+[data-tip]:hover::after,
+[data-tip]:focus-visible::after,
+[data-tip]:focus-within::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 230px;
+  white-space: normal;
+  background: #fff;
+  color: #0B1C30;
+  border: 1px solid #C3D2DE;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 20px -8px rgba(11, 28, 48, 0.25);
+  z-index: 50;
+  pointer-events: none;
+}
+[data-tip]:hover::before,
+[data-tip]:focus-visible::before,
+[data-tip]:focus-within::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #C3D2DE;
+  border-bottom: none;
+  z-index: 50;
+  pointer-events: none;
+}
+[data-tip]:focus-visible { outline: 2px solid #0077BE; outline-offset: 2px; }
+
 .ordora-skeleton-title .ordora-shimmer { height: 1.1rem; }
 
 @keyframes ordora-shimmer {
