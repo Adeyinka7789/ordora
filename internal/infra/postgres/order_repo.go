@@ -125,6 +125,34 @@ func (r *OrderRepo) getByIDTx(ctx context.Context, tx pgx.Tx, scope tenant.Tenan
 	return o, nil
 }
 
+// GetByIDForUpdate loads the order inside the caller's transaction with a
+// row lock. Concurrent writers block until the holder commits or rolls
+// back — this closes the check-then-write race in payment recording.
+func (r *OrderRepo) GetByIDForUpdate(ctx context.Context, tx pgx.Tx, scope tenant.TenantScope, id uuid.UUID) (*order.Order, error) {
+	const q = `
+		SELECT
+			id, organization_id, customer_id, order_number,
+			public_token_hash, title, COALESCE(description,''),
+			status, currency,
+			subtotal_minor, discount_minor, tax_minor, total_minor, amount_paid_minor,
+			expected_completion, delivered_at,
+			created_by, created_at, updated_at
+		FROM orders
+		WHERE id = $1
+		FOR UPDATE
+	`
+	o, err := scanOrderRow(tx.QueryRow(ctx, q, id))
+	if err != nil {
+		return nil, err
+	}
+	items, err := r.loadItemsTx(ctx, tx, o.ID, o.Currency)
+	if err != nil {
+		return nil, err
+	}
+	o.Items = items
+	return o, nil
+}
+
 func (r *OrderRepo) loadItemsTx(ctx context.Context, tx pgx.Tx, orderID uuid.UUID, currency string) ([]*order.Item, error) {
 	const q = `
 		SELECT id, description, quantity, unit_price_minor, subtotal_minor, position

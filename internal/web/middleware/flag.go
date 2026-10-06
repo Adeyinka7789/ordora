@@ -18,7 +18,8 @@ func RequireFlag(provider *flags.Provider, key string) func(http.Handler) http.H
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if provider == nil {
-				next.ServeHTTP(w, r)
+				// No provider means no flag data — deny, never assume on.
+				http.NotFound(w, r)
 				return
 			}
 			s := SessionFromContext(r.Context())

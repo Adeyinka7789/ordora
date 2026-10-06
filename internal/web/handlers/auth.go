@@ -315,6 +315,8 @@ func humanizeAuthError(err error) string {
 	switch {
 	case errors.Is(err, auth.ErrInvalidCredentials):
 		return "Email or password is incorrect."
+	case errors.Is(err, auth.ErrAccountLocked):
+		return "Too many failed attempts. Try again in a few minutes."
 	case errors.Is(err, auth.ErrEmailNotVerified):
 		return "Please verify your email before signing in."
 	case errors.Is(err, auth.ErrTokenInvalid):

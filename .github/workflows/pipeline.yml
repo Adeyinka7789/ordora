@@ -81,6 +81,11 @@ jobs:
       - name: go vet
         run: go vet ./...
 
+      - name: govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
       - name: go build
         run: go build ./...
 

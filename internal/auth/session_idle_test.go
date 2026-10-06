@@ -82,12 +82,24 @@ func (fakeTxRunner) WithTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	return errors.New("fakeTxRunner: unexpected WithTx")
 }
 
+// fakeAttemptStore is a permissive lockout store (never locked).
+type fakeAttemptStore struct{}
+
+func (fakeAttemptStore) Locked(ctx context.Context, email string, now time.Time) (bool, error) {
+	return false, nil
+}
+func (fakeAttemptStore) RecordFailure(ctx context.Context, email string, now time.Time) error {
+	return nil
+}
+func (fakeAttemptStore) Clear(ctx context.Context, email string) error { return nil }
+
 func idleTestService(store *fakeSessionStore, idle time.Duration, now time.Time) *Service {
 	uid := uuid.New()
 	return NewService(Deps{
 		DB:       fakeTxRunner{},
 		Users:    &fakeUserStore{u: &user.User{ID: uid, Name: "T"}},
 		Sessions: store,
+		Attempts: fakeAttemptStore{},
 		IDs:      nil,
 		Now:      func() time.Time { return now },
 		IdleTTL:  idle,

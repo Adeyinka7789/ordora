@@ -112,7 +112,9 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 
 	var updated *order.Order
 	err := s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
-		o, err := s.orders.GetByID(ctx, scope, in.OrderID)
+		// Row lock: concurrent RecordPayment calls serialize here, so
+		// the balance check below can't pass twice for the same funds.
+		o, err := s.orders.GetByIDForUpdate(ctx, tx, scope, in.OrderID)
 		if err != nil {
 			if errors.Is(err, order.ErrNotFound) {
 				return ErrOrderNotFound

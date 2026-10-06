@@ -50,6 +50,11 @@ type OrderWriter interface {
 // OrderReader is the read side.
 type OrderReader interface {
 	GetByID(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*order.Order, error)
+	// GetByIDForUpdate loads the order inside the caller's transaction
+	// with a row lock (SELECT ... FOR UPDATE). Use it when the caller
+	// is about to write based on what it reads (balance checks) — the
+	// lock is held until tx commit and serializes concurrent writers.
+	GetByIDForUpdate(ctx context.Context, tx pgx.Tx, scope tenant.TenantScope, id uuid.UUID) (*order.Order, error)
 }
 
 // NumberAllocator is the order-number allocation contract.

@@ -85,6 +85,7 @@ type Service struct {
 	members  MemberStore
 	sessions SessionStore
 	tokens   AuthTokenStore
+	attempts LoginAttemptStore
 	ids      IDGen
 	mailer   Mailer
 	now      Clock
@@ -100,6 +101,9 @@ type Deps struct {
 	Members  MemberStore
 	Sessions SessionStore
 	Tokens   AuthTokenStore
+	// Attempts is required (fail-closed): pass a working store, never
+	// nil — without it brute-force lockout silently stops working.
+	Attempts LoginAttemptStore
 	Mailer   Mailer
 	Outbox   OutboxWriter
 	IDs      IDGen
@@ -125,6 +129,7 @@ func NewService(d Deps) *Service {
 		members:  d.Members,
 		sessions: d.Sessions,
 		tokens:   d.Tokens,
+		attempts: d.Attempts,
 		ids:      d.IDs,
 		mailer:   d.Mailer,
 		now:      d.Now,
@@ -319,6 +324,17 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
+	attemptKey := normalizeAttemptEmail(in.Email)
+
+	// Fail closed on store errors: if we can't check attempts, don't
+	// let the login through blind.
+	locked, err := s.attempts.Locked(ctx, attemptKey, s.now())
+	if err != nil {
+		return nil, err
+	}
+	if locked {
+		return nil, ErrAccountLocked
+	}
 
 	u, err := s.users.GetByEmail(ctx, email)
 	if err != nil {
@@ -326,14 +342,19 @@ func (s *Service) Login(ctx context.Context, in LoginInput) (*LoginResult, error
 			// Run a dummy hash to equalize timing. Avoids revealing whether
 			// the email exists.
 			_, _ = HashPassword("timing-equalization-placeholder")
+			_ = s.attempts.RecordFailure(ctx, attemptKey, s.now())
 			return nil, ErrInvalidCredentials
 		}
 		return nil, err
 	}
 
 	if err := VerifyPassword(in.Password, u.PasswordHash); err != nil {
+		_ = s.attempts.RecordFailure(ctx, attemptKey, s.now())
 		return nil, ErrInvalidCredentials
 	}
+	// Correct password resets the counter even if later steps fail
+	// (e.g. no membership) — lockout punishes guessing, not edge cases.
+	_ = s.attempts.Clear(ctx, attemptKey)
 
 	// Pick the user's first (oldest) membership as the active org.
 	memberships, err := s.members.ListForUser(ctx, u.ID)

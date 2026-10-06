@@ -124,6 +124,7 @@ func run() error {
 		Members:  postgres.NewMemberRepo(db),
 		Sessions: postgres.NewSessionRepo(db),
 		Tokens:   postgres.NewAuthTokenRepo(db),
+		Attempts: postgres.NewLoginAttemptRepo(db),
 		IDs:      id.Generator{},
 		Mailer:   authMailer,
 		IdleTTL:  cfg.Session.IdleTTL,
@@ -513,6 +514,16 @@ func run() error {
 		return middleware.RequireTenant(middleware.RequireFlag(flagProvider, flag)(h))
 	}
 
+	// Per-IP limiter for credential-bearing POSTs (business + admin
+	// login, registration, password reset). Brute-force protection;
+	// account lockout additionally applies to business login.
+	// In-memory per instance — documented in middleware.
+	authLimit := middleware.RateLimit(middleware.RateLimitConfig{
+		Limit:   10,
+		Window:  time.Minute,
+		Message: "Too many attempts. Please wait a minute and try again.",
+	})
+
 	// Offline fallback page for the PWA service worker.
 	mux.HandleFunc("GET /offline", func(w http.ResponseWriter, r *http.Request) {
 		renderer.RenderFragment(w, http.StatusOK, "errors/offline.html", nil)
@@ -531,7 +542,7 @@ func run() error {
 	})))
 
 	mux.Handle("GET "+adminPath+"/login", adminSessionMW(http.HandlerFunc(adminAuthH.LoginPage)))
-	mux.HandleFunc("POST "+adminPath+"/login", adminAuthH.Login)
+	mux.Handle("POST "+adminPath+"/login", authLimit(adminSessionMW(http.HandlerFunc(adminAuthH.Login))))
 	mux.HandleFunc("POST "+adminPath+"/logout", adminAuthH.Logout)
 
 	mux.Handle("GET "+adminPath+"/dashboard",
@@ -665,16 +676,19 @@ func run() error {
 	})
 
 	// ---- Auth routes ----
+	// Credential-bearing POSTs are per-IP rate limited (brute-force
+	// protection; account lockout additionally applies to login).
+	// The limiter is in-memory per instance — documented in middleware.
 	mux.HandleFunc("GET /register", authH.RegisterPage)
-	mux.HandleFunc("POST /register", authH.Register)
+	mux.Handle("POST /register", authLimit(http.HandlerFunc(authH.Register)))
 	mux.HandleFunc("GET /login", authH.LoginPage)
-	mux.HandleFunc("POST /login", authH.Login)
+	mux.Handle("POST /login", authLimit(http.HandlerFunc(authH.Login)))
 	mux.HandleFunc("POST /logout", authH.Logout)
 	mux.HandleFunc("GET /verify", authH.VerifyEmail)
 	mux.HandleFunc("GET /password/forgot", authH.ForgotPage)
-	mux.HandleFunc("POST /password/forgot", authH.Forgot)
+	mux.Handle("POST /password/forgot", authLimit(http.HandlerFunc(authH.Forgot)))
 	mux.HandleFunc("GET /password/reset", authH.ResetPage)
-	mux.HandleFunc("POST /password/reset", authH.Reset)
+	mux.Handle("POST /password/reset", authLimit(http.HandlerFunc(authH.Reset)))
 
 	// Silent handlers for well-known browser probes.
 	mux.HandleFunc("GET /js/sw.js", func(w http.ResponseWriter, r *http.Request) {
@@ -778,6 +792,7 @@ func run() error {
 	// Session must run before any handler that reads the context.
 	handler := chain(mux,
 		observe.Traced,
+		middleware.SecurityHeaders,
 		middleware.Recover(renderer),
 		middleware.RequestID,
 		middleware.Logger,
