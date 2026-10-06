@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
+	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
@@ -99,6 +100,11 @@ func (h *CalendarHandler) Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "could not load calendar", http.StatusInternalServerError)
 		return
+	}
+	// Occasions belong to the tailoring-only groups feature; other
+	// trades get the plain due-date week (their links would 404).
+	if s := middleware.SessionFromContext(r.Context()); s == nil || !s.IsTailoring {
+		occasions = nil
 	}
 	for _, g := range occasions {
 		if g.OccasionDate == nil {

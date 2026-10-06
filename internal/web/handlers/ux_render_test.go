@@ -13,9 +13,6 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
-// UX regression net: field errors render next to their inputs with ARIA
-// wiring, the confirm modal ships in the app layout, and the products
-// index offers Undo after an archive.
 func TestUXFieldErrorsRender(t *testing.T) {
 	r, err := render.New("../templates")
 	if err != nil {
@@ -159,5 +156,34 @@ func TestUXGroupsAndCalendarRender(t *testing.T) {
 		if !strings.Contains(cal, want) {
 			t.Errorf("calendar page missing %q", want)
 		}
+	}
+}
+
+func TestUXSidebarGroupsTailoringGate(t *testing.T) {
+	r, err := render.New("../templates")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	sidebarWith := func(tailoring bool) string {
+		out, err := r.Raw("partials/sidebar.html", map[string]any{
+			"Shell": map[string]any{
+				"OrgID":       uuid.New().String(),
+				"OrgName":     "Shop",
+				"IsTailoring": tailoring,
+			},
+		})
+		if err != nil {
+			t.Fatalf("sidebar (tailoring=%v): %v", tailoring, err)
+		}
+		return out
+	}
+	if got := sidebarWith(false); strings.Contains(got, "/groups") {
+		t.Error("non-tailoring sidebar must not link /groups")
+	}
+	if got := sidebarWith(true); !strings.Contains(got, "/groups") {
+		t.Error("tailoring sidebar must link /groups")
+	}
+	if got := sidebarWith(false); !strings.Contains(got, "/calendar") {
+		t.Error("calendar stays visible to all trades")
 	}
 }

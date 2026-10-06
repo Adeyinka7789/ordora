@@ -35,14 +35,6 @@
           <span class="sidebar-label">Dashboard</span>
         </div>
       </a>
-      {{ if and (flag "orders" .Shell.OrgID) .Shell.IsTailoring }}
-        <a href="/groups" title="Aso-ebi groups" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
-          <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">group_work</span>
-            <span class="sidebar-label">Aso-ebi Groups</span>
-          </div>
-        </a>
-      {{ end }}
       {{ if flag "customers" .Shell.OrgID }}
         <a href="/customers" title="Customers" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
@@ -67,13 +59,15 @@
           </div>
         </a>
       {{ end }}
-      {{ if flag "orders" .Shell.OrgID }}
+      {{ if and (flag "orders" .Shell.OrgID) .Shell.IsTailoring }}
         <a href="/groups" title="Aso-ebi groups" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
             <span class="material-symbols-outlined text-[18px]">group_work</span>
             <span class="sidebar-label">Aso-ebi Groups</span>
           </div>
         </a>
+      {{ end }}
+      {{ if flag "orders" .Shell.OrgID }}
         <a href="/calendar" title="Occasion calendar" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
             <span class="material-symbols-outlined text-[18px]">calendar_month</span>
