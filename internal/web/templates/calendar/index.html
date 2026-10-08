@@ -16,7 +16,7 @@
   {{ if .Overdue }}
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm accent-card" style="border-left-color:#ba1a1a">
       <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-error text-[22px]">warning</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-error text-[22px]">warning</span>
         <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Overdue — {{ len .Overdue }} order(s) need attention</h2>
       </div>
       <div class="flex flex-col gap-space-xs">
@@ -29,7 +29,7 @@
             <div class="flex items-center gap-space-xs shrink-0">
               {{ if .NudgeURL }}
                 <a href="{{ .NudgeURL }}" target="_blank" rel="noopener" class="h-8 px-3 rounded bg-tertiary text-on-tertiary font-label-sm text-label-sm font-semibold inline-flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[16px]">chat</span>
+                  <span aria-hidden="true" class="material-symbols-outlined text-[16px]">chat</span>
                   <span>Nudge on WhatsApp</span>
                 </a>
               {{ end }}
@@ -51,7 +51,7 @@
         {{ range .Occasion }}
           <a href="/groups/{{ .ID }}" class="block p-space-xs rounded-lg bg-tertiary-fixed/40 border border-tertiary-fixed">
             <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">celebration</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[14px]">celebration</span>
               <span class="truncate">{{ .Name }}</span>
             </span>
             <span class="font-label-sm text-label-sm text-on-surface-variant">{{ .Members }} member(s)</span>

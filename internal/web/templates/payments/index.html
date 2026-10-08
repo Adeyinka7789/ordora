@@ -9,7 +9,7 @@
     {{ if .ExportAllowed }}
       <a href="/payments/export.csv?q={{ .Query }}&method={{ .Method }}&from={{ .From }}&to={{ .To }}{{ if .HideReversed }}&hide=1{{ end }}"
          class="h-9 px-space-md rounded bg-surface-container-lowest border border-outline-variant/30 hover:bg-surface-container-low text-on-surface font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">download</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">download</span>
         <span>Export CSV</span>
       </a>
     {{ end }}
@@ -50,7 +50,7 @@
         hx-swap="outerHTML"
         hx-push-url="true">
     <div class="relative w-full max-w-md flex items-center">
-      <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+      <span aria-hidden="true" class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
       <input type="search" name="q" value="{{ .Query }}" placeholder="Search by order #, customer, or reference…" autocomplete="off"
              class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
     </div>

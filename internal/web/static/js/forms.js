@@ -75,6 +75,35 @@
   var backdrop = null, modalTitle = null, modalBody = null, modalOk = null, modalCancel = null;
   var pendingForm = null, pendingBtn = null, lastTrigger = null;
 
+  // Focus trap: while a modal backdrop is open, Tab cycles only through
+  // the visible dialog's focusable controls. One document-level listener
+  // covers both the confirm and session-expired dialogs.
+  function trapTab(e) {
+    if (e.key !== 'Tab') return;
+    var open = null;
+    ['ordora-confirm-backdrop', 'ordora-expired-backdrop'].forEach(function (id) {
+      var b = document.getElementById(id);
+      if (b && !b.hidden) open = b;
+    });
+    if (!open) return;
+    var focusables = Array.prototype.slice.call(
+      open.querySelectorAll('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter(function (el) { return !el.disabled && el.offsetParent !== null; });
+    if (!focusables.length) {
+      e.preventDefault();
+      return;
+    }
+    var first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+  document.addEventListener('keydown', trapTab, true);
+
   function ensureModal() {
     if (backdrop) return true;
     backdrop = $('#ordora-confirm-backdrop');
@@ -181,7 +210,7 @@
       original = btn.innerHTML;
       btn.setAttribute('data-copy-original', original);
     }
-    btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span><span>Copied</span>';
+    btn.innerHTML = '<span aria-hidden="true" class="material-symbols-outlined text-[16px]">check</span><span>Copied</span>';
     window.setTimeout(function () { btn.innerHTML = original; }, 1500);
   }
 

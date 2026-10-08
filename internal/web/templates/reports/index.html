@@ -14,7 +14,7 @@
     <div class="flex items-center gap-space-sm">
       <a href="/reports/export.csv?range={{ .CurrentKey }}"
          class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md font-semibold flex items-center gap-2 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">download</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">download</span>
         <span>Export CSV</span>
       </a>
     </div>
@@ -263,7 +263,7 @@
                         {{ if eq .Severity "critical" }}bg-error-container text-on-error-container
                         {{ else if eq .Severity "warn" }}bg-amber-100 text-amber-900
                         {{ else }}bg-secondary-container text-on-secondary-fixed{{ end }}">
-              <span class="material-symbols-outlined text-[18px]">
+              <span aria-hidden="true" class="material-symbols-outlined text-[18px]">
                 {{ if eq .Severity "critical" }}warning{{ else if eq .Severity "warn" }}schedule{{ else }}info{{ end }}
               </span>
             </div>

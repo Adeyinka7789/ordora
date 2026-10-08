@@ -4,9 +4,9 @@
     <p class="font-body-md text-body-md text-on-surface-variant">No products found.</p>
   </div>
 {{ else }}
-  <ul class="divide-y divide-outline-variant/20">
+  <ul class="divide-y divide-outline-variant/20" role="listbox" aria-label="Catalog products">
     {{ range .Products }}
-      <li>
+      <li role="option" aria-selected="false">
         <button type="button" class="picker-item w-full flex items-center justify-between p-space-md hover:bg-surface-container transition-colors text-left"
                 data-id="{{ .ID }}"
                 data-name="{{ .Name }}"
@@ -18,6 +18,8 @@
             <span class="font-label-md text-label-md font-semibold text-on-surface truncate">{{ .Name }}</span>
             {{ if .SKU }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .SKU }}</span>{{ end }}
             {{ if .Material }}<span class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ .Material }}</span>{{ end }}
+            {{ if eq .Availability "low_stock" }}<span class="font-label-sm text-label-sm text-amber-700 font-semibold">Low stock</span>{{ end }}
+            {{ if eq .Availability "made_to_order" }}<span class="font-label-sm text-label-sm text-on-surface-variant">Made to order{{ if gt .ProductionDays 0 }} · ~{{ .ProductionDays }} days{{ end }}</span>{{ end }}
           </div>
           <span class="font-code-md text-code-md font-bold text-primary tabular-nums whitespace-nowrap ml-space-sm">{{ if .QuoteOnly }}Quote{{ else }}{{ currency .UnitPrice.Amount .Currency }}{{ end }}</span>
         </button>

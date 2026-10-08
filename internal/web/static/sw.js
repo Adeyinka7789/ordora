@@ -8,13 +8,15 @@
 //     to the network, falling back to the pre-cached /offline page.
 //   - Offline: fallback to a cached /offline page.
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const STATIC_CACHE = `ordora-static-${VERSION}`;
 
 // Static assets to pre-cache on install. These are the things every page
 // needs and that rarely change.
 const PRECACHE_URLS = [
   '/static/css/app.css',
+  '/static/css/fonts.css',
+  '/static/js/htmx.min.js',
   '/static/js/orders.js',
   '/static/js/pwa.js',
   '/static/logo.svg',

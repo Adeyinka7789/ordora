@@ -14,13 +14,12 @@
     <!-- Org switcher -->
     {{ if .Shell.OrgName }}
       <div id="sidebar-org" class="p-space-sm border-b border-outline-variant/20">
-        <button class="w-full flex items-center justify-between p-space-sm rounded bg-surface-container-low hover:bg-surface-container transition-colors text-left">
+        <div class="w-full flex items-center justify-between p-space-sm rounded bg-surface-container-low text-left" aria-label="Current business: {{ .Shell.OrgName }}">
           <div class="flex flex-col min-w-0 pr-space-xs">
             <span class="font-label-md text-label-md text-on-surface font-medium truncate">{{ .Shell.OrgName }}</span>
             <span class="font-label-sm text-label-sm text-primary font-semibold uppercase tracking-wider">{{ if .Shell.OrgRole }}{{ .Shell.OrgRole }}{{ else }}Owner{{ end }}</span>
           </div>
-          <span class="material-symbols-outlined text-on-surface-variant text-[18px]">unfold_more</span>
-        </button>
+        </div>
       </div>
     {{ end }}
 
@@ -29,48 +28,48 @@
       <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Operations</span>
     </div>
     <nav class="flex flex-col gap-0.5 px-space-sm">
-      <a href="/dashboard" title="Dashboard" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+      <a href="/dashboard" data-snav="dashboard" title="Dashboard" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
         <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">dashboard</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-[18px]">dashboard</span>
           <span class="sidebar-label">Dashboard</span>
         </div>
       </a>
       {{ if flag "customers" .Shell.OrgID }}
-        <a href="/customers" title="Customers" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <a href="/customers" data-snav="customers" title="Customers" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">group</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">group</span>
             <span class="sidebar-label">Customers</span>
           </div>
         </a>
       {{ end }}
       {{ if flag "products" .Shell.OrgID }}
-        <a href="/products" title="Products" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <a href="/products" data-snav="products" title="Products" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">inventory_2</span>
             <span class="sidebar-label">Products</span>
           </div>
         </a>
       {{ end }}
       {{ if flag "ledger" .Shell.OrgID }}
-        <a href="/payments" title="Payments and ledger" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <a href="/payments" data-snav="payments" title="Payments and ledger" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
             <span class="sidebar-label">Payments &amp; Ledger</span>
           </div>
         </a>
       {{ end }}
       {{ if and (flag "orders" .Shell.OrgID) .Shell.IsTailoring }}
-        <a href="/groups" title="Aso-ebi groups" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <a href="/groups" data-snav="groups" title="Aso-ebi groups" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">group_work</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">group_work</span>
             <span class="sidebar-label">Aso-ebi Groups</span>
           </div>
         </a>
       {{ end }}
       {{ if flag "orders" .Shell.OrgID }}
-        <a href="/calendar" title="Occasion calendar" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <a href="/calendar" data-snav="calendar" title="Occasion calendar" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">calendar_month</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">calendar_month</span>
             <span class="sidebar-label">Calendar</span>
           </div>
         </a>
@@ -82,37 +81,37 @@
       <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider text-outline">Channels &amp; Tools</span>
     </div>
     <nav class="flex flex-col gap-0.5 px-space-sm pb-space-md">
-      <a href="/storefront" title="Public Storefront" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+      <a href="/storefront" data-snav="storefront" title="Public Storefront" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
         <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">storefront</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-[18px]">storefront</span>
           <span class="sidebar-label">Public Storefront</span>
         </div>
         <span class="sidebar-trailing material-symbols-outlined text-[16px] text-outline">open_in_new</span>
       </a>
       {{ if flag "reports" .Shell.OrgID }}
-        <a href="/reports" title="Reports and Analytics" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <a href="/reports" data-snav="reports" title="Reports and Analytics" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">query_stats</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">query_stats</span>
             <span class="sidebar-label">Reports &amp; Analytics</span>
           </div>
         </a>
       {{ end }}
-      <a href="/settings" title="Settings" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+      <a href="/settings" data-snav="settings" title="Settings" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
         <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">settings</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-[18px]">settings</span>
           <span class="sidebar-label">Settings</span>
         </div>
       </a>
-      <a href="/profile" title="Profile" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+      <a href="/profile" data-snav="profile" title="Profile" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
         <div class="flex items-center gap-space-sm">
-          <span class="material-symbols-outlined text-[18px]">person</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-[18px]">person</span>
           <span class="sidebar-label">Profile</span>
         </div>
       </a>
       {{ if flag "support_desk" .Shell.OrgID }}
-        <a href="/support" title="Support" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+        <a href="/support" data-snav="support" title="Support" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">
-            <span class="material-symbols-outlined text-[18px]">support_agent</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">support_agent</span>
             <span class="sidebar-label">Support</span>
           </div>
         </a>
@@ -130,7 +129,7 @@
           <button type="button"
                   data-copy-path="{{ $intakeURL }}"
                   class="flex items-center gap-0.5 text-primary hover:text-on-primary-fixed-variant text-[11px] font-medium transition-colors">
-            <span class="material-symbols-outlined text-[14px]">content_copy</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[14px]">content_copy</span>
             <span>Copy</span>
           </button>
         </div>

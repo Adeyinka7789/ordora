@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -57,7 +58,8 @@ func (r *PublicOrderRepo) ListProductsBySlug(ctx context.Context, slug string) (
 		const q = `
 			SELECT product_id, product_name, product_description, product_short,
 			       product_material, product_category, unit_price_minor, currency,
-			       quote_only, starting_from, availability, cover_image_id, product_questions
+			       quote_only, starting_from, availability, cover_image_id, product_questions,
+			       product_specs, product_color, product_production_days, product_image_ids
 			FROM get_public_products($1)
 		`
 		rows, err := tx.Query(ctx, q, slug)
@@ -69,21 +71,39 @@ func (r *PublicOrderRepo) ListProductsBySlug(ctx context.Context, slug string) (
 			var p app.PublicProduct
 			var coverID *uuid.UUID
 			var questionsRaw []byte
+			var imageIDs string
 			if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.ShortDescription,
 				&p.Material, &p.Category, &p.UnitPriceMinor, &p.Currency,
 				&p.QuoteOnly, &p.StartingFrom, &p.Availability,
-				&coverID, &questionsRaw); err != nil {
+				&coverID, &questionsRaw, &p.Specs, &p.Color, &p.ProductionDays,
+				&imageIDs); err != nil {
 				return fmt.Errorf("public_order_repo: scan product: %w", err)
 			}
 			if coverID != nil {
 				p.CoverImageID = *coverID
 			}
 			p.Questions = unmarshalPublicQuestions(questionsRaw)
+			p.ImageIDs = parseImageIDs(imageIDs)
 			out = append(out, p)
 		}
 		return rows.Err()
 	})
 	return out, err
+}
+
+// parseImageIDs splits the comma-joined gallery ids from
+// get_public_products, dropping blanks and malformed entries.
+func parseImageIDs(raw string) []uuid.UUID {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	var out []uuid.UUID
+	for _, part := range strings.Split(raw, ",") {
+		if id, err := uuid.Parse(strings.TrimSpace(part)); err == nil && id != uuid.Nil {
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 // unmarshalPublicQuestions decodes the questions JSONB from

@@ -11,7 +11,7 @@
     </div>
   {{ else }}
     <div class="w-full overflow-x-auto">
-      <table class="w-full text-left font-body-md text-body-md">
+      <table class="data-table w-full text-left font-body-md text-body-md">
         <thead>
           <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
             <th class="py-2.5 px-space-md font-semibold">Name</th>
@@ -23,16 +23,16 @@
         <tbody>
           {{ range .Customers }}
             <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Name">
                 <a href="/customers/{{ .ID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
               </td>
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Email">
                 {{ if .Email }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .Email }}</span>{{ else }}<span class="text-outline">—</span>{{ end }}
               </td>
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Phone">
                 {{ if .Phone }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .Phone }}</span>{{ else }}<span class="text-outline">—</span>{{ end }}
               </td>
-              <td class="py-3 px-space-md text-right">
+              <td class="py-3 px-space-md text-right no-th">
                 <a href="/customers/{{ .ID }}/edit" class="font-label-sm text-label-sm text-primary font-semibold hover:underline">Edit</a>
               </td>
             </tr>

@@ -9,10 +9,7 @@
   <meta name="csrf-token" content="{{ csrfToken .Data }}">
   <meta name="robots" content="noindex, nofollow">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/fonts.css">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -37,10 +34,10 @@
             "space-xs": "0.25rem", "space-sm": "0.5rem", "space-md": "0.75rem",
             "space-lg": "1.25rem", "space-xl": "2rem"
           },
-          fontFamily: { "body-md": ["Inter"], "headline-lg": ["Inter"], "label-md": ["Inter"] },
+          fontFamily: { "body-md": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"], "headline-lg": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"], "label-md": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"] },
           fontSize: {
             "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "600" }],
-            "body-md": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+            "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
             "label-md": ["12px", { lineHeight: "16px", fontWeight: "600" }]
           }
         }
@@ -53,7 +50,7 @@
 
   <div class="w-full bg-error text-on-error px-space-lg py-2 flex items-center justify-center text-label-md font-label-md">
     <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-[18px]">shield_person</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[18px]">shield_person</span>
       <span class="font-bold uppercase tracking-wider">Platform Admin</span>
       <span class="opacity-80">— every action is logged</span>
     </div>

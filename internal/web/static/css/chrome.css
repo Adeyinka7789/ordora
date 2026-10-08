@@ -178,6 +178,180 @@ body.scrolled-down #scroll-top-btn:hover { transform: translateY(-2px); }
   #mobile-bottomnav { display: none; }
 }
 
+/* NOTE: skip-link + :focus-visible live in css/app.css (loaded by every
+   layout); the rest here needs the app/landing chrome. */
+
+/* ---- Desktop sidebar active link ---- */
+.sidebar-link.is-active {
+  background: #D9EDF8;
+  color: #0B1C30;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 #0077BE;
+}
+.sidebar-link.is-active .material-symbols-outlined {
+  color: #0077BE;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ---- Offline banner + sync chip ---- */
+#offline-banner {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
+  background: #3D2E00;
+  color: #FFE9B3;
+  font-size: 13px;
+  font-weight: 600;
+}
+#offline-banner[hidden] { display: none; }
+@media (min-width: 768px) {
+  #offline-banner { left: 16rem; }
+  body.sidebar-collapsed #offline-banner { left: 4.5rem; }
+}
+.sync-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 12px;
+  font-weight: 600;
+}
+.sync-chip .sync-dot {
+  width: 0.55rem; height: 0.55rem;
+  border-radius: 9999px;
+  background: #1e9e62;
+}
+body.is-offline .sync-chip .sync-dot { background: #ff3b30; }
+body.is-offline .sync-chip .sync-label::after { content: " (offline)"; }
+
+/* ---- Toasts ---- */
+#ordora-toasts {
+  position: fixed;
+  bottom: 5rem; left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+}
+@media (min-width: 768px) { #ordora-toasts { bottom: 2rem; } }
+.ordora-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  background: #0B1C30;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  animation: ordora-toast-in 200ms ease;
+}
+.ordora-toast.is-error { background: #93000a; }
+@keyframes ordora-toast-in {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* NOTE: breadcrumbs CSS lives in css/app.css (admin layout has no chrome). */
+
+/* ---- Order wizard steps ---- */
+#order-steps { list-style: none; margin: 0; padding: 0; display: none; }
+/* Step chrome only exists when JS drives the wizard; without JS the form
+   renders as one continuous (fully usable) page. */
+.js-wizard #order-steps { display: flex; }
+body:not(.js-wizard) [data-step-next],
+body:not(.js-wizard) [data-step-back] { display: none; }
+/* Panels are visible by default (no-JS = full long form); hiding only
+   applies once JS signals it manages the steps. */
+.js-wizard [data-step-panel].wizard-hidden { display: none; }
+.step-dot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 13px;
+  font-weight: 600;
+  color: #44566A;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  min-height: 44px;
+}
+.step-dot:disabled { cursor: default; opacity: 0.6; }
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem; height: 1.75rem;
+  border-radius: 9999px;
+  background: #E1EAF2;
+  color: #44566A;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.step-dot.is-current { color: #0B1C30; background: #D9EDF8; }
+.step-dot.is-current .step-num { background: #0077BE; color: #fff; }
+.step-dot.is-done .step-num { background: #1e9e62; color: #fff; }
+.step-line { flex: 1; height: 2px; background: #C3D2DE; border-radius: 2px; min-width: 0.75rem; }
+@media (max-width: 640px) {
+  .step-name { display: none; }
+  .step-dot { padding: 0.5rem; }
+}
+
+/* ---- Data tables go card-style on mobile ---- */
+@media (max-width: 767.98px) {
+  table.data-table thead { display: none; }
+  table.data-table, table.data-table tbody { display: block; width: 100%; }
+  table.data-table tr {
+    display: block;
+    background: #ffffff;
+    border: 1px solid rgba(195, 210, 222, 0.6);
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 0.25rem 0.75rem;
+  }
+  table.data-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.5rem 0;
+    border: none;
+    border-bottom: 1px solid rgba(195, 210, 222, 0.35);
+    text-align: right;
+  }
+  table.data-table td:last-child { border-bottom: none; }
+  table.data-table td::before {
+    content: attr(data-th);
+    font-size: 12px;
+    font-weight: 600;
+    color: #44566A;
+    text-align: left;
+    flex-shrink: 0;
+  }
+  table.data-table td.no-th::before { content: none; }
+  table.data-table td.no-th { justify-content: flex-end; }
+
+  /* 44px touch targets on primary controls. */
+  .mnav-item { min-height: 56px; }
+  main button:not(.mnav-item):not(.chip):not(.icon-btn),
+  main input[type="submit"] { min-height: 44px; }
+  main input[type="text"], main input[type="number"], main input[type="tel"],
+  main input[type="email"], main input[type="date"], main input[type="search"],
+  main select, main textarea { font-size: 16px; }
+}
 /* ---- Landing section spotlight: past sections go grey ---- */
 [data-spotlight] {
   transition: filter 600ms ease, opacity 600ms ease;

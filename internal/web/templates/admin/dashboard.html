@@ -1,5 +1,6 @@
 {{ define "admin/dashboard.html" }}
 <div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Admin"))) }}
 
   <div>
     <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Welcome, {{ .AdminName }}</h1>
@@ -9,7 +10,7 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
     <a href="{{ .Path }}/orgs" class="block bg-surface-container-lowest rounded-xl shadow-sm p-space-lg hover:ring-1 hover:ring-primary-container/30 transition-all">
       <div class="flex items-center gap-2 mb-space-sm">
-        <span class="material-symbols-outlined text-primary text-[22px]">corporate_fare</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">corporate_fare</span>
         <span class="font-headline-md text-headline-md font-bold">Tenants</span>
       </div>
       <p class="font-body-md text-body-md text-on-surface-variant">Manage businesses, impersonate, suspend.</p>
@@ -17,7 +18,7 @@
 
     <a href="{{ .Path }}/users" class="block bg-surface-container-lowest rounded-xl shadow-sm p-space-lg hover:ring-1 hover:ring-primary-container/30 transition-all">
       <div class="flex items-center gap-2 mb-space-sm">
-        <span class="material-symbols-outlined text-primary text-[22px]">group</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">group</span>
         <span class="font-headline-md text-headline-md font-bold">Users</span>
       </div>
       <p class="font-body-md text-body-md text-on-surface-variant">Search and manage platform-wide users.</p>
@@ -25,7 +26,7 @@
 
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
       <div class="flex items-center gap-2 mb-space-sm">
-        <span class="material-symbols-outlined text-primary text-[22px]">storage</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">storage</span>
         <span class="font-headline-md text-headline-md font-bold">Data browser</span>
       </div>
       <p class="font-body-md text-body-md text-on-surface-variant">Read-only view of every table.</p>

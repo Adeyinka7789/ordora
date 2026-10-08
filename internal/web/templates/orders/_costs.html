@@ -4,7 +4,7 @@
 
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-primary text-[22px]">calculate</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">calculate</span>
       <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Costs &amp; Profit</h2>
     </div>
     <span class="font-label-sm text-label-sm text-outline">Internal only</span>
@@ -76,7 +76,7 @@
                     data-confirm="Delete this cost?" data-confirm-title="Delete cost" data-confirm-label="Delete">
                 <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                 <button type="submit" class="p-1 rounded hover:bg-error-container text-on-surface-variant hover:text-error transition-colors" title="Delete">
-                  <span class="material-symbols-outlined text-[16px]">close</span>
+                  <span aria-hidden="true" class="material-symbols-outlined text-[16px]">close</span>
                 </button>
               </form>
             </div>
@@ -90,7 +90,7 @@
     <!-- Add cost form -->
     <details class="pt-space-md border-t border-outline-variant/30">
       <summary class="cursor-pointer text-primary hover:underline font-label-md font-semibold flex items-center gap-1">
-        <span class="material-symbols-outlined text-[18px]">add</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">add</span>
         Add cost
       </summary>
       <form hx-post="/orders/{{ $s.OrderID }}/costs"

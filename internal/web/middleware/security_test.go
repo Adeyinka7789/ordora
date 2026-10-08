@@ -38,6 +38,12 @@ func TestSecurityHeaders(t *testing.T) {
 			t.Errorf("CSP missing %q: %s", want, csp)
 		}
 	}
+	// htmx + fonts are self-hosted: no third-party hosts except Tailwind.
+	for _, gone := range []string{"unpkg.com", "fonts.googleapis.com", "fonts.gstatic.com"} {
+		if containsStr(csp, gone) {
+			t.Errorf("CSP must not reference %q (self-hosted): %s", gone, csp)
+		}
+	}
 	// Plain HTTP must NOT carry HSTS.
 	if got := rec.Header().Get("Strict-Transport-Security"); got != "" {
 		t.Errorf("plain HTTP must not send HSTS, got %q", got)

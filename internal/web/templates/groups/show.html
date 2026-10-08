@@ -14,7 +14,7 @@
     </div>
     <div class="flex items-center gap-space-sm">
       <a href="/groups" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1">
-        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[16px]">arrow_back</span>
         <span>All groups</span>
       </a>
       <form method="post" action="/groups/{{ .Detail.Group.ID }}/delete" class="inline"
@@ -31,7 +31,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
     <div class="metric-card">
       <div class="metric-icon bg-surface-container-low text-primary">
-        <span class="material-symbols-outlined text-[22px]">group</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[22px]">group</span>
       </div>
       <div class="flex flex-col">
         <span class="metric-value">{{ .Detail.MemberCount }}</span>
@@ -40,7 +40,7 @@
     </div>
     <div class="metric-card">
       <div class="metric-icon bg-secondary-container/60 text-primary-container">
-        <span class="material-symbols-outlined text-[22px]">payments</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[22px]">payments</span>
       </div>
       <div class="flex flex-col">
         <span class="metric-value">{{ if .Detail.Currency }}{{ currency .Detail.TotalMinor .Detail.Currency }}{{ else }}—{{ end }}</span>
@@ -49,7 +49,7 @@
     </div>
     <div class="metric-card">
       <div class="metric-icon {{ if gt .Detail.BalanceMinor 0 }}bg-error-container/60 text-error{{ else }}bg-surface-container-low text-on-surface-variant{{ end }}">
-        <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
       </div>
       <div class="flex flex-col">
         <span class="metric-value {{ if gt .Detail.BalanceMinor 0 }}text-error{{ end }}">{{ if .Detail.Currency }}{{ currency .Detail.BalanceMinor .Detail.Currency }}{{ else }}—{{ end }}</span>
@@ -169,7 +169,7 @@
                         data-confirm="Remove this order from the group? The order itself is kept." data-confirm-title="Remove member" data-confirm-label="Remove">
                     <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                     <button type="submit" class="p-1 rounded hover:bg-error-container text-on-surface-variant hover:text-error transition-colors" aria-label="Remove member" title="Remove member">
-                      <span class="material-symbols-outlined text-[16px]">close</span>
+                      <span aria-hidden="true" class="material-symbols-outlined text-[16px]">close</span>
                     </button>
                   </form>
                 </td>

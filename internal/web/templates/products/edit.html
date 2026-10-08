@@ -1,5 +1,6 @@
 {{ define "products/edit.html" }}
 <div class="p-space-lg lg:p-space-xl max-w-2xl mx-auto flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Products" "Href" "/products") (dict "Label" .Product.Name "Href" (printf "/products/%s" .Product.ID)) (dict "Label" "Edit"))) }}
 
   <div class="flex items-center justify-between">
     <div class="flex flex-col">
@@ -7,7 +8,7 @@
       <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Update the catalog entry.</p>
     </div>
     <a href="/products/{{ .Product.ID }}" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1">
-      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[16px]">arrow_back</span>
       <span>Back</span>
     </a>
   </div>

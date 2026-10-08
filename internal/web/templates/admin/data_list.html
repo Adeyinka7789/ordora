@@ -10,7 +10,7 @@
     {{ range .Tables }}
       <a href="{{ $.Path }}/data/{{ .TableName }}" class="block bg-surface-container-lowest rounded-xl shadow-sm p-space-md hover:ring-1 hover:ring-primary-container/30 transition-all">
         <div class="flex items-center gap-2 mb-space-xs">
-          <span class="material-symbols-outlined text-primary text-[20px]">table_chart</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">table_chart</span>
           <span class="font-headline-md text-headline-md font-bold">{{ .DisplayName }}</span>
         </div>
         <code class="font-code-md text-code-md text-on-surface-variant">{{ .TableName }}</code>

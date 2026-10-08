@@ -158,6 +158,10 @@ type intakeProductView struct {
 	Availability     string
 	CoverImageID     string // "" when none; served via /public/product-images/{id}
 	Questions        []intakeQuestionView
+	Specs            string
+	Color            string
+	ProductionDays   int
+	ImageIDs         []string // gallery ids for the detail modal, cover first
 }
 
 type intakeQuestionView struct {
@@ -226,9 +230,13 @@ func (h *PortalHandler) intakeProducts(r *http.Request, slug string) []intakePro
 			PriceMinor: p.UnitPriceMinor, Currency: p.Currency,
 			QuoteOnly: p.QuoteOnly, StartingFrom: p.StartingFrom,
 			Availability: p.Availability,
+			Specs: p.Specs, Color: p.Color, ProductionDays: p.ProductionDays,
 		}
 		if p.CoverImageID != uuid.Nil {
 			v.CoverImageID = p.CoverImageID.String()
+		}
+		for _, id := range p.ImageIDs {
+			v.ImageIDs = append(v.ImageIDs, id.String())
 		}
 		for _, q := range p.Questions {
 			v.Questions = append(v.Questions, intakeQuestionView{

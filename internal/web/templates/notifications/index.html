@@ -20,7 +20,7 @@
 
   {{ if not .Rows }}
     <div class="bg-surface-container-lowest rounded shadow-sm p-space-xl text-center">
-      <span class="material-symbols-outlined text-outline text-[40px]">notifications_off</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-outline text-[40px]">notifications_off</span>
       <p class="font-body-md text-body-md text-on-surface-variant mt-2">You're all caught up. Nothing here yet.</p>
     </div>
   {{ else }}
@@ -51,7 +51,7 @@
               <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
               <button type="submit" title="Mark as read"
                       class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors">
-                <span class="material-symbols-outlined text-[18px]">check</span>
+                <span aria-hidden="true" class="material-symbols-outlined text-[18px]">check</span>
               </button>
             </form>
           {{ end }}

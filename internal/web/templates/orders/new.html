@@ -1,13 +1,14 @@
 {{ define "orders/new.html" }}
-<div class="p-space-lg lg:p-space-xl max-w-4xl mx-auto flex flex-col gap-space-lg">
+<div class="p-space-lg lg:p-space-xl max-w-6xl mx-auto flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Orders" "Href" "/orders") (dict "Label" "New order"))) }}
 
   <div class="flex items-center justify-between">
     <div class="flex flex-col">
       <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">New Order</h1>
-      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Create an order for a customer.</p>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Create an order for a customer — step by step.</p>
     </div>
     <a href="/orders" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1">
-      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[16px]">arrow_back</span>
       <span>Back to Orders</span>
     </a>
   </div>
@@ -17,31 +18,54 @@
   {{ if not .Customers }}
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center flex flex-col items-center gap-space-md">
       <div class="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
-        <span class="material-symbols-outlined text-[32px]">group_add</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[32px]">group_add</span>
       </div>
       <p class="font-headline-md text-headline-md text-on-surface">You need a customer first.</p>
       <p class="font-body-md text-body-md text-on-surface-variant">Orders are always attached to a customer. Create one to continue.</p>
       <a href="/customers/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">add</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">add</span>
         <span>New Customer</span>
       </a>
     </div>
   {{ else }}
-    <form method="post" action="/orders" id="order-form" data-draft="order-new" class="flex flex-col gap-space-lg">
+    <ol id="order-steps" class="flex items-center gap-1 sm:gap-2" aria-label="Order creation steps">
+      <li class="flex items-center gap-1 sm:gap-2 flex-1">
+        <button type="button" data-step-goto="1" class="step-dot" aria-current="step"><span class="step-num" aria-hidden="true">1</span><span class="step-name">Basics</span></button>
+      </li>
+      <li class="flex items-center gap-1 sm:gap-2 flex-1" aria-hidden="true"><span class="step-line"></span></li>
+      <li class="flex items-center gap-1 sm:gap-2 flex-1">
+        <button type="button" data-step-goto="2" class="step-dot"><span class="step-num" aria-hidden="true">2</span><span class="step-name">Items</span></button>
+      </li>
+      <li class="flex items-center gap-1 sm:gap-2 flex-1" aria-hidden="true"><span class="step-line"></span></li>
+      {{ if .IsTailoring }}
+      <li class="flex items-center gap-1 sm:gap-2 flex-1">
+        <button type="button" data-step-goto="3" class="step-dot"><span class="step-num" aria-hidden="true">3</span><span class="step-name">Details</span></button>
+      </li>
+      <li class="flex items-center gap-1 sm:gap-2 flex-1" aria-hidden="true"><span class="step-line"></span></li>
+      {{ end }}
+      <li class="flex items-center gap-1 sm:gap-2 flex-1">
+        <button type="button" data-step-goto="4" class="step-dot"><span class="step-num" aria-hidden="true">4</span><span class="step-name">Review</span></button>
+      </li>
+    </ol>
+    <p id="step-announcer" class="sr-only" role="status" aria-live="polite"></p>
+
+    <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-space-lg lg:items-start">
+    <form method="post" action="/orders" id="order-form" data-draft="order-new" class="flex flex-col gap-space-lg min-w-0">
       <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
       <input type="hidden" name="item_count" id="item-count" value="{{ len .FormItems }}">
+      <div id="step-error" role="alert" class="hidden p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md"></div>
 
-      <!-- Section: Basics -->
-      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <!-- Step 1: Basics -->
+      <section data-step-panel="1" aria-labelledby="step1-h" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
         <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
-          <span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
-          <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Order Details</h2>
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
+          <h2 id="step1-h" tabindex="-1" class="font-headline-md text-headline-md text-on-surface font-bold">Customer &amp; basics</h2>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
           <label class="flex flex-col gap-1">
             <span class="font-label-md text-label-md text-on-surface">Customer *</span>
-            <select name="customer_id" required
+            <select name="customer_id" required id="order-customer"
                     {{ if index .FieldErrors "customer_id" }}aria-invalid="true" aria-describedby="err-customer_id"{{ end }}
                     class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
               <option value="">— Choose a customer —</option>
@@ -74,33 +98,39 @@
           <textarea name="description" rows="2" maxlength="5000"
                     class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .FormDesc }}</textarea>
         </label>
-      </div>
 
-      <!-- Section: Items -->
-      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
-        <div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/30">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
-            <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Items</h2>
-          </div>
-          <div class="flex items-center gap-2">
-            <button type="button" id="add-item" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">add</span>
-              <span>Blank Row</span>
-            </button>
-            <button type="button" id="pick-product" class="h-8 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold flex items-center gap-1">
-              <span class="material-symbols-outlined text-[14px]">inventory_2</span>
-              <span>From Catalog</span>
-            </button>
-          </div>
+        <div class="flex items-center justify-end gap-space-sm">
+          <button type="button" data-step-next class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2">
+            <span>Continue to items</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Step 2: Items -->
+      <section data-step-panel="2" aria-labelledby="step2-h" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+        <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
+          <h2 id="step2-h" tabindex="-1" class="font-headline-md text-headline-md text-on-surface font-bold">Items &amp; catalog</h2>
         </div>
         {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "items") }}
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="pick-product" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1">
+            <span aria-hidden="true" class="material-symbols-outlined text-[16px]">inventory_2</span>
+            <span>Add catalog product</span>
+          </button>
+          <button type="button" id="add-item" class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1">
+            <span aria-hidden="true" class="material-symbols-outlined text-[16px]">add</span>
+            <span>Add custom item</span>
+          </button>
+        </div>
 
         <div id="product-picker" class="hidden rounded-lg bg-surface-container-low border border-outline-variant/30 overflow-hidden">
           <div class="p-space-sm border-b border-outline-variant/30 flex items-center gap-2">
             <div class="relative flex-1 flex items-center">
-              <span class="material-symbols-outlined absolute left-2.5 text-outline text-[16px]">search</span>
-              <input type="search" id="picker-search" name="q" placeholder="Search products…"
+              <span aria-hidden="true" class="material-symbols-outlined absolute left-2.5 text-outline text-[16px]">search</span>
+              <input type="search" id="picker-search" name="q" placeholder="Search products…" aria-label="Search catalog products"
                      hx-get="/products/picker"
                      hx-trigger="input changed delay:300ms, load"
                      hx-target="#picker-results"
@@ -112,40 +142,55 @@
               Close
             </button>
           </div>
-          <div id="picker-results" class="max-h-72 overflow-y-auto"></div>
+          <div id="picker-results" class="max-h-72 overflow-y-auto" role="region" aria-label="Catalog results"></div>
+        </div>
+
+        <div id="items-empty" class="rounded-lg border border-dashed border-outline-variant p-space-lg text-center flex flex-col items-center gap-2">
+          <span aria-hidden="true" class="material-symbols-outlined text-[28px] text-outline">inventory_2</span>
+          <p class="font-label-md text-label-md text-on-surface font-semibold">No items yet</p>
+          <p class="font-body-md text-body-md text-on-surface-variant">Add a catalog product for priced lines (quote-only items show as “Quote required”), or a custom item for free-hand work.</p>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-left" id="items-table">
             <thead>
               <tr class="bg-surface-container-low font-label-sm text-label-sm text-outline uppercase tracking-wider">
-                <th class="py-2 px-space-sm font-semibold rounded-l">Description</th>
-                <th class="py-2 px-space-sm font-semibold text-center w-24">Quantity</th>
-                <th class="py-2 px-space-sm font-semibold text-right w-32">Unit Price</th>
-                <th class="py-2 px-space-sm font-semibold text-right w-28 rounded-r">Subtotal</th>
-                <th class="w-10"></th>
+                <th class="py-2 px-space-sm font-semibold rounded-l" scope="col">Description</th>
+                <th class="py-2 px-space-sm font-semibold text-center w-32" scope="col">Quantity</th>
+                <th class="py-2 px-space-sm font-semibold text-right w-32" scope="col">Unit Price</th>
+                <th class="py-2 px-space-sm font-semibold text-right w-28 rounded-r" scope="col">Subtotal</th>
+                <th class="w-10"><span class="sr-only">Remove</span></th>
               </tr>
             </thead>
             <tbody id="items-body">
               {{ range $i, $it := .FormItems }}
                 <tr class="item-row border-b border-outline-variant/20">
                   <td class="py-2 px-space-sm">
-                    <input type="text" name="items[{{ $i }}][description]" value="{{ $it.Description }}" placeholder="What is it?" required
+                    <input type="text" name="items[{{ $i }}][description]" value="{{ $it.Description }}" placeholder="What is it?" required aria-label="Item description"
                            class="w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
                     <input type="hidden" name="items[{{ $i }}][product_id]" value="{{ $it.ProductID }}">
                     <input type="hidden" name="items[{{ $i }}][material]" value="{{ $it.Material }}">
                     <input type="hidden" name="items[{{ $i }}][image_ref]" value="{{ $it.ImageRef }}">
+                    <div class="row-meta flex items-center gap-2 mt-1">
+                      {{ if $it.ImageRef }}<img class="row-thumb w-10 h-10 rounded object-cover" src="/attachments/{{ $it.ImageRef }}?view=1" alt="">{{ end }}
+                      {{ if $it.Material }}<span class="row-material font-body-sm text-body-sm text-on-surface-variant">{{ $it.Material }}</span>{{ else }}<span class="row-material font-body-sm text-body-sm text-on-surface-variant"></span>{{ end }}
+                      <span class="quote-badge hidden font-label-sm text-label-sm font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">Quote required</span>
+                    </div>
                   </td>
                   <td class="py-2 px-space-sm">
-                    <input type="text" name="items[{{ $i }}][quantity]" value="{{ $it.Quantity }}" placeholder="1" required inputmode="decimal" class="qty-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-center focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                    <div class="flex items-center justify-center gap-1">
+                      <button type="button" class="qty-dec w-8 h-8 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-bold" aria-label="Decrease quantity">−</button>
+                      <input type="text" name="items[{{ $i }}][quantity]" value="{{ $it.Quantity }}" placeholder="1" required inputmode="decimal" aria-label="Quantity" class="qty-input w-14 h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-center focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                      <button type="button" class="qty-inc w-8 h-8 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-bold" aria-label="Increase quantity">+</button>
+                    </div>
                   </td>
                   <td class="py-2 px-space-sm">
-                    <input type="text" name="items[{{ $i }}][unit_price]" value="{{ $it.UnitPrice }}" placeholder="0.00" required inputmode="decimal" class="price-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-right focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                    <input type="text" name="items[{{ $i }}][unit_price]" value="{{ $it.UnitPrice }}" placeholder="0.00" required inputmode="decimal" aria-label="Unit price" class="price-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-right focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
                   </td>
                   <td class="py-2 px-space-sm text-right font-code-md text-code-md text-on-surface-variant tabular-nums subtotal-cell">—</td>
                   <td class="py-2 px-space-sm text-center">
                     <button type="button" class="remove-item p-1 rounded hover:bg-error-container text-on-surface-variant hover:text-error transition-colors" aria-label="Remove item">
-                      <span class="material-symbols-outlined text-[16px]">close</span>
+                      <span aria-hidden="true" class="material-symbols-outlined text-[16px]">close</span>
                     </button>
                   </td>
                 </tr>
@@ -155,7 +200,7 @@
         </div>
 
         <div class="flex flex-col sm:flex-row justify-end gap-space-md pt-space-md border-t border-outline-variant/30">
-          <div class="w-full sm:w-72 flex flex-col gap-1.5 text-right tabular-nums">
+          <div class="w-full sm:w-72 flex flex-col gap-1.5 text-right tabular-nums" role="status" aria-live="polite" aria-atomic="true" aria-label="Order totals">
             <div class="flex justify-between font-label-md text-label-md text-on-surface-variant">
               <span>Subtotal:</span>
               <span class="font-code-md text-on-surface" id="subtotal">0.00</span>
@@ -187,21 +232,85 @@
                    class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
           </label>
         </div>
-      </div>
 
-      <!-- Section: Measurements (tailoring orgs only) -->
-      {{ template "measurements/_section.html" . }}
+        <div class="flex items-center justify-between gap-space-sm">
+          <button type="button" data-step-back class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-2">
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span>Back</span>
+          </button>
+          <button type="button" data-step-next class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2">
+            <span>Continue</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span>
+          </button>
+        </div>
+      </section>
 
-      <div class="flex items-center gap-space-sm">
-        <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
-          <span class="material-symbols-outlined text-[18px]">check</span>
-          <span>Create Order</span>
-        </button>
-        <a href="/orders" class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">Cancel</a>
+      {{ if .IsTailoring }}
+      <!-- Step 3: Measurements (tailoring orgs only) -->
+      <section data-step-panel="3" aria-labelledby="step3-h" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+        <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">straighten</span>
+          <h2 id="step3-h" tabindex="-1" class="font-headline-md text-headline-md text-on-surface font-bold">Details</h2>
+        </div>
+        {{ template "measurements/_section.html" . }}
+        <div class="flex items-center justify-between gap-space-sm">
+          <button type="button" data-step-back class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-2">
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span>Back</span>
+          </button>
+          <button type="button" data-step-next class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2">
+            <span>Review order</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span>
+          </button>
+        </div>
+      </section>
+      {{ end }}
+
+      <!-- Step 4: Review -->
+      <section data-step-panel="4" aria-labelledby="step4-h" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+        <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">fact_check</span>
+          <h2 id="step4-h" tabindex="-1" class="font-headline-md text-headline-md text-on-surface font-bold">Review &amp; create</h2>
+        </div>
+        <p class="font-body-md text-body-md text-on-surface-variant">Check everything once. Creating the order notifies nobody yet — you confirm and share it afterwards.</p>
+        <div id="review-body" class="flex flex-col gap-space-md"></div>
+        <div class="flex items-center justify-between gap-space-sm">
+          <button type="button" data-step-back class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-2">
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_back</span>
+            <span>Back</span>
+          </button>
+          <button type="submit" class="h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">check</span>
+            <span>Create Order</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Mobile bottom action bar (JS-driven; hidden without JS) -->
+      <div id="order-mobilebar" hidden class="md:hidden fixed left-0 right-0 z-40 bg-surface-container-lowest border-t border-outline-variant/30 px-space-md py-space-sm flex items-center justify-between gap-space-sm" style="bottom: 4.25rem;">
+        <div class="flex flex-col">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Total</span>
+          <span class="font-headline-md text-headline-md font-bold text-on-surface tabular-nums" id="mobile-total">0.00</span>
+        </div>
+        <button type="button" id="mobile-next" class="h-11 px-space-md rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Continue</button>
       </div>
     </form>
 
+    <aside id="order-summary" aria-label="Order summary" class="hidden lg:flex flex-col gap-space-sm bg-surface-container-lowest rounded-xl shadow-sm p-space-lg lg:sticky lg:top-32 h-fit">
+      <h2 class="font-label-lg text-label-lg text-on-surface font-bold">Summary</h2>
+      <div class="flex flex-col gap-1 font-body-md text-body-md">
+        <div class="flex justify-between gap-2"><span class="text-on-surface-variant">Customer</span><strong id="summary-customer" class="text-on-surface text-right truncate max-w-[160px]">—</strong></div>
+        <div class="flex justify-between gap-2"><span class="text-on-surface-variant">Items</span><strong id="summary-count" class="text-on-surface">0</strong></div>
+        <div class="flex justify-between gap-2"><span class="text-on-surface-variant">Total</span><strong id="summary-total" class="text-on-surface tabular-nums">0.00</strong></div>
+      </div>
+      <p id="summary-quote-note" class="hidden font-label-sm text-label-sm text-amber-800 bg-amber-100 px-2 py-1 rounded">Includes quote-required items — price them after creating.</p>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Totals update live as you type. Quote-only lines stay at zero until you price them.</p>
+    </aside>
+    </div>
+    <div class="h-20 md:hidden" aria-hidden="true"></div>
+
     <script src="/static/js/orders.js" defer></script>
+    <script src="/static/js/order-steps.js" defer></script>
   {{ end }}
 </div>
 {{ end }}

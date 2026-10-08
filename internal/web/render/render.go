@@ -63,6 +63,13 @@ type Shell struct {
 	ImpersonatingOrgName string
 }
 
+// Breadcrumb is one trail element. Empty Href marks the current page
+// (rendered with aria-current="page" instead of a link).
+type Breadcrumb struct {
+	Label string
+	Href  string
+}
+
 // New loads all .html files under templatesDir.
 func New(templatesDir string) (*Renderer, error) {
 	tmpl := template.New("").Funcs(templateFuncs())

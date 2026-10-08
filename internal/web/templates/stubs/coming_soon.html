@@ -1,12 +1,12 @@
 {{ define "stubs/coming_soon.html" }}
 <div class="p-space-lg lg:p-space-xl max-w-2xl mx-auto flex flex-col items-center text-center gap-space-md pt-space-xl">
   <div class="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
-    <span class="material-symbols-outlined text-[32px]">{{ .Icon }}</span>
+    <span aria-hidden="true" class="material-symbols-outlined text-[32px]">{{ .Icon }}</span>
   </div>
   <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">{{ .Heading }}</h1>
   <p class="font-body-lg text-body-lg text-on-surface-variant max-w-md">{{ .Description }}</p>
   <a href="/dashboard" class="mt-space-md h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
-    <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+    <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_back</span>
     <span>Back to Dashboard</span>
   </a>
 </div>

@@ -3,28 +3,28 @@
 
   <div class="no-print flex flex-wrap items-center justify-between gap-space-sm">
     <a href="/orders" class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
-      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[16px]">arrow_back</span>
       <span>Back to orders</span>
     </a>
     <div class="flex flex-wrap items-center gap-space-xs">
       <button type="button" data-print class="h-9 px-space-sm rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">print</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">print</span>
         <span>Print / PDF</span>
       </button>
       <button type="button" id="receipt-png-btn" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">image</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">image</span>
         <span>Save image</span>
       </button>
       <button type="button" id="receipt-copy-btn" data-copy="{{ .Card.ReceiptURL }}" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">link</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">link</span>
         <span>Copy link</span>
       </button>
       <a href="{{ .MailtoURL }}" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">mail</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">mail</span>
         <span>Email</span>
       </a>
       <a href="{{ .WhatsAppURL }}" target="_blank" rel="noopener" class="h-9 px-space-sm rounded bg-tertiary-container hover:opacity-90 text-on-tertiary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-        <span class="material-symbols-outlined text-[18px]">chat</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">chat</span>
         <span>WhatsApp</span>
       </a>
     </div>

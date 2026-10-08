@@ -7,7 +7,7 @@
       <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">One style, many members — track every outfit and balance per group.</p>
     </div>
     <a href="/groups/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
-      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[18px]">add</span>
       <span>New Group</span>
     </a>
   </div>
@@ -21,7 +21,7 @@
         hx-target="#groups-table"
         hx-swap="outerHTML"
         hx-push-url="true">
-    <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+    <span aria-hidden="true" class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
     <input type="search" name="q" value="{{ .Query }}" placeholder="Search groups…" autocomplete="off"
            class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
   </form>

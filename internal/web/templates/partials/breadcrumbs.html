@@ -1,0 +1,17 @@
+{{ define "partials/breadcrumbs.html" }}
+{{/* Breadcrumb trail. Page data must carry .Breadcrumbs ([]render.Breadcrumb).
+  Only invoked from templates whose data provides it — missing fields fail
+  template execution, so every call site below was wired deliberately. */}}
+{{ with .Breadcrumbs }}
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    {{ range $i, $c := . }}
+    <li class="flex items-center gap-1">
+      {{ if $i }}<span class="crumb-sep" aria-hidden="true">/</span>{{ end }}
+      {{ if $c.Href }}<a href="{{ $c.Href }}">{{ $c.Label }}</a>{{ else }}<span aria-current="page">{{ $c.Label }}</span>{{ end }}
+    </li>
+    {{ end }}
+  </ol>
+</nav>
+{{ end }}
+{{ end }}

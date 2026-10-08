@@ -11,7 +11,7 @@
     </div>
   {{ else }}
     <div class="w-full overflow-x-auto">
-      <table class="w-full text-left font-body-md text-body-md">
+      <table class="data-table w-full text-left font-body-md text-body-md">
         <thead>
           <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
             <th class="py-2.5 px-space-md font-semibold">Order</th>
@@ -26,22 +26,22 @@
           {{ range .Rows }}
             {{ $o := .Order }}
             <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Order">
                 <a href="/orders/{{ $o.ID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline">{{ $o.Number }}</a>
               </td>
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Customer">
                 <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .CustomerName }}</span>
               </td>
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Title">
                 <span class="font-label-md text-label-md text-on-surface truncate max-w-[220px] inline-block">{{ $o.Title }}</span>
               </td>
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Status">
                 {{ template "partials/status_badge.html" $o.Status }}
               </td>
-              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold">
+              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold" data-th="Total">
                 {{ currency $o.Total.Amount $o.Currency }}
               </td>
-              <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">
+              <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant" data-th="Due">
                 {{ if $o.ExpectedCompletion }}{{ $o.ExpectedCompletion.Format "02-01" }}{{ else }}—{{ end }}
               </td>
             </tr>

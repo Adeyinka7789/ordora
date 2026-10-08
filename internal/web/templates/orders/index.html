@@ -1,5 +1,6 @@
 {{ define "orders/index.html" }}
 <div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Orders"))) }}
 
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
     <div class="flex flex-col">
@@ -7,7 +8,7 @@
       <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Track every order from creation to completion.</p>
     </div>
     <a href="/orders/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
-      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[18px]">add</span>
       <span>New Order</span>
     </a>
   </div>
@@ -22,7 +23,7 @@
         hx-swap="outerHTML"
         hx-push-url="true">
     <div class="relative w-full max-w-md flex items-center">
-      <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+      <span aria-hidden="true" class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
       <input type="search" name="q" value="{{ .Query }}" placeholder="Search by order #, customer, or title…" autocomplete="off"
              class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
     </div>

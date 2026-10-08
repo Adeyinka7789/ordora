@@ -11,7 +11,7 @@
     </div>
   {{ else }}
     <div class="w-full overflow-x-auto">
-      <table class="w-full text-left font-body-md text-body-md">
+      <table class="data-table w-full text-left font-body-md text-body-md">
         <thead>
           <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
             <th class="py-2.5 px-space-md font-semibold">Name</th>
@@ -24,23 +24,23 @@
         <tbody>
           {{ range .Products }}
             <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20 {{ if not .Active }}opacity-60{{ end }}">
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Name">
                 <a href="/products/{{ .ID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
               </td>
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="SKU">
                 {{ if .SKU }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .SKU }}</span>{{ else }}<span class="text-outline">—</span>{{ end }}
               </td>
-              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold">
+              <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold" data-th="Price">
                 {{ currency .UnitPrice.Amount .Currency }}
               </td>
-              <td class="py-3 px-space-md">
+              <td class="py-3 px-space-md" data-th="Status">
                 {{ if .Active }}
                   <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-100 text-emerald-900"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>ACTIVE</span>
                 {{ else }}
                   <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-red-100 text-red-900"><span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>ARCHIVED</span>
                 {{ end }}
               </td>
-              <td class="py-3 px-space-md text-right">
+              <td class="py-3 px-space-md text-right no-th">
                 <a href="/products/{{ .ID }}/edit" class="font-label-sm text-label-sm text-primary font-semibold hover:underline">Edit</a>
               </td>
             </tr>

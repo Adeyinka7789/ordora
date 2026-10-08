@@ -20,7 +20,7 @@
               <a href="{{ .URL }}" class="block px-3 py-2 rounded hover:bg-surface-container-low transition-colors">
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2 min-w-0">
-                    <span class="material-symbols-outlined text-primary text-[18px] shrink-0">receipt_long</span>
+                    <span aria-hidden="true" class="material-symbols-outlined text-primary text-[18px] shrink-0">receipt_long</span>
                     <div class="min-w-0">
                       <div class="font-code-md text-code-md font-bold text-on-surface truncate">{{ .Title }}</div>
                       <div class="text-label-sm text-on-surface-variant truncate">{{ .Subtitle }}</div>
@@ -45,7 +45,7 @@
             <li>
               <a href="{{ .URL }}" class="block px-3 py-2 rounded hover:bg-surface-container-low transition-colors">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="material-symbols-outlined text-primary text-[18px] shrink-0">group</span>
+                  <span aria-hidden="true" class="material-symbols-outlined text-primary text-[18px] shrink-0">group</span>
                   <div class="min-w-0">
                     <div class="font-label-md text-label-md font-semibold text-on-surface truncate">{{ .Title }}</div>
                     {{ if .Subtitle }}<div class="text-label-sm text-on-surface-variant truncate">{{ .Subtitle }}</div>{{ end }}
@@ -66,7 +66,7 @@
             <li>
               <a href="{{ .URL }}" class="block px-3 py-2 rounded hover:bg-surface-container-low transition-colors">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="material-symbols-outlined text-primary text-[18px] shrink-0">inventory_2</span>
+                  <span aria-hidden="true" class="material-symbols-outlined text-primary text-[18px] shrink-0">inventory_2</span>
                   <div class="min-w-0">
                     <div class="font-label-md text-label-md font-semibold text-on-surface truncate">{{ .Title }}</div>
                     {{ if .Subtitle }}<div class="text-code-md text-code-md text-on-surface-variant truncate">{{ .Subtitle }}</div>{{ end }}

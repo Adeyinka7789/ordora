@@ -9,12 +9,13 @@ import (
 // SecurityHeaders sets baseline response headers on every response.
 //
 // Content-Security-Policy is deliberately pragmatic, not maximal: the app
-// loads Google Fonts, the Tailwind Play CDN, and htmx from unpkg, and uses
-// inline scripts/styles plus inline event handlers. A strict
+// loads the Tailwind Play CDN and uses inline scripts/styles plus inline
+// event handlers. A strict
 // script-src 'self' would break the product, so inline scripts are still
 // allowed — the policy's value today is: no plugins, no framing, no
-// form posts off-site, and scripts/styles only from 'self' plus the three
-// pinned third parties. Template output is escaped by html/template, which
+// form posts off-site, and scripts/styles only from 'self' plus the
+// pinned Tailwind CDN. htmx and both font families are self-hosted under
+// /static. Template output is escaped by html/template, which
 // remains the primary XSS defense. The follow-up is nonce-based
 // script-src (propagate nonces through templates and HTMX swaps).
 //
@@ -26,9 +27,9 @@ import (
 // force HTTPS on subdomains the operator may not control.
 func SecurityHeaders(next http.Handler) http.Handler {
 	const csp = "default-src 'self'; " +
-		"script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; " +
-		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-		"font-src 'self' https://fonts.gstatic.com; " +
+		"script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
+		"style-src 'self' 'unsafe-inline'; " +
+		"font-src 'self'; " +
 		"img-src 'self' data:; " +
 		"connect-src 'self'; " +
 		"object-src 'none'; " +

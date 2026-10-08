@@ -104,32 +104,50 @@ func TestRegisterPagePreservesOtherSelection(t *testing.T) {
 	}
 }
 
-// TestOnboardingPageRenders ensures the wizard carries 4 steps, a skip path,
-// a finish path, progress UI and its assets.
+// TestOnboardingPageRenders ensures the wizard carries 4 task steps, a skip
+// path, a finish path, inline customer creation, progress UI and its assets.
 func TestOnboardingPageRenders(t *testing.T) {
 	r, err := render.New("../templates")
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	out, err := r.Raw("onboarding/show.html", authPage{Title: "Welcome to Ordora", Name: "Ada"})
+	out, err := r.Raw("onboarding/show.html", obPage{Title: "Welcome to Ordora", Name: "Ada"})
 	if err != nil {
 		t.Fatalf("onboarding/show.html: %v", err)
 	}
 	for _, want := range []string{
 		`data-step="0"`, `data-step="1"`, `data-step="2"`, `data-step="3"`,
+		`role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`,
 		`action="/onboarding/skip"`,
 		`action="/onboarding/complete"`,
+		`action="/onboarding/customer"`,
 		`id="ob-progress-fill"`,
 		`data-goto="3"`,
 		`id="ob-next"`, `id="ob-back"`,
 		"/static/js/onboarding.js",
 		"/static/css/onboarding.css",
 		"Welcome, Ada",
-		"/customers/new",
 		"/orders/new",
+		`id="ob-announcer"`,
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("onboarding/show.html missing %q", want)
+		}
+	}
+
+	// Success state renders the preselected order CTA.
+	out, err = r.Raw("onboarding/show.html", obPage{
+		Title: "Welcome to Ordora", Name: "Ada",
+		JustCreatedID: "0f0e0d0c-0b0a-0908-0706-050403020100", JustCreatedName: "Adaeze",
+	})
+	if err != nil {
+		t.Fatalf("onboarding/show.html (created): %v", err)
+	}
+	for _, want := range []string{
+		"Adaeze", "/orders/new?customer=0f0e0d0c-0b0a-0908-0706-050403020100",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("onboarding/show.html (created) missing %q", want)
 		}
 	}
 }

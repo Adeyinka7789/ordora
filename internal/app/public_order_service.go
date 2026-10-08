@@ -63,6 +63,10 @@ type PublicProduct struct {
 	Availability     string
 	CoverImageID     uuid.UUID // Nil when the product has no cover
 	Questions        []ProductQuestion
+	Specs            string
+	Color            string
+	ProductionDays   int
+	ImageIDs         []uuid.UUID // gallery + cover ids, cover first
 }
 
 // PublicOrderResult is what the handler returns to the template.

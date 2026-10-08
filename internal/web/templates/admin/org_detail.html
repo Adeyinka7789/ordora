@@ -1,5 +1,6 @@
 {{ define "admin/org_detail.html" }}
 <div class="max-w-[1440px] mx-auto p-space-lg lg:p-space-xl flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Admin" "Href" .Path) (dict "Label" "Businesses" "Href" (printf "%s/orgs" .Path)) (dict "Label" .Org.Name))) }}
 
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
     <div>
@@ -47,7 +48,7 @@
               class="absolute right-0 mt-1 z-40 w-80 p-space-md rounded-lg bg-surface-container-lowest border border-error-container shadow-lg flex flex-col gap-space-sm">
           <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
           <div class="flex items-center gap-2 text-error">
-            <span class="material-symbols-outlined text-[20px]">warning</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[20px]">warning</span>
             <span class="font-label-md font-bold">Delete this business permanently</span>
           </div>
           <p class="text-body-sm text-on-surface-variant">
@@ -69,7 +70,7 @@
   {{ if .Flash }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed text-label-md font-label-md">{{ .Flash }}</div>{{ end }}
     {{ if .Org.SuspendedAt }}
     <div class="p-space-md rounded-lg bg-error-container text-on-error-container flex items-start gap-space-sm">
-      <span class="material-symbols-outlined text-[22px]">block</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[22px]">block</span>
       <div class="flex flex-col">
         <span class="font-label-md font-bold">This business is suspended</span>
         <span class="text-body-sm">Suspended {{ .Org.SuspendedAt.Format "02-01-2006 · 15:04" }}{{ if .Org.SuspendedReason }} · Reason: {{ .Org.SuspendedReason }}{{ end }}</span>

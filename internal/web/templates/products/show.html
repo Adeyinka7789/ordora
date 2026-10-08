@@ -1,5 +1,6 @@
 {{ define "products/show.html" }}
 <div class="p-space-lg lg:p-space-xl max-w-3xl mx-auto flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Products" "Href" "/products") (dict "Label" .Product.Name))) }}
 
   <div class="flex items-center justify-between">
     <div class="flex flex-col">
@@ -15,7 +16,7 @@
     </div>
     <div class="flex items-center gap-space-sm">
       <a href="/products/{{ .Product.ID }}/edit" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1">
-        <span class="material-symbols-outlined text-[16px]">edit</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[16px]">edit</span>
         <span>Edit</span>
       </a>
       {{ if .Product.Active }}
@@ -23,7 +24,7 @@
               data-confirm="Archive this product? It won't be selectable in new orders. You can undo this afterwards." data-confirm-title="Archive product" data-confirm-label="Archive">
           <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
           <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">archive</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[16px]">archive</span>
             <span>Archive</span>
           </button>
         </form>
@@ -31,7 +32,7 @@
         <form method="post" action="/products/{{ .Product.ID }}/unarchive" class="inline">
           <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
           <button type="submit" class="h-9 px-space-md rounded bg-tertiary text-on-tertiary font-label-md text-label-md font-semibold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">unarchive</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[16px]">unarchive</span>
             <span>Restore</span>
           </button>
         </form>

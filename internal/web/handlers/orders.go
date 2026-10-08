@@ -236,6 +236,15 @@ func (h *OrderHandler) New(w http.ResponseWriter, r *http.Request) {
 		Customers: customers.Customers,
 		FormItems: []orderFormItem{{}},
 	}
+	// ?customer=<id> preselects the dropdown (onboarding deep-link). The id
+	// must belong to this org; anything else is ignored silently.
+	if cid := strings.TrimSpace(r.URL.Query().Get("customer")); cid != "" {
+		if id, err := uuid.Parse(cid); err == nil {
+			if _, err := h.CustRepo.GetByID(r.Context(), scope, id); err == nil {
+				page.FormCustID = id.String()
+			}
+		}
+	}
 	if len(customers.Customers) == 0 {
 		page.Error = "You need to create a customer before you can create an order."
 	}

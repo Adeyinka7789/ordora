@@ -1,5 +1,55 @@
 /* app.css — minimal overrides. All visual design is via Tailwind (loaded in the layout). */
 
+/* ---- Global accessibility foundation (every layout loads this file) ---- */
+
+/* Skip link: first tab stop, visible on focus. */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  background: #0B1C30;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 150ms ease;
+}
+.skip-link:focus-visible { top: 1rem; }
+
+/* Consistent keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid #0077BE;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* ---- Breadcrumbs (also used by the admin layout, which skips chrome) ---- */
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+.breadcrumbs a { color: #005A8C; text-decoration: none; font-weight: 500; }
+.breadcrumbs a:hover { text-decoration: underline; }
+.breadcrumbs .crumb-sep { color: #707A88; user-select: none; }
+.breadcrumbs [aria-current="page"] { color: #44566A; font-weight: 600; }
+
+/* ---- Public catalog selection + detail dialog ---- */
+.catalog-card.is-selected {
+  outline: 2px solid #0077BE;
+  outline-offset: -2px;
+}
+dialog::backdrop { background: rgba(11, 28, 48, 0.45); }
+dialog { border: none; padding: 0; background: transparent; }
+dialog > div { background: #fff; }
+
 :root {
   color-scheme: light;
 }

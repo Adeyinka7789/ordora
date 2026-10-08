@@ -36,6 +36,9 @@
   flex-direction: column;
   gap: 14px;
 }
+@media (min-width: 960px) {
+  .ob-shell { max-width: 1120px; }
+}
 
 .ob-topbar {
   display: flex;
@@ -86,6 +89,15 @@
   padding: 36px 32px 30px;
   text-align: center;
   box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.45);
+}
+/* Step nav is JS-driven chrome: hidden until the script takes over, so
+   keyboard users without JS get one continuous usable page instead. */
+.ob-nav { display: none; }
+.js-ob .ob-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
 }
 .ob-step[hidden] { display: none; }
 #ob-steps[data-dir="next"] .ob-step.is-active { animation: ob-in-right 450ms cubic-bezier(0.16, 1, 0.3, 1); }
@@ -269,12 +281,6 @@
 .ob-cta:hover { background: #005A8C; transform: translateY(-1px); }
 
 /* Bottom nav */
-.ob-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4px;
-}
 .ob-back, .ob-next {
   min-width: 96px;
   height: 44px;
@@ -313,6 +319,249 @@
   color: rgba(255, 255, 255, 0.7);
   font-size: 13px;
   margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ob-ring, .ob-chip, .ob-mini-receipt, .ob-pill-now,
+  .ob-step.is-active, .ob-progress span, .ob-dot {
+    animation: none !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Visually-hidden helper (page is fully self-hosted: no Tailwind here). */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =============================================================
+   Task-first layout: two columns on desktop, task flow on mobile.
+   ============================================================= */
+
+.ob-cols {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+@media (min-width: 960px) {
+  .ob-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 32px;
+    align-items: start;
+  }
+  .ob-copy .ob-title,
+  .ob-copy .ob-sub { text-align: left; margin-left: 0; margin-right: 0; }
+}
+.ob-copy { display: flex; flex-direction: column; min-width: 0; }
+.ob-copy .ob-kicker { margin-top: 0; }
+
+/* Path choices (step 1) */
+.ob-paths { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.ob-path-form { margin: 0; }
+.ob-path {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  background: #F7FAFD;
+  border: 1px solid #E1EAF2;
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+button.ob-path { color: inherit; }
+.ob-path:hover {
+  border-color: #0077BE;
+  box-shadow: 0 10px 22px -10px rgba(0, 65, 74, 0.35);
+  transform: translateY(-1px);
+}
+.ob-path .material-symbols-outlined { color: #0077BE; font-size: 26px; flex-shrink: 0; }
+.ob-path span span { display: flex; flex-direction: column; }
+.ob-path strong { font-size: 15px; color: #0B1C30; }
+.ob-path em { font-style: normal; font-size: 13px; color: #44566A; }
+
+/* Optional tour (step 1 details) */
+.ob-tour {
+  margin-top: 14px;
+  border: 1px solid #E1EAF2;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #F7FAFD;
+}
+.ob-tour summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #005A8C;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.ob-tour-body ul { margin: 8px 0 4px; padding-left: 20px; font-size: 14px; color: #44566A; }
+.ob-tour-body li + li { margin-top: 6px; }
+.ob-tour-body strong { color: #0B1C30; }
+
+/* Inline customer form (step 2) */
+.ob-form { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+.ob-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0B1C30;
+  text-align: left;
+}
+.ob-form input {
+  height: 48px;
+  border: 1px solid #C3D2DE;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-size: 16px;
+  color: #0B1C30;
+  background: #fff;
+}
+.ob-form input:focus { outline: 2px solid #0077BE; outline-offset: 1px; border-color: #0077BE; }
+.ob-form input[aria-invalid="true"] { border-color: #ba1a1a; }
+.ob-error {
+  margin: 12px 0 0;
+  background: #ffdad6;
+  color: #93000a;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.ob-success {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 18px;
+  background: #e8f7ee;
+  border: 1px solid #6ffbbe;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: #002113;
+}
+.ob-success .material-symbols-outlined { color: #006e4b; font-size: 24px; flex-shrink: 0; }
+.ob-success p { margin: 0; }
+.ob-inline-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+/* Checklist + orientation */
+.ob-checklist { margin: 14px 0 0; padding-left: 22px; font-size: 15px; color: #0B1C30; text-align: left; }
+.ob-checklist li + li { margin-top: 8px; }
+.ob-orient { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+
+/* Preview pane (decorative product-shaped mock) */
+.ob-preview { min-width: 0; }
+.ob-preview-card {
+  background: #F7FAFD;
+  border: 1px solid #E1EAF2;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 16px 36px -18px rgba(0, 65, 74, 0.4);
+}
+.ob-preview-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0077BE;
+}
+.ob-preview-row, .ob-preview-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #E1EAF2;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.ob-preview-row i, .ob-preview-stat i {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #D9EDF8, #6ffbbe);
+  flex-shrink: 0;
+}
+.ob-preview-row b, .ob-preview-stat b { color: #0B1C30; }
+.ob-preview-row em, .ob-preview-stat em { margin-left: auto; font-style: normal; font-size: 12px; font-weight: 700; color: #006e4b; }
+.ob-preview-dim { opacity: 0.55; }
+@media (max-width: 959.98px) {
+  /* Keep decor compact on phones: content first, action reachable. */
+  .ob-preview-card { max-height: 26vh; overflow: hidden; }
+}
+
+/* CTA as link */
+.ob-cta-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+/* Focus visibility (page loads no app.css) */
+.ob-skip:focus-visible,
+.ob-back:focus-visible,
+.ob-next:focus-visible,
+.ob-dot:focus-visible,
+.ob-cta:focus-visible,
+.ob-path:focus-visible,
+.ob-action:focus-visible,
+.ob-tour summary:focus-visible,
+.ob-form input:focus-visible {
+  outline: 3px solid #8FCBF5;
+  outline-offset: 2px;
+}
+
+/* Dots need a 44px hit area despite 10px visuals */
+.ob-dot { position: relative; }
+.ob-dot::after {
+  content: "";
+  position: absolute;
+  inset: -17px -14px;
+}
+
+/* Sticky step nav on phones */
+@media (max-width: 959.98px) {
+  .js-ob .ob-nav {
+    position: sticky;
+    bottom: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
+  }
+  .ob-step { padding: 26px 20px 22px; }
+  .ob-title { font-size: 25px; }
+}
+
+/* High contrast + forced colors */
+@media (prefers-contrast: more) {
+  .ob-gradient { background: none; color: #005A8C; }
+}
+@media (forced-colors: active) {
+  .ob-gradient { background: none; color: CanvasText; }
+  .ob-step, .ob-preview-card, .ob-path, .ob-action { border: 1px solid CanvasText; }
+  .ob-progress { border: 1px solid CanvasText; }
 }
 
 @media (prefers-reduced-motion: reduce) {

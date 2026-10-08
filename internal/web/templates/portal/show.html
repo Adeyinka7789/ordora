@@ -9,7 +9,7 @@
           <span class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant font-semibold">{{ .View.OrgName }}</span>
           {{ if .View.ExpectedCompletion }}
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
-              <span class="material-symbols-outlined text-[14px]">event</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[14px]">event</span>
               <span>Due {{ .View.ExpectedCompletion.Format "02-01-2006" }}</span>
             </span>
           {{ end }}
@@ -23,12 +23,12 @@
       <div class="flex flex-wrap items-center gap-space-sm">
         {{ if or (eq .View.Status "COMPLETED") (and (le .View.Balance.Amount 0) (gt .View.Total.Amount 0)) }}
           <a href="/o/{{ .Token }}/receipt" class="h-9 px-space-md rounded bg-tertiary-container hover:opacity-90 text-on-tertiary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
-            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">receipt_long</span>
             <span>Receipt</span>
           </a>
         {{ end }}
         <a href="#payments" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
-          <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
           <span>View Payments</span>
         </a>
       </div>
@@ -38,7 +38,7 @@
   <!-- Lifecycle stepper -->
   <div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
     <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-primary text-[22px]">route</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">route</span>
       <span class="font-headline-md text-headline-md text-on-surface font-bold">Fulfillment Progress</span>
     </div>
     {{ template "partials/lifecycle_stepper.html" .OrderForStepper }}
@@ -53,7 +53,7 @@
       <!-- Items -->
       <div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
           <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Ordered Items</h2>
         </div>
         <div class="flex flex-col divide-y divide-outline-variant/20">
@@ -88,7 +88,7 @@
       <!-- Delivery -->
       <div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
           <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Delivery &amp; Contact</h2>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
@@ -113,7 +113,7 @@
       <div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-[20px]">account_balance_wallet</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">account_balance_wallet</span>
             <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Financial Summary</h2>
           </div>
           {{ template "partials/payment_status_badge.html" .View.PayStatus }}
@@ -171,20 +171,20 @@
       <!-- Contact the business -->
       <div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-[20px]">support_agent</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">support_agent</span>
           <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Need Help?</h2>
         </div>
         <p class="font-body-md text-body-md text-on-surface-variant">Reach out to {{ .View.OrgName }} directly with any questions about your order.</p>
         <div class="flex flex-col gap-space-xs">
           {{ if .View.OrgPhone }}
             <a href="tel:{{ .View.OrgPhone }}" class="flex items-center gap-2 p-space-xs rounded hover:bg-surface-container-low transition-colors">
-              <span class="material-symbols-outlined text-[18px] text-on-surface-variant">call</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[18px] text-on-surface-variant">call</span>
               <span class="font-code-md text-code-md text-on-surface">{{ .View.OrgPhone }}</span>
             </a>
           {{ end }}
           {{ if .View.OrgEmail }}
             <a href="mailto:{{ .View.OrgEmail }}" class="flex items-center gap-2 p-space-xs rounded hover:bg-surface-container-low transition-colors">
-              <span class="material-symbols-outlined text-[18px] text-on-surface-variant">mail</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[18px] text-on-surface-variant">mail</span>
               <span class="font-code-md text-code-md text-on-surface">{{ .View.OrgEmail }}</span>
             </a>
           {{ end }}

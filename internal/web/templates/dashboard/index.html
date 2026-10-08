@@ -7,8 +7,12 @@
       <div class="flex items-center gap-space-sm">
         <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Good day, {{ .UserName }}.</h1>
         <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-fixed font-label-sm text-label-sm">
-          <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
-          <span>Live Sync: Connected</span>
+          <span class="sync-chip" id="sync-chip" role="status" aria-live="polite">
+            <span class="sync-dot" aria-hidden="true"></span>
+            <span class="sync-label">Live Sync: Connected</span>
+          </span>
+          <span class="text-outline" aria-hidden="true">·</span>
+          <span>Updated <span id="sync-updated">just now</span></span>
         </div>
       </div>
       <p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2 mt-0.5">
@@ -19,7 +23,7 @@
     </div>
     <div class="flex items-center gap-space-sm flex-wrap">
       <a href="/orders/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
-        <span class="material-symbols-outlined text-[18px]">add</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">add</span>
         <span>New Order</span>
       </a>
     </div>
@@ -147,7 +151,7 @@
         <div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col gap-space-md">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-tertiary-container text-[20px]">account_balance</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-tertiary-container text-[20px]">account_balance</span>
               <h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Recent Payments</h2>
             </div>
           </div>
@@ -157,7 +161,7 @@
                 <a href="/orders/{{ .OrderID }}" class="flex items-center justify-between p-space-xs rounded hover:bg-surface-container-low transition-colors">
                   <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
-                      <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                      <span aria-hidden="true" class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
                     </div>
                     <div class="flex flex-col">
                       <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .CustomerName }}</span>
@@ -179,7 +183,7 @@
         <!-- Dispatch placeholder -->
         <div class="bg-surface-container-lowest p-space-md rounded shadow-sm flex flex-col gap-space-sm">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">local_shipping</span>
             <h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Dispatch Schedule</h2>
           </div>
           <p class="font-body-sm text-body-sm text-on-surface-variant">Delivery tracking arrives in a future release. For now, use the order detail page to manage fulfillment status.</p>

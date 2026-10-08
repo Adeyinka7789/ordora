@@ -1,15 +1,16 @@
 {{ define "orders/show.html" }}
 <div class="p-space-lg lg:p-space-xl max-w-[1440px] mx-auto flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Orders" "Href" "/orders") (dict "Label" .Order.Number))) }}
 
   <!-- Breadcrumb + title bar -->
   <div class="flex flex-col gap-space-md">
     <div class="flex flex-wrap items-center justify-between gap-space-sm text-outline">
       <div class="flex items-center gap-space-xs font-label-md text-label-md">
         <a href="/orders" class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
-          <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-[16px]">receipt_long</span>
           <span>Orders</span>
         </a>
-        <span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
         <span class="font-code-md text-code-md px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface font-semibold">{{ .Order.Number }}</span>
       </div>
     </div>
@@ -17,13 +18,13 @@
       {{ if .TokenRaw }}
     <div class="p-space-sm rounded bg-primary-fixed text-on-primary-fixed flex flex-wrap items-center justify-between gap-space-sm">
       <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined">link</span>
+        <span aria-hidden="true" class="material-symbols-outlined">link</span>
         <span class="font-label-md text-label-md font-semibold">Client tracking link — copy and share now. This is the only time you'll see it.</span>
       </div>
       <div class="flex items-center gap-2">
         <code class="font-code-md text-code-md bg-surface-container-lowest px-2 py-1 rounded">{{ .PortalURL }}</code>
         <button type="button" data-copy-value="{{ .PortalURL }}" class="h-7 px-2 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold flex items-center gap-1">
-          <span class="material-symbols-outlined text-[14px]">content_copy</span>
+          <span aria-hidden="true" class="material-symbols-outlined text-[14px]">content_copy</span>
           <span>Copy</span>
         </button>
       </div>
@@ -37,7 +38,7 @@
           {{ template "partials/status_badge.html" .Order.Status }}
           {{ if .Group }}
             <a href="/groups/{{ .Group.ID }}" title="Aso-ebi group" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-tertiary-fixed/50 text-on-tertiary-fixed hover:underline">
-              <span class="material-symbols-outlined text-[14px]">group_work</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[14px]">group_work</span>
               <span>{{ .Group.Name }}</span>
             </a>
           {{ end }}
@@ -45,19 +46,19 @@
         <div class="flex flex-wrap items-center gap-y-1 gap-x-space-md text-on-surface-variant font-body-sm text-body-sm">
           {{ if .Customer }}
             <div class="flex items-center gap-1">
-              <span class="material-symbols-outlined text-[16px] text-outline">person</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[16px] text-outline">person</span>
               <a href="/customers/{{ .Customer.ID }}" class="font-medium text-on-surface hover:text-primary">{{ .Customer.Name }}</a>
             </div>
           {{ end }}
           <span class="text-outline">/</span>
           <div class="flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
             <span>Created {{ .Order.CreatedAt.Format "02-01-2006" }}</span>
           </div>
           {{ if .Order.ExpectedCompletion }}
             <span class="text-outline">/</span>
             <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-error-container/40 text-on-error-container font-medium">
-              <span class="material-symbols-outlined text-[15px]">event_upcoming</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[15px]">event_upcoming</span>
               <span>Target: <strong>{{ .Order.ExpectedCompletion.Format "02-01-2006" }}</strong></span>
             </div>
           {{ end }}
@@ -67,7 +68,7 @@
       <form method="post" action="/orders/{{ .Order.ID }}/public-token/regenerate" class="inline">
           <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
           <button type="submit" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-            <span class="material-symbols-outlined text-[18px]">link</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">link</span>
             <span>Client Link</span>
           </button>
       </form>
@@ -75,19 +76,19 @@
       <div class="flex flex-wrap items-center gap-space-xs self-start xl:self-center">
         {{ if or (eq .Order.Status "COMPLETED") (and (le .Balance 0) (gt .Order.Total.Amount 0)) }}
           <a href="/orders/{{ .Order.ID }}/receipt" class="h-9 px-space-sm rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">receipt_long</span>
             <span>Receipt</span>
           </a>
         {{ end }}
         {{ if not .Order.Status.IsTerminal }}
           <a href="/orders/{{ .Order.ID }}/edit" class="h-9 px-space-sm rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-            <span class="material-symbols-outlined text-[18px]">edit</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">edit</span>
             <span>Edit</span>
           </a>
         {{ end }}
         {{ if ne .Order.Status "CANCELLED" }}
           <a href="#payments-card" class="h-9 px-space-sm rounded bg-secondary-container hover:bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md font-semibold flex items-center gap-1.5 transition-colors">
-            <span class="material-symbols-outlined text-[18px]">payments</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">payments</span>
             <span>Record Payment</span>
           </a>
         {{ end }}
@@ -138,7 +139,7 @@
       <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-[22px]">inventory_2</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">inventory_2</span>
             <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Line Items</h2>
           </div>
           <span class="font-code-md text-code-md px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">{{ len .Order.Items }} items</span>
@@ -208,7 +209,7 @@
         <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-primary text-[22px]">straighten</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">straighten</span>
               <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Measurements</h2>
             </div>
             <div class="flex items-center gap-2">
@@ -247,7 +248,7 @@
         <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-primary text-[22px]">history</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">history</span>
               <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Audit Trail</h2>
             </div>
             <span class="font-label-sm text-label-sm text-outline">Postgres append-only log</span>
@@ -288,14 +289,14 @@
           </div>
           {{ if .Customer.Phone }}
             <div class="flex items-center gap-2 p-space-xs rounded bg-surface-container-low">
-              <span class="material-symbols-outlined text-[16px] text-outline">call</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[16px] text-outline">call</span>
               <span class="font-code-md text-code-md text-on-surface">{{ .Customer.Phone }}</span>
             </div>
           {{ end }}
           {{ if .Customer.Address }}
             <div class="flex flex-col gap-1 p-space-sm rounded bg-surface-container-low">
               <div class="flex items-center gap-1.5 text-on-surface font-label-md text-label-md font-semibold">
-                <span class="material-symbols-outlined text-[16px] text-primary">pin_drop</span>
+                <span aria-hidden="true" class="material-symbols-outlined text-[16px] text-primary">pin_drop</span>
                 <span>Delivery Address</span>
               </div>
               <span class="font-body-md text-body-md text-on-surface-variant">{{ .Customer.Address }}</span>
@@ -308,7 +309,7 @@
       <div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-primary text-[20px]">preview</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">preview</span>
             <span class="font-headline-md text-headline-md text-on-surface font-bold">Client Portal</span>
           </div>
           <span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">Zero-login</span>

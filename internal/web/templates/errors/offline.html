@@ -2,7 +2,7 @@
 <div class="min-h-screen flex items-center justify-center p-space-md bg-surface">
   <div class="max-w-md w-full text-center flex flex-col items-center gap-space-md">
     <div class="w-16 h-16 rounded-full bg-error-container flex items-center justify-center text-error">
-      <span class="material-symbols-outlined text-[36px]">wifi_off</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[36px]">wifi_off</span>
     </div>
     <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">You're offline</h1>
     <p class="font-body-md text-body-md text-on-surface-variant">
@@ -10,7 +10,7 @@
     </p>
     {{/* Inline handler is intentional: this fragment renders without layout scripts. */}}
     <button onclick="location.reload()" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
-      <span class="material-symbols-outlined text-[18px]">refresh</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[18px]">refresh</span>
       <span>Try again</span>
     </button>
   </div>

@@ -2,7 +2,7 @@
 <div id="payments-card" class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-primary text-[22px]">account_balance_wallet</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-primary text-[22px]">account_balance_wallet</span>
       <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Payment Ledger</h2>
     </div>
     {{ template "partials/payment_status_badge.html" .PayStatus }}
@@ -36,7 +36,7 @@
         <div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm {{ if or .IsReversal .IsReversed }}opacity-60{{ end }}">
           <div class="flex items-start gap-space-sm">
             <div class="w-9 h-9 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center font-bold flex-shrink-0">
-              <span class="material-symbols-outlined text-[20px]">account_balance</span>
+              <span aria-hidden="true" class="material-symbols-outlined text-[20px]">account_balance</span>
             </div>
             <div class="flex flex-col">
               <div class="flex items-center gap-space-xs flex-wrap">
@@ -56,7 +56,7 @@
               {{ if $atts }}
                 {{ range $atts }}
                   <a href="/attachments/{{ .ID }}" class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md hover:bg-surface-container transition-colors">
-                    <span class="material-symbols-outlined text-[16px] text-primary">picture_as_pdf</span>
+                    <span aria-hidden="true" class="material-symbols-outlined text-[16px] text-primary">picture_as_pdf</span>
                     <span class="truncate max-w-[100px]">{{ .Filename }}</span>
                   </a>
                 {{ end }}
@@ -69,14 +69,14 @@
                 <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
                 <input type="hidden" name="purpose" value="payment_proof">
                 <label class="inline-flex items-center gap-1 px-2 py-1 rounded text-on-surface-variant font-label-sm text-label-sm cursor-pointer hover:bg-surface-container-low">
-                  <span class="material-symbols-outlined text-[14px]">upload</span>
+                  <span aria-hidden="true" class="material-symbols-outlined text-[14px]">upload</span>
                   <span>Proof</span>
                   <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required class="hidden" onchange="this.form.requestSubmit()">
                 </label>
               </form>
               <details class="reverse-payment inline">
                 <summary class="inline-flex items-center gap-1 px-2 py-1 rounded text-error font-label-sm text-label-sm cursor-pointer hover:bg-error-container/30">
-                  <span class="material-symbols-outlined text-[14px]">undo</span>
+                  <span aria-hidden="true" class="material-symbols-outlined text-[14px]">undo</span>
                   <span>Reverse</span>
                 </summary>                <form hx-post="/payments/{{ .ID }}/reverse"
                       hx-target="#payments-card"

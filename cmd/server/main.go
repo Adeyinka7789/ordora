@@ -770,8 +770,9 @@ func run() error {
 	mux.Handle("GET /dashboard", middleware.RequireAuth(http.HandlerFunc(dashH.Index)))
 
 	// ---- Onboarding wizard (first run only; handler redirects others) ----
-	onboardH := &handlers.OnboardingHandler{Auth: authService, Renderer: renderer}
+	onboardH := &handlers.OnboardingHandler{Auth: authService, Customers: custRepo, IDs: id.Generator{}, Now: time.Now, Renderer: renderer}
 	mux.Handle("GET /onboarding", middleware.RequireAuth(http.HandlerFunc(onboardH.Show)))
+	mux.Handle("POST /onboarding/customer", middleware.RequireAuth(http.HandlerFunc(onboardH.CreateCustomer)))
 	mux.Handle("POST /onboarding/complete", middleware.RequireAuth(http.HandlerFunc(onboardH.Complete)))
 	mux.Handle("POST /onboarding/skip", middleware.RequireAuth(http.HandlerFunc(onboardH.Skip)))
 

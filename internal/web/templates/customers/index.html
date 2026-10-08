@@ -1,5 +1,6 @@
 {{ define "customers/index.html" }}
 <div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Customers"))) }}
 
   <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
     <div class="flex flex-col">
@@ -7,7 +8,7 @@
       <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Manage the people and businesses you sell to.</p>
     </div>
     <a href="/customers/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
-      <span class="material-symbols-outlined text-[18px]">add</span>
+      <span aria-hidden="true" class="material-symbols-outlined text-[18px]">add</span>
       <span>New Customer</span>
     </a>
   </div>
@@ -21,7 +22,7 @@
         hx-target="#customers-table"
         hx-swap="outerHTML"
         hx-push-url="true">
-    <span class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
+    <span aria-hidden="true" class="material-symbols-outlined absolute left-2.5 text-outline text-[18px]">search</span>
     <input type="search" name="q" value="{{ .Query }}" placeholder="Search by name, email, or phone…" autocomplete="off"
            class="w-full h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container transition-colors">
   </form>

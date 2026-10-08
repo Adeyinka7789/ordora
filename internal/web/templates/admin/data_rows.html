@@ -11,7 +11,7 @@
     </div>
     <div class="flex items-center gap-space-sm">
       <form method="get" action="{{ .Path }}/data/{{ .Table.TableName }}" class="relative">
-        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+        <span aria-hidden="true" class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
         <input type="search" name="q" value="{{ .Search }}" placeholder="Search…" autocomplete="off"
                class="h-9 pl-9 pr-3 rounded bg-surface-container-lowest border border-outline-variant/30 font-body-sm text-body-sm focus:outline-none focus:border-primary-container w-72">
       </form>
