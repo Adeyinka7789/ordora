@@ -1,23 +1,28 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
+	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/product"
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
 // ProductHandler serves /products/*.
 type ProductHandler struct {
-	Service  *app.ProductService
-	Repo     *postgres.ProductRepo
-	Renderer *render.Renderer
+	Service     *app.ProductService
+	Repo        *postgres.ProductRepo
+	Attachments *app.AttachmentService
+	Renderer    *render.Renderer
 }
 
 // Page data.
@@ -46,12 +51,108 @@ type productFormPage struct {
 	FormDesc    string
 	FormSKU     string
 	FormPrice   string
+	Catalog     product.CatalogDetails
+	// QuestionRows precomputes the question editor rows: existing
+	// questions followed by blank rows (indices match qkeyN inputs).
+	QuestionRows []productQuestionRow
+}
+
+type productQuestionRow struct {
+	Index    int
+	Key      string
+	Label    string
+	Required bool
+}
+
+// questionRows builds editor rows: existing questions then blank rows
+// (3 blanks, 10 rows max).
+func questionRows(existing []product.ProductQuestion) []productQuestionRow {
+	if len(existing) > product.MaxProductQuestions {
+		existing = existing[:product.MaxProductQuestions]
+	}
+	out := make([]productQuestionRow, 0, 10)
+	for i, q := range existing {
+		out = append(out, productQuestionRow{Index: i, Key: q.Key, Label: q.Label, Required: q.Required})
+	}
+	for i := len(out); i < product.MaxProductQuestions && i < len(existing)+3; i++ {
+		out = append(out, productQuestionRow{Index: i})
+	}
+	return out
+}
+
+// parseCatalogForm reads merchandising fields from a parsed product form.
+func parseCatalogForm(r *http.Request) product.CatalogDetails {
+	days := 0
+	if v := strings.TrimSpace(r.PostFormValue("production_days")); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			days = n
+		}
+	}
+	return product.CatalogDetails{
+		Material:         formValue(r, "material"),
+		Color:            formValue(r, "color"),
+		ShortDescription: formValue(r, "short_description"),
+		InternalNotes:    formValue(r, "internal_notes"),
+		Specs:            formValue(r, "specs"),
+		ProductionDays:   days,
+		QuoteOnly:        r.PostFormValue("quote_only") == "on",
+		StartingFrom:     r.PostFormValue("starting_from") == "on",
+		Hidden:           r.PostFormValue("hidden") == "on",
+		Availability:     formValue(r, "availability"),
+		Category:         formValue(r, "category"),
+		Questions:        parseProductQuestionsForm(r),
+	}
+}
+
+// echoCatalogForm copies raw catalog form values onto p so an error
+// re-render echoes what the user typed (no validation — display only).
+func echoCatalogForm(p *product.Product, r *http.Request) {
+	if p == nil {
+		return
+	}
+	p.Material = formValue(r, "material")
+	p.Color = formValue(r, "color")
+	p.ShortDescription = formValue(r, "short_description")
+	p.InternalNotes = formValue(r, "internal_notes")
+	p.Specs = formValue(r, "specs")
+	if v := formValue(r, "production_days"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			p.ProductionDays = n
+		}
+	}
+	p.QuoteOnly = r.PostFormValue("quote_only") == "on"
+	p.StartingFrom = r.PostFormValue("starting_from") == "on"
+	p.Hidden = r.PostFormValue("hidden") == "on"
+	if v := formValue(r, "availability"); v != "" {
+		p.Availability = v
+	}
+	p.Category = formValue(r, "category")
+	p.Questions = parseProductQuestionsForm(r)
+}
+
+// parseProductQuestionsForm reads up to 10 qkeyN/qlabelN/qreqN rows.
+func parseProductQuestionsForm(r *http.Request) []product.ProductQuestion {
+	var out []product.ProductQuestion
+	for i := 0; i < product.MaxProductQuestions; i++ {
+		p := strconv.Itoa(i)
+		label := strings.TrimSpace(r.PostFormValue("qlabel" + p))
+		if label == "" {
+			continue
+		}
+		out = append(out, product.ProductQuestion{
+			Key:      strings.TrimSpace(r.PostFormValue("qkey" + p)),
+			Label:    label,
+			Required: r.PostFormValue("qreq"+p) == "on",
+		})
+	}
+	return out
 }
 
 type productShowPage struct {
 	Title     string
 	CSRFToken string
 	Product   *product.Product
+	Images    []*attachment.Attachment
 }
 
 // Index.
@@ -118,8 +219,9 @@ func (h *ProductHandler) New(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	page := productFormPage{
-		Title:     "New product",
-		CSRFToken: csrfFromCtx(r),
+		Title:        "New product",
+		CSRFToken:    csrfFromCtx(r),
+		QuestionRows: questionRows(nil),
 	}
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/new.html", page)
 }
@@ -137,6 +239,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	price, err := parseMoneyMinor(formValue(r, "unit_price"))
 	if err != nil {
 		msg := "Please enter a valid price."
+		cat := parseCatalogForm(r)
 		page := productFormPage{
 			Title:       "New product",
 			CSRFToken:   csrfFromCtx(r),
@@ -146,7 +249,9 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			FormDesc:    formValue(r, "description"),
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
+			Catalog:     cat,
 		}
+		page.QuestionRows = questionRows(cat.Questions)
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
 		return
 	}
@@ -157,6 +262,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		SKU:            formValue(r, "sku"),
 		UnitPriceMinor: price,
 		Currency:       currencyFromRequest(r),
+		Catalog:        parseCatalogForm(r),
 	})
 
 	if err != nil {
@@ -174,7 +280,9 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			FormDesc:    formValue(r, "description"),
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
+			Catalog:     parseCatalogForm(r),
 		}
+		page.QuestionRows = questionRows(page.Catalog.Questions)
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
 		return
 	}
@@ -207,6 +315,11 @@ func (h *ProductHandler) Show(w http.ResponseWriter, r *http.Request) {
 		CSRFToken: csrfFromCtx(r),
 		Product:   p,
 	}
+	if h.Attachments != nil {
+		if images, err := h.Attachments.List(r.Context(), scope, attachment.EntityProduct, id); err == nil {
+			page.Images = images
+		}
+	}
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/show.html", page)
 }
 
@@ -238,6 +351,7 @@ func (h *ProductHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		FormSKU:   p.SKU,
 		FormPrice: formatMoneyMinor(p.UnitPrice.Amount()),
 	}
+	page.QuestionRows = questionRows(p.Questions)
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/edit.html", page)
 }
 
@@ -259,6 +373,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		msg := "Please enter a valid price."
 		p, _ := h.Service.Get(r.Context(), scope, id)
+		echoCatalogForm(p, r)
 		page := productFormPage{
 			Title:       "Edit product",
 			CSRFToken:   csrfFromCtx(r),
@@ -271,6 +386,11 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
 		}
+		if p != nil {
+			page.QuestionRows = questionRows(p.Questions)
+		} else {
+			page.QuestionRows = questionRows(nil)
+		}
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/edit.html", page)
 		return
 	}
@@ -280,6 +400,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Description:    formValue(r, "description"),
 		SKU:            formValue(r, "sku"),
 		UnitPriceMinor: price,
+		Catalog:        parseCatalogForm(r),
 	})
 	if err != nil {
 		if errors.Is(err, product.ErrNotFound) {
@@ -292,6 +413,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 			fields[f] = msg
 		}
 		p, _ := h.Service.Get(r.Context(), scope, id)
+		echoCatalogForm(p, r)
 		page := productFormPage{
 			Title:       "Edit product",
 			CSRFToken:   csrfFromCtx(r),
@@ -303,6 +425,11 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 			FormDesc:    formValue(r, "description"),
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
+		}
+		if p != nil {
+			page.QuestionRows = questionRows(p.Questions)
+		} else {
+			page.QuestionRows = questionRows(nil)
 		}
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/edit.html", page)
 		return
@@ -365,7 +492,38 @@ func (h *ProductHandler) Picker(w http.ResponseWriter, r *http.Request) {
 	h.Renderer.Fragment(w, r, http.StatusOK, "products/_picker.html", map[string]any{
 		"Products": res.Products,
 		"Query":    query,
+		"Covers":   h.productCovers(r.Context(), scope, res.Products),
 	})
+}
+
+// productCovers maps product id → cover image id (best-effort; empty on
+// any failure so the picker never breaks). Every listed product gets an
+// entry ("" when no cover) so the template never prints "<no value>".
+func (h *ProductHandler) productCovers(ctx context.Context, scope tenant.TenantScope, list []*product.Product) map[string]string {
+	out := make(map[string]string, len(list))
+	for _, p := range list {
+		out[p.ID.String()] = ""
+	}
+	if h.Attachments == nil || len(list) == 0 {
+		return out
+	}
+	ids := make([]uuid.UUID, 0, len(list))
+	for _, p := range list {
+		ids = append(ids, p.ID)
+	}
+	grouped, err := h.Attachments.ListForEntities(ctx, scope, attachment.EntityProduct, ids)
+	if err != nil {
+		return out
+	}
+	for pid, atts := range grouped {
+		for _, a := range atts {
+			if a.IsCover() {
+				out[pid.String()] = a.ID.String()
+				break
+			}
+		}
+	}
+	return out
 }
 
 func humanizeProductError(err error) string {
@@ -382,6 +540,28 @@ func humanizeProductError(err error) string {
 		return "Description is too long."
 	case errors.Is(err, product.ErrSKUTooLong):
 		return "SKU is too long."
+	case errors.Is(err, product.ErrMaterialTooLong):
+		return "Material is too long (max 120)."
+	case errors.Is(err, product.ErrColorTooLong):
+		return "Color info is too long (max 120)."
+	case errors.Is(err, product.ErrShortDescTooLong):
+		return "Short description is too long (max 500)."
+	case errors.Is(err, product.ErrNotesTooLong):
+		return "Internal notes are too long (max 5000)."
+	case errors.Is(err, product.ErrSpecsTooLong):
+		return "Specifications are too long (max 2000)."
+	case errors.Is(err, product.ErrProductionDays):
+		return "Production days cannot be negative."
+	case errors.Is(err, product.ErrAvailabilityInvalid):
+		return "Please choose a valid availability."
+	case errors.Is(err, product.ErrCategoryTooLong):
+		return "Category is too long (max 80)."
+	case errors.Is(err, product.ErrQuestionLabel):
+		return "Each question needs a label (max 120)."
+	case errors.Is(err, product.ErrQuestionKey):
+		return "Two questions share the same key. Keys must be unique."
+	case errors.Is(err, product.ErrTooManyQuestions):
+		return "Too many questions (max 10)."
 	default:
 		return "Something went wrong."
 	}

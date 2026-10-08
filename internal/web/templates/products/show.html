@@ -42,10 +42,37 @@
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
     <dl class="grid grid-cols-[140px_1fr] gap-x-space-md gap-y-space-sm">
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Unit price</dt>
-      <dd class="font-code-md text-headline-md font-bold text-on-surface tabular-nums">{{ currency .Product.UnitPrice.Amount .Product.Currency }}</dd>
+      <dd class="font-code-md text-headline-md font-bold text-on-surface tabular-nums">{{ if .Product.QuoteOnly }}Request quote{{ else }}{{ if .Product.StartingFrom }}Starting from {{ end }}{{ currency .Product.UnitPrice.Amount .Product.Currency }}{{ end }}</dd>
+
+      <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Visibility</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ .Product.Visibility }}{{ if .Product.Availability }} · {{ .Product.Availability }}{{ end }}</dd>
+
+      {{ if .Product.Category }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Category</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ .Product.Category }}</dd>{{ end }}
+
+      {{ if .Product.ShortDescription }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Short blurb</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ .Product.ShortDescription }}</dd>{{ end }}
+
+      {{ if .Product.Material }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Material</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ .Product.Material }}</dd>{{ end }}
+
+      {{ if .Product.Color }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Color</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ .Product.Color }}</dd>{{ end }}
+
+      {{ if .Product.Specs }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Specs</dt>
+      <dd class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Product.Specs }}</dd>{{ end }}
+
+      {{ if gt .Product.ProductionDays 0 }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Production time</dt>
+      <dd class="font-body-md text-body-md text-on-surface">~{{ .Product.ProductionDays }} days</dd>{{ end }}
 
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Description</dt>
       <dd class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ if .Product.Description }}{{ .Product.Description }}{{ else }}—{{ end }}</dd>
+
+      {{ if .Product.InternalNotes }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Staff notes</dt>
+      <dd class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Product.InternalNotes }}</dd>{{ end }}
+
+      {{ if .Product.Questions }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Questions</dt>
+      <dd class="font-body-md text-body-md text-on-surface">{{ range .Product.Questions }}<span class="inline-block mr-2 mb-1 px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm">{{ .Label }}{{ if .Required }} *{{ end }}</span>{{ end }}</dd>{{ end }}
 
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Created</dt>
       <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Product.CreatedAt.Format "02-01-2006 · 15:04" }}</dd>
@@ -53,6 +80,44 @@
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Updated</dt>
       <dd class="font-code-md text-code-md text-on-surface-variant">{{ .Product.UpdatedAt.Format "02-01-2006 · 15:04" }}</dd>
     </dl>
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg">
+    <h2 class="font-label-lg text-label-lg text-on-surface mb-space-sm">Photos</h2>
+    {{ if .Images }}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-space-sm">
+      {{ range .Images }}
+      <div class="relative rounded-lg overflow-hidden bg-surface-container">
+        <img src="/attachments/{{ .ID }}?view=1" alt="{{ .Filename }}" class="w-full h-32 object-cover">
+        {{ if eq .Purpose "product_cover" }}<span class="absolute top-1 left-1 px-2 py-0.5 rounded bg-primary-container font-label-sm text-label-sm font-semibold">COVER</span>{{ end }}
+        <div class="p-2 flex items-center gap-2">
+          {{ if ne .Purpose "product_cover" }}
+          <form method="post" action="/products/{{ .EntityID }}/images/{{ .ID }}/cover" class="inline">
+            <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+            <button type="submit" class="font-label-sm text-label-sm text-primary font-semibold">Set cover</button>
+          </form>
+          {{ end }}
+          <form method="post" action="/products/images/{{ .ID }}/delete?product_id={{ .EntityID }}" class="inline"
+                data-confirm="Delete this image?" data-confirm-title="Delete image" data-confirm-label="Delete">
+            <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+            <button type="submit" class="font-label-sm text-label-sm text-error font-semibold">Delete</button>
+          </form>
+        </div>
+      </div>
+      {{ end }}
+    </div>
+    {{ else }}
+    <p class="font-body-md text-body-md text-on-surface-variant">No photos yet — upload the first one below.</p>
+    {{ end }}
+    <form method="post" action="/products/{{ .Product.ID }}/images" enctype="multipart/form-data" class="mt-space-md flex flex-wrap items-center gap-space-sm">
+      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+      <input type="file" name="file" accept="image/jpeg,image/png,image/webp,image/gif" required
+             class="font-body-md text-body-md text-on-surface">
+      <label class="flex items-center gap-1 font-body-md text-body-md text-on-surface">
+        <input type="checkbox" name="purpose" value="product_cover" class="h-4 w-4"> Set as cover
+      </label>
+      <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Upload photo</button>
+    </form>
   </div>
 </div>
 {{ end }}

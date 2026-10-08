@@ -21,6 +21,16 @@ type PublicOrderInput struct {
 	// Items holds optional product lines picked from the shop's catalog.
 	// QuantityScaled uses the same scale as order items (3 decimals).
 	Items []PublicOrderItemInput
+	// Answers holds product-specific question answers:
+	// [{Product, Q, A}] free-form, capped server-side.
+	Answers []PublicAnswer
+}
+
+// PublicAnswer is one answered product question on a public submission.
+type PublicAnswer struct {
+	Product string
+	Q       string
+	A       string
 }
 
 // PublicOrderItemInput is one catalog line on a public submission.
@@ -29,15 +39,30 @@ type PublicOrderItemInput struct {
 	QuantityScaled int64
 }
 
+// ProductQuestion is one question a product asks on the public form.
+type ProductQuestion struct {
+	Key      string
+	Label    string
+	Required bool
+}
+
 // PublicProduct is one catalog row shown on the public intake form.
 // Prices are display snapshots; the order function re-reads and
 // snapshots them server-side.
 type PublicProduct struct {
-	ID             uuid.UUID
-	Name           string
-	Description    string
-	UnitPriceMinor int64
-	Currency       string
+	ID               uuid.UUID
+	Name             string
+	Description      string
+	ShortDescription string
+	Material         string
+	Category         string
+	UnitPriceMinor   int64
+	Currency         string
+	QuoteOnly        bool
+	StartingFrom     bool
+	Availability     string
+	CoverImageID     uuid.UUID // Nil when the product has no cover
+	Questions        []ProductQuestion
 }
 
 // PublicOrderResult is what the handler returns to the template.
@@ -70,6 +95,36 @@ type PublicOrderDB interface {
 // MaxPublicItems caps product lines per public submission (abuse guard;
 // the SQL function enforces the same cap).
 const MaxPublicItems = 25
+
+// MaxPublicAnswers caps product-question answers per submission.
+const MaxPublicAnswers = 50
+
+// normalizePublicAnswers trims answers and drops blank ones.
+func normalizePublicAnswers(in []PublicAnswer) []PublicAnswer {
+	out := make([]PublicAnswer, 0, len(in))
+	for _, a := range in {
+		a.Product = strings.TrimSpace(a.Product)
+		a.Q = strings.TrimSpace(a.Q)
+		a.A = strings.TrimSpace(a.A)
+		if a.A == "" {
+			continue
+		}
+		if len(a.Product) > 80 {
+			a.Product = a.Product[:80]
+		}
+		if len(a.Q) > 120 {
+			a.Q = a.Q[:120]
+		}
+		if len(a.A) > 500 {
+			a.A = a.A[:500]
+		}
+		out = append(out, a)
+		if len(out) >= MaxPublicAnswers {
+			break
+		}
+	}
+	return out
+}
 
 // Errors.
 var (
@@ -151,6 +206,9 @@ func (s *PublicOrderService) Submit(ctx context.Context, in PublicOrderInput) (*
 			return nil, ErrPublicQtyInvalid
 		}
 	}
+	// Normalize answers: trim, drop empties, cap count and length. The SQL
+	// function truncates defensively as well.
+	in.Answers = normalizePublicAnswers(in.Answers)
 	if in.Description == "" && len(in.Items) == 0 {
 		return nil, ErrPublicOrderEmpty
 	}

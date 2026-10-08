@@ -1,0 +1,99 @@
+{{ define "products/_catalog_fields.html" }}
+{{/* Shared merchandising fields for product new/edit forms.
+  Expects a dict: Material, Color, ShortDescription, InternalNotes, Specs,
+  ProductionDays (int, 0 = unset), QuoteOnly, StartingFrom, Hidden (bools),
+  Availability, Category, QuestionRows ([]productQuestionRow). */}}
+<div class="flex flex-col gap-space-md pt-space-xs border-t border-outline-variant">
+  <h2 class="font-label-lg text-label-lg text-on-surface">Catalog details</h2>
+  <p class="font-body-sm text-body-sm text-on-surface-variant -mt-2">Shown to customers on your public order link. Upload photos after creating the product.</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Category</span>
+      <input type="text" name="category" value="{{ .Category }}" maxlength="80" placeholder="e.g. Senator, Kaftan, Aso-ebi"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Availability</span>
+      <select name="availability"
+              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="in_stock" {{ if or (eq .Availability "in_stock") (eq .Availability "") }}selected{{ end }}>In stock</option>
+        <option value="low_stock" {{ if eq .Availability "low_stock" }}selected{{ end }}>Low stock</option>
+        <option value="made_to_order" {{ if eq .Availability "made_to_order" }}selected{{ end }}>Made to order</option>
+        <option value="out_of_stock" {{ if eq .Availability "out_of_stock" }}selected{{ end }}>Out of stock (hidden publicly)</option>
+      </select>
+    </label>
+  </div>
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Short description <span class="text-on-surface-variant">(customer one-liner)</span></span>
+    <input type="text" name="short_description" value="{{ .ShortDescription }}" maxlength="500" placeholder="e.g. Premium senator set, tailored fit"
+           class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+  </label>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Material / fabric</span>
+      <input type="text" name="material" value="{{ .Material }}" maxlength="120" placeholder="e.g. Italian wool"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Color / variant</span>
+      <input type="text" name="color" value="{{ .Color }}" maxlength="120" placeholder="e.g. Navy blue"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+  </div>
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Specifications <span class="text-on-surface-variant">(dimensions, sizes, details)</span></span>
+    <textarea name="specs" rows="2" maxlength="2000"
+              class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Specs }}</textarea>
+  </label>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Est. production time (days)</span>
+      <input type="number" name="production_days" value="{{ if gt .ProductionDays 0 }}{{ .ProductionDays }}{{ end }}" min="0" max="365" inputmode="numeric"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label class="flex items-center gap-2 font-body-md text-body-md text-on-surface">
+      <input type="checkbox" name="quote_only" {{ if .QuoteOnly }}checked{{ end }} class="h-4 w-4">
+      <span>Request quote <span class="text-on-surface-variant">(no fixed price — customers ask instead)</span></span>
+    </label>
+    <label class="flex items-center gap-2 font-body-md text-body-md text-on-surface">
+      <input type="checkbox" name="starting_from" {{ if .StartingFrom }}checked{{ end }} class="h-4 w-4">
+      <span>Show price as “Starting from”</span>
+    </label>
+    <label class="flex items-center gap-2 font-body-md text-body-md text-on-surface">
+      <input type="checkbox" name="hidden" {{ if .Hidden }}checked{{ end }} class="h-4 w-4">
+      <span>Hidden <span class="text-on-surface-variant">(active but not shown on the public link)</span></span>
+    </label>
+  </div>
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Internal staff notes <span class="text-on-surface-variant">(never shown to customers)</span></span>
+    <textarea name="internal_notes" rows="2" maxlength="5000"
+              class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .InternalNotes }}</textarea>
+  </label>
+
+  <div class="flex flex-col gap-2">
+    <span class="font-label-md text-label-md text-on-surface">Product questions <span class="text-on-surface-variant">(asked on the public form when this product is picked)</span></span>
+    {{ range .QuestionRows }}
+    <div class="grid grid-cols-[1fr_2fr_auto] gap-2 items-center">
+      <input type="text" name="qkey{{ .Index }}" value="{{ .Key }}" maxlength="64" placeholder="key (auto)"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <input type="text" name="qlabel{{ .Index }}" value="{{ .Label }}" maxlength="120" placeholder="e.g. Lace color?"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <label class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface whitespace-nowrap">
+        <input type="checkbox" name="qreq{{ .Index }}" {{ if .Required }}checked{{ end }} class="h-4 w-4"> Required
+      </label>
+    </div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}

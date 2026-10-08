@@ -98,7 +98,10 @@
       newRow = document.createElement('tr');
       newRow.className = 'item-row';
       newRow.innerHTML =
-        '<td><input type="text" name="items[0][description]" required></td>' +
+        '<td><input type="text" name="items[0][description]" required>' +
+        '<input type="hidden" name="items[0][product_id]" value="">' +
+        '<input type="hidden" name="items[0][material]" value="">' +
+        '<input type="hidden" name="items[0][image_ref]" value=""></td>' +
         '<td><input type="text" name="items[0][quantity]" class="qty-input" required></td>' +
         '<td><input type="text" name="items[0][unit_price]" class="price-input" required></td>' +
         '<td class="subtotal-cell">—</td>' +
@@ -151,9 +154,12 @@
     const item = e.target.closest('.picker-item');
     if (!item) return;
     addRowFromProduct({
+      id: item.dataset.id || '',
       name: item.dataset.name || '',
       price: item.dataset.price || '0.00',
       desc: item.dataset.desc || '',
+      material: item.dataset.material || '',
+      image: item.dataset.image || '',
     });
     picker.hidden = true;
   });
@@ -168,10 +174,17 @@
     const descInput = lastRow.querySelector('input[name$="[description]"]');
     const priceInput = lastRow.querySelector('.price-input');
     const qtyInput = lastRow.querySelector('.qty-input');
+    const pidInput = lastRow.querySelector('input[name$="[product_id]"]');
+    const matInput = lastRow.querySelector('input[name$="[material]"]');
+    const imgInput = lastRow.querySelector('input[name$="[image_ref]"]');
 
     if (descInput) descInput.value = prod.name;
     if (priceInput) priceInput.value = prod.price;
     if (qtyInput && !qtyInput.value) qtyInput.value = '1';
+    // Catalog snapshot link: frozen onto the line at order time.
+    if (pidInput) pidInput.value = prod.id;
+    if (matInput) matInput.value = prod.material;
+    if (imgInput) imgInput.value = prod.image;
 
     updateRowSubtotal(lastRow);
     updateTotals();

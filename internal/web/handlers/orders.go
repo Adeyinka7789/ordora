@@ -82,6 +82,10 @@ type orderFormItem struct {
 	Description string
 	Quantity    string
 	UnitPrice   string
+	// Catalog snapshot echo (hidden inputs; empty for free-hand lines).
+	ProductID string
+	Material  string
+	ImageRef  string
 }
 
 type orderEditPage struct {
@@ -374,6 +378,9 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 			Description:    desc,
 			QuantityScaled: qty,
 			UnitPriceMinor: price,
+			ProductID:      parseOptionalUUID(formValue(r, "items["+strconv.Itoa(i)+"][product_id]")),
+			Material:       formValue(r, "items["+strconv.Itoa(i)+"][material]"),
+			ImageRef:       formValue(r, "items["+strconv.Itoa(i)+"][image_ref]"),
 		})
 	}
 
@@ -444,6 +451,9 @@ func (h *OrderHandler) Edit(w http.ResponseWriter, r *http.Request) {
 			Description: it.Description,
 			Quantity:    formatQuantity(it.Quantity),
 			UnitPrice:   formatMoneyMinor(it.UnitPrice.Amount()),
+			ProductID:   uuidToString(it.ProductID),
+			Material:    it.Material,
+			ImageRef:    it.ImageRef,
 		})
 	}
 	if len(page.FormItems) == 0 {
@@ -513,6 +523,9 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 				Description: it.Description,
 				Quantity:    formatQuantity(it.QuantityScaled),
 				UnitPrice:   formatMoneyMinor(it.UnitPriceMinor),
+				ProductID:   uuidToString(it.ProductID),
+				Material:    it.Material,
+				ImageRef:    it.ImageRef,
 			})
 		}
 		if len(page.FormItems) == 0 {
@@ -633,6 +646,9 @@ func parseUpdateOrderInput(r *http.Request) (*app.UpdateOrderInput, error) {
 			Description:    desc,
 			QuantityScaled: q,
 			UnitPriceMinor: p,
+			ProductID:      parseOptionalUUID(formValue(r, "items["+strconv.Itoa(i)+"][product_id]")),
+			Material:       formValue(r, "items["+strconv.Itoa(i)+"][material]"),
+			ImageRef:       formValue(r, "items["+strconv.Itoa(i)+"][image_ref]"),
 		})
 	}
 	measIn, _, _, _ := parseMeasurementInput(r)
@@ -665,6 +681,9 @@ func (h *OrderHandler) respondCreateError(w http.ResponseWriter, r *http.Request
 				Description: it.Description,
 				Quantity:    formatQuantity(it.QuantityScaled),
 				UnitPrice:   formatMoneyMinor(it.UnitPriceMinor),
+				ProductID:   uuidToString(it.ProductID),
+				Material:    it.Material,
+				ImageRef:    it.ImageRef,
 			})
 		}
 		// Preserve the measurement selection (gender/garment/values/notes).

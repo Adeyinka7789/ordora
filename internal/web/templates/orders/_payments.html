@@ -61,12 +61,24 @@
                   </a>
                 {{ end }}
               {{ end }}
+              <form hx-post="/payments/{{ .ID }}/attachments"
+                    hx-target="#payments-card"
+                    hx-swap="outerHTML"
+                    hx-encoding="multipart/form-data"
+                    class="inline-flex items-center gap-1" title="Upload payment proof (visible to the customer)">
+                <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+                <input type="hidden" name="purpose" value="payment_proof">
+                <label class="inline-flex items-center gap-1 px-2 py-1 rounded text-on-surface-variant font-label-sm text-label-sm cursor-pointer hover:bg-surface-container-low">
+                  <span class="material-symbols-outlined text-[14px]">upload</span>
+                  <span>Proof</span>
+                  <input type="file" name="file" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" required class="hidden" onchange="this.form.requestSubmit()">
+                </label>
+              </form>
               <details class="reverse-payment inline">
                 <summary class="inline-flex items-center gap-1 px-2 py-1 rounded text-error font-label-sm text-label-sm cursor-pointer hover:bg-error-container/30">
                   <span class="material-symbols-outlined text-[14px]">undo</span>
                   <span>Reverse</span>
-                </summary>
-                <form hx-post="/payments/{{ .ID }}/reverse"
+                </summary>                <form hx-post="/payments/{{ .ID }}/reverse"
                       hx-target="#payments-card"
                       hx-swap="outerHTML"
                       class="mt-space-xs flex flex-col gap-space-xs p-space-sm rounded bg-error-container/20 border border-error-container/40">

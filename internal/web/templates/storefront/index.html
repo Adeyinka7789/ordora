@@ -22,10 +22,10 @@
         <span class="material-symbols-outlined text-[16px]">content_copy</span>
         <span>Copy</span>
       </button>
-      <a href="/order/{{ .Slug }}" target="_blank" rel="noopener"
+      <a href="/order/{{ .Slug }}?preview=1" target="_blank" rel="noopener"
          class="h-9 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold inline-flex items-center gap-1">
         <span class="material-symbols-outlined text-[16px]">open_in_new</span>
-        <span>Open form</span>
+        <span>Preview form</span>
       </a>
     </div>
     <p class="font-label-sm text-label-sm text-on-surface-variant">Want a different address? Change your public slug in <a class="underline font-semibold" href="/settings">Business settings</a>.</p>
@@ -36,7 +36,7 @@
       <span class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
       <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Your product menu</h2>
     </div>
-    <p class="font-body-sm text-body-sm text-on-surface-variant">Your <a class="underline font-semibold" href="/products">active products</a> show up on the form automatically — customers enter a quantity for anything they want, plus an optional note. No products yet? The form falls back to a free-text request box.</p>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Your <a class="underline font-semibold" href="/products">visible products</a> — with photos, prices or “request quote”, and any questions you configured — show up on the form automatically with search and category filters. Hidden, archived, and out-of-stock items never appear. No products yet? The form falls back to a free-text request box.</p>
   </div>
 
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">

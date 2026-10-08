@@ -11,7 +11,7 @@
   <tbody>
     {{ range .Items }}
       <tr>
-        <td>{{ .Description }}</td>
+        <td>{{ .Description }}{{ if .Material }}<div class="font-body-sm text-body-sm text-on-surface-variant">{{ .Material }}</div>{{ end }}</td>
         <td class="num">{{ formatQty .Quantity }}</td>
         <td class="num">{{ currency .UnitPrice.Amount .UnitPrice.Currency }}</td>
         <td class="num">{{ currency .Subtotal.Amount .Subtotal.Currency }}</td>

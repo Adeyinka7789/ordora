@@ -21,11 +21,12 @@ const (
 	EntityOrder    EntityType = "ORDER"
 	EntityPayment  EntityType = "PAYMENT"
 	EntityCustomer EntityType = "CUSTOMER"
+	EntityProduct  EntityType = "PRODUCT"
 )
 
 func (e EntityType) Valid() bool {
 	switch e {
-	case EntityOrder, EntityPayment, EntityCustomer:
+	case EntityOrder, EntityPayment, EntityCustomer, EntityProduct:
 		return true
 	}
 	return false
@@ -50,8 +51,11 @@ type Attachment struct {
 
 // Attachment purposes.
 const (
-	PurposeGeneral     = "general"
-	PurposeInspiration = "inspiration"
+	PurposeGeneral       = "general"
+	PurposeInspiration   = "inspiration"
+	PurposePaymentProof  = "payment_proof"
+	PurposeProductGallery = "product_gallery"
+	PurposeProductCover  = "product_cover"
 )
 
 // NormalizePurpose maps arbitrary input to a valid purpose.
@@ -59,6 +63,12 @@ func NormalizePurpose(p string) string {
 	switch strings.ToLower(strings.TrimSpace(p)) {
 	case PurposeInspiration:
 		return PurposeInspiration
+	case PurposePaymentProof:
+		return PurposePaymentProof
+	case PurposeProductGallery:
+		return PurposeProductGallery
+	case PurposeProductCover:
+		return PurposeProductCover
 	default:
 		return PurposeGeneral
 	}
@@ -67,6 +77,33 @@ func NormalizePurpose(p string) string {
 // IsInspiration reports whether the file is a style reference photo.
 func (a *Attachment) IsInspiration() bool {
 	return a.Purpose == PurposeInspiration
+}
+
+// IsProductImage reports whether the file is catalog imagery.
+func (a *Attachment) IsProductImage() bool {
+	return a.Purpose == PurposeProductGallery || a.Purpose == PurposeProductCover
+}
+
+// IsCover reports whether the file is the product's cover image.
+func (a *Attachment) IsCover() bool {
+	return a.Purpose == PurposeProductCover
+}
+
+// CustomerVisiblePurposes are the purposes a customer may see through the
+// portal token. Mirrors the allowlist in get_portal_attachment — keep both
+// in sync.
+var CustomerVisiblePurposes = []string{
+	PurposeGeneral, PurposeInspiration, PurposePaymentProof,
+}
+
+// IsCustomerVisible reports whether the attachment may be served through
+// the public portal.
+func (a *Attachment) IsCustomerVisible() bool {
+	switch a.Purpose {
+	case PurposeGeneral, PurposeInspiration, PurposePaymentProof:
+		return true
+	}
+	return false
 }
 
 // Errors.

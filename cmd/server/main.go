@@ -203,10 +203,12 @@ func run() error {
 
 	numberRepo := postgres.NewOrderNumberRepo(db)
 	measurementRepo := postgres.NewMeasurementRepo(db)
+	productRepo := postgres.NewProductRepo(db)
 
 	orderService := app.NewOrderService(app.OrderServiceDeps{
 		DB:           db,
 		Customers:    custRepo,
+		Products:     productRepo,
 		Orders:       orderRepo,
 		OrderRead:    orderRepo,
 		Numbers:      numberRepo,
@@ -259,16 +261,18 @@ func run() error {
 	}
 
 	// ---- Products ----
-	productRepo := postgres.NewProductRepo(db)
 	productService := app.NewProductService(app.ProductServiceDeps{
 		Store: productRepo,
 		IDs:   id.Generator{},
 	})
 	productH := &handlers.ProductHandler{
-		Service:  productService,
-		Repo:     productRepo,
-		Renderer: renderer,
+		Service:     productService,
+		Repo:        productRepo,
+		Attachments: attachService,
+		Renderer:    renderer,
 	}
+	// Product image uploads validate the product through the catalog service.
+	attachH.ProductLookup = productService
 
 	orderH := &handlers.OrderHandler{
 		Service:      orderService,
@@ -523,7 +527,8 @@ func run() error {
 	// ---- Public portal ----
 	portalRepo := postgres.NewPortalRepo(db)
 	portalService := app.NewPortalService(app.PortalServiceDeps{
-		Repo: portalRepo,
+		Repo:  portalRepo,
+		Blobs: blobs,
 	})
 	publicOrderRepo := postgres.NewPublicOrderRepo(db, id.Generator{})
 	publicOrderService := app.NewPublicOrderService(app.PublicOrderServiceDeps{
@@ -684,6 +689,8 @@ func run() error {
 	portalMux := http.NewServeMux()
 	portalMux.HandleFunc("GET /o/{token}", portalH.Show)
 	portalMux.HandleFunc("GET /o/{token}/receipt", portalH.Receipt)
+	portalMux.HandleFunc("GET /o/{token}/attachments/{id}", portalH.ProofDownload)
+	portalMux.HandleFunc("GET /public/product-images/{id}", portalH.ProductImage)
 	portalMux.HandleFunc("GET /order/{slug}", portalH.IntakeForm)
 	portalMux.HandleFunc("POST /order/{slug}", portalH.IntakeSubmit)
 
@@ -697,6 +704,15 @@ func run() error {
 	})(portalMux))
 	mux.Handle("GET /o/{token}/receipt", middleware.RateLimit(middleware.RateLimitConfig{
 		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(portalMux))
+	// Token-bound proof downloads + public catalog images (same limits).
+	mux.Handle("GET /o/{token}/attachments/{id}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(portalMux))
+	mux.Handle("GET /public/product-images/{id}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 120, Window: time.Minute,
 		Message: "Too many requests. Please slow down.",
 	})(portalMux))
 	mux.Handle("GET /order/{slug}", middleware.RateLimit(middleware.RateLimitConfig{
@@ -882,6 +898,10 @@ func run() error {
 	// ---- Attachments ----
 	mux.Handle("POST /orders/{id}/attachments", gatedWrite("orders", http.HandlerFunc(attachH.UploadToOrder)))
 	mux.Handle("GET /attachments/{id}", gated("orders", http.HandlerFunc(attachH.Download)))
+	// ---- Product images (catalog gallery) ----
+	mux.Handle("POST /products/{id}/images", gatedWrite("products", http.HandlerFunc(attachH.UploadToProduct)))
+	mux.Handle("POST /products/{id}/images/{imageID}/cover", gatedWrite("products", http.HandlerFunc(attachH.SetProductCover)))
+	mux.Handle("POST /products/images/{id}/delete", gatedWrite("products", http.HandlerFunc(attachH.DeleteProductImage)))
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.
 	handler := chain(mux,

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -31,16 +32,28 @@ func (r *ProductRepo) Create(ctx context.Context, scope tenant.TenantScope, p *p
 		return fmt.Errorf("product_repo: org mismatch")
 	}
 	return r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		questions, err := marshalQuestions(p.Questions)
+		if err != nil {
+			return err
+		}
 		const q = `
 			INSERT INTO products
-				(id, organization_id, name, description, sku, unit_price_minor, currency, active, created_by, created_at, updated_at)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+				(id, organization_id, name, description, sku, unit_price_minor, currency, active, created_by, created_at, updated_at,
+				 material, color, short_description, internal_notes, specs, production_days,
+				 quote_only, starting_from, hidden, availability, category, questions)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+			        $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23::jsonb)
 		`
-		_, err := tx.Exec(ctx, q,
+		_, err = tx.Exec(ctx, q,
 			p.ID, p.OrganizationID, p.Name,
 			nullIfEmpty(p.Description), nullIfEmpty(p.SKU),
 			p.UnitPrice.Amount(), p.Currency, p.Active,
 			p.CreatedBy, p.CreatedAt, p.UpdatedAt,
+			nullIfEmpty(p.Material), nullIfEmpty(p.Color),
+			nullIfEmpty(p.ShortDescription), nullIfEmpty(p.InternalNotes),
+			nullIfEmpty(p.Specs), nullIfInt(p.ProductionDays),
+			p.QuoteOnly, p.StartingFrom, p.Hidden, p.Availability,
+			nullIfEmpty(p.Category), questions,
 		)
 		if err != nil {
 			return fmt.Errorf("product_repo: create: %w", Classify(err))
@@ -54,15 +67,28 @@ func (r *ProductRepo) Update(ctx context.Context, scope tenant.TenantScope, p *p
 		return fmt.Errorf("product_repo: org mismatch")
 	}
 	return r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		questions, err := marshalQuestions(p.Questions)
+		if err != nil {
+			return err
+		}
 		const q = `
 			UPDATE products
 			   SET name = $2, description = $3, sku = $4,
-			       unit_price_minor = $5, active = $6, updated_at = $7
+			       unit_price_minor = $5, active = $6, updated_at = $7,
+			       material = $8, color = $9, short_description = $10,
+			       internal_notes = $11, specs = $12, production_days = $13,
+			       quote_only = $14, starting_from = $15, hidden = $16,
+			       availability = $17, category = $18, questions = $19::jsonb
 			 WHERE id = $1
 		`
 		ct, err := tx.Exec(ctx, q,
 			p.ID, p.Name, nullIfEmpty(p.Description), nullIfEmpty(p.SKU),
 			p.UnitPrice.Amount(), p.Active, p.UpdatedAt,
+			nullIfEmpty(p.Material), nullIfEmpty(p.Color),
+			nullIfEmpty(p.ShortDescription), nullIfEmpty(p.InternalNotes),
+			nullIfEmpty(p.Specs), nullIfInt(p.ProductionDays),
+			p.QuoteOnly, p.StartingFrom, p.Hidden, p.Availability,
+			nullIfEmpty(p.Category), questions,
 		)
 		if err != nil {
 			return fmt.Errorf("product_repo: update: %w", Classify(err))
@@ -107,7 +133,12 @@ func (r *ProductRepo) GetByID(ctx context.Context, scope tenant.TenantScope, id 
 	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		const q = `
 			SELECT id, organization_id, name, COALESCE(description,''), COALESCE(sku,''),
-			       unit_price_minor, currency, active, created_by, created_at, updated_at
+			       unit_price_minor, currency, active, created_by, created_at, updated_at,
+			       COALESCE(material,''), COALESCE(color,''), COALESCE(short_description,''),
+			       COALESCE(internal_notes,''), COALESCE(specs,''), production_days,
+			       COALESCE(quote_only,false), COALESCE(starting_from,false),
+			       COALESCE(hidden,false), COALESCE(availability,'in_stock'),
+			       COALESCE(category,''), COALESCE(questions,'[]')
 			FROM products
 			WHERE id = $1
 		`
@@ -158,7 +189,12 @@ func (r *ProductRepo) List(ctx context.Context, scope tenant.TenantScope, opts P
 		pageArgs = append(pageArgs, opts.Limit, opts.Offset)
 		listSQL := fmt.Sprintf(`
 			SELECT id, organization_id, name, COALESCE(description,''), COALESCE(sku,''),
-			       unit_price_minor, currency, active, created_by, created_at, updated_at
+			       unit_price_minor, currency, active, created_by, created_at, updated_at,
+			       COALESCE(material,''), COALESCE(color,''), COALESCE(short_description,''),
+			       COALESCE(internal_notes,''), COALESCE(specs,''), production_days,
+			       COALESCE(quote_only,false), COALESCE(starting_from,false),
+			       COALESCE(hidden,false), COALESCE(availability,'in_stock'),
+			       COALESCE(category,''), COALESCE(questions,'[]')
 			FROM products
 			WHERE %s
 			ORDER BY active DESC, name ASC
@@ -232,8 +268,23 @@ func scanProduct(row scannable) (*product.Product, error) {
 		createdBy   uuid.UUID
 		createdAt   time.Time
 		updatedAt   time.Time
+
+		material      string
+		color         string
+		shortDesc     string
+		notes         string
+		specs         string
+		prodDays      *int
+		quoteOnly     bool
+		startingFrom  bool
+		hidden        bool
+		availability  string
+		category      string
+		questionsRaw  []byte
 	)
-	if err := row.Scan(&id, &orgID, &name, &description, &sku, &priceMinor, &currency, &active, &createdBy, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&id, &orgID, &name, &description, &sku, &priceMinor, &currency, &active, &createdBy, &createdAt, &updatedAt,
+		&material, &color, &shortDesc, &notes, &specs, &prodDays,
+		&quoteOnly, &startingFrom, &hidden, &availability, &category, &questionsRaw); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, product.ErrNotFound
 		}
@@ -243,7 +294,14 @@ func scanProduct(row scannable) (*product.Product, error) {
 	if err != nil {
 		return nil, fmt.Errorf("product_repo: bad price: %w", err)
 	}
-	return &product.Product{
+	questions, err := unmarshalQuestions(questionsRaw)
+	if err != nil {
+		return nil, fmt.Errorf("product_repo: bad questions: %w", err)
+	}
+	if availability == "" {
+		availability = product.AvailabilityInStock
+	}
+	p := &product.Product{
 		ID:             id,
 		OrganizationID: orgID,
 		Name:           name,
@@ -255,5 +313,53 @@ func scanProduct(row scannable) (*product.Product, error) {
 		CreatedBy:      createdBy,
 		CreatedAt:      createdAt,
 		UpdatedAt:      updatedAt,
-	}, nil
+
+		Material:         material,
+		Color:            color,
+		ShortDescription: shortDesc,
+		InternalNotes:    notes,
+		Specs:            specs,
+		QuoteOnly:        quoteOnly,
+		StartingFrom:     startingFrom,
+		Hidden:           hidden,
+		Availability:     availability,
+		Category:         category,
+		Questions:        questions,
+	}
+	if prodDays != nil {
+		p.ProductionDays = *prodDays
+	}
+	return p, nil
+}
+
+// nullIfInt stores 0 production days as NULL (unset).
+func nullIfInt(n int) any {
+	if n <= 0 {
+		return nil
+	}
+	return n
+}
+
+// marshalQuestions encodes product questions for the JSONB column.
+func marshalQuestions(qs []product.ProductQuestion) (string, error) {
+	if len(qs) == 0 {
+		return "[]", nil
+	}
+	raw, err := json.Marshal(qs)
+	if err != nil {
+		return "", fmt.Errorf("product_repo: marshal questions: %w", err)
+	}
+	return string(raw), nil
+}
+
+// unmarshalQuestions decodes the JSONB column; NULL/empty yields nil.
+func unmarshalQuestions(raw []byte) ([]product.ProductQuestion, error) {
+	if len(raw) == 0 || string(raw) == "null" || string(raw) == "[]" {
+		return nil, nil
+	}
+	var qs []product.ProductQuestion
+	if err := json.Unmarshal(raw, &qs); err != nil {
+		return nil, err
+	}
+	return qs, nil
 }

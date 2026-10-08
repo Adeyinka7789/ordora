@@ -62,7 +62,7 @@
       <tbody>
         {{ range .Lines }}
         <tr>
-          <td>{{ .Description }}</td>
+          <td>{{ .Description }}{{ if .Material }}<div class="rcpt-line-sub">{{ .Material }}</div>{{ end }}</td>
           <td class="rcpt-num">{{ formatQty .QuantityScaled }}</td>
           <td class="rcpt-num">{{ currency .UnitPriceMinor .Currency }}</td>
           <td class="rcpt-num">{{ currency .SubtotalMinor .Currency }}</td>
@@ -89,8 +89,8 @@
         {{ if .Proofs }}
         <div class="rcpt-proofs">
           {{ range .Proofs }}
-            {{ if .ID }}
-              <a class="rcpt-proof-link" href="/attachments/{{ .ID }}">🧾 {{ .Filename }}</a>
+            {{ if .URL }}
+              <a class="rcpt-proof-link" href="{{ .URL }}">🧾 {{ .Filename }}</a>
             {{ else }}
               <span class="rcpt-proof-text">🧾 {{ .Filename }}</span>
             {{ end }}

@@ -37,7 +37,9 @@ type BrowsableTable struct {
 	MaxLimit      int
 }
 
-// ListTables returns the whitelist.
+// ListTables returns the whitelist, minus denied session/token tables.
+// Filtering here keeps the UI from showing dead links on databases that
+// predate the 0051 cleanup migration (GetTable/Browse fail closed anyway).
 func (r *AdminDataRepo) ListTables(ctx context.Context) ([]BrowsableTable, error) {
 	var out []BrowsableTable
 	err := r.adminDB.WithTx(ctx, func(tx pgx.Tx) error {
@@ -55,6 +57,9 @@ func (r *AdminDataRepo) ListTables(ctx context.Context) ([]BrowsableTable, error
 			var t BrowsableTable
 			if err := rows.Scan(&t.TableName, &t.DisplayName, &t.SearchColumns, &t.OrderBy, &t.OrderDir, &t.MaxLimit); err != nil {
 				return err
+			}
+			if _, denied := deniedTables[strings.ToLower(t.TableName)]; denied {
+				continue
 			}
 			out = append(out, t)
 		}
@@ -126,7 +131,15 @@ type ColumnInfo struct {
 
 // DescribeTable reads columns from information_schema for the given table.
 // Table name is validated against the whitelist before this runs.
+//
+// Secret columns are stripped here — this is the single choke point, so
+// neither the UI headers (via AdminDataService.Browse) nor the SELECT list
+// (via BrowseTable below) can ever expose names like password_hash or
+// token_hash. Denied tables fail closed with ErrNotFound.
 func (r *AdminDataRepo) DescribeTable(ctx context.Context, tableName string) ([]ColumnInfo, error) {
+	if _, denied := deniedTables[strings.ToLower(tableName)]; denied {
+		return nil, ErrNotFound
+	}
 	var out []ColumnInfo
 	err := r.adminDB.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `
@@ -156,6 +169,9 @@ func (r *AdminDataRepo) DescribeTable(ctx context.Context, tableName string) ([]
 			var col ColumnInfo
 			if err := rows.Scan(&col.Name, &col.DataType, &col.Nullable, &col.IsPK); err != nil {
 				return err
+			}
+			if isDeniedColumn(col.Name) {
+				continue
 			}
 			out = append(out, col)
 		}
@@ -189,19 +205,13 @@ func (r *AdminDataRepo) BrowseTable(ctx context.Context, t *BrowsableTable, sear
 	}
 
 	// Fetch columns.
+	// DescribeTable already strips secret columns and rejects denied tables,
+	// so cols here are exactly the visible set. A table with no visible
+	// columns is treated as non-browsable.
 	cols, err := r.DescribeTable(ctx, t.TableName)
 	if err != nil {
 		return nil, err
 	}
-	// Strip secret columns before building the SELECT. A table left with
-	// no visible columns is treated as non-browsable.
-	visible := cols[:0]
-	for _, c := range cols {
-		if !isDeniedColumn(c.Name) {
-			visible = append(visible, c)
-		}
-	}
-	cols = visible
 	if len(cols) == 0 {
 		return nil, ErrNotFound
 	}

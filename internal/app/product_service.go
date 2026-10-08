@@ -50,6 +50,7 @@ type CreateProductInput struct {
 	SKU            string
 	UnitPriceMinor int64
 	Currency       string
+	Catalog        product.CatalogDetails
 }
 
 type UpdateProductInput struct {
@@ -57,6 +58,7 @@ type UpdateProductInput struct {
 	Description    string
 	SKU            string
 	UnitPriceMinor int64
+	Catalog        product.CatalogDetails
 }
 
 // Errors.
@@ -95,6 +97,9 @@ func (s *ProductService) Create(ctx context.Context, scope tenant.TenantScope, i
 	if err != nil {
 		return nil, err
 	}
+	if err := p.ApplyCatalog(in.Catalog, s.now()); err != nil {
+		return nil, err
+	}
 
 	if err := s.store.Create(ctx, scope, p); err != nil {
 		return nil, err
@@ -121,6 +126,9 @@ func (s *ProductService) Update(ctx context.Context, scope tenant.TenantScope, i
 		return nil, err
 	}
 	if err := p.Update(in.Name, in.Description, in.SKU, price, s.now()); err != nil {
+		return nil, err
+	}
+	if err := p.ApplyCatalog(in.Catalog, s.now()); err != nil {
 		return nil, err
 	}
 	if err := s.store.Update(ctx, scope, p); err != nil {

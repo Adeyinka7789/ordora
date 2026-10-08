@@ -35,14 +35,15 @@ type receiptLine struct {
 	UnitPriceMinor int64
 	SubtotalMinor  int64
 	Currency       string
+	Material       string // order-time snapshot (may be "")
 }
 
-// receiptProof is one already-uploaded payment-proof file. ID is empty on
-// the public receipt (downloads stay behind staff auth), in which case the
-// template renders the filename as text instead of a link.
+// receiptProof is one already-uploaded payment-proof file. URL is empty
+// when there is no download (template renders the filename as text).
 type receiptProof struct {
 	ID       string
 	Filename string
+	URL      string
 }
 
 // receiptPayment is one "what they paid" row.
@@ -369,6 +370,7 @@ func staffReceiptCard(r *http.Request, d *receiptDetail, _ string) receiptCard {
 			UnitPriceMinor: it.UnitPrice.Amount(),
 			SubtotalMinor:  it.Subtotal.Amount(),
 			Currency:       it.UnitPrice.Currency(),
+			Material:       it.Material,
 		})
 	}
 	for _, p := range d.Payments {
@@ -383,7 +385,11 @@ func staffReceiptCard(r *http.Request, d *receiptDetail, _ string) receiptCard {
 			IsReversal:  p.IsReversal(),
 		}
 		for _, a := range d.ProofsByPayment[p.ID] {
-			rp.Proofs = append(rp.Proofs, receiptProof{ID: a.ID.String(), Filename: a.Filename})
+			rp.Proofs = append(rp.Proofs, receiptProof{
+				ID:       a.ID.String(),
+				Filename: a.Filename,
+				URL:      "/attachments/" + a.ID.String(),
+			})
 		}
 		card.Payments = append(card.Payments, rp)
 	}
@@ -398,8 +404,8 @@ func staffReceiptCard(r *http.Request, d *receiptDetail, _ string) receiptCard {
 //
 // Same card, public layout. Available under the same token rules as the
 // portal itself, plus the receipt gate (COMPLETED or fully paid) so an
-// in-progress order's receipt can't be opened early. Proof downloads stay
-// staff-only: the card lists proof filenames as text.
+// in-progress order's receipt can't be opened early. Proofs link to the
+// token-bound download endpoint (/o/{token}/attachments/{id}).
 
 type portalReceiptPage struct {
 	Title   string
@@ -428,7 +434,7 @@ func (h *PortalHandler) Receipt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	card := portalReceiptCard(v)
+	card := portalReceiptCard(v, token)
 	card.ReceiptURL = absoluteURL(r, "/o/"+token+"/receipt")
 	data := portalReceiptPage{
 		Title:   "Receipt " + v.OrderNumber,
@@ -438,7 +444,7 @@ func (h *PortalHandler) Receipt(w http.ResponseWriter, r *http.Request) {
 	h.Renderer.PagePublic(w, http.StatusOK, "layouts/public.html", "portal/receipt.html", data)
 }
 
-func portalReceiptCard(v *app.PortalView) receiptCard {
+func portalReceiptCard(v *app.PortalView, token string) receiptCard {
 	card := receiptCard{
 		OrgName:    v.OrgName,
 		OrgEmail:   v.OrgEmail,
@@ -475,6 +481,7 @@ func portalReceiptCard(v *app.PortalView) receiptCard {
 			UnitPriceMinor: it.UnitPrice.Amount(),
 			SubtotalMinor:  it.Subtotal.Amount(),
 			Currency:       it.UnitPrice.Currency(),
+			Material:       it.Material,
 		})
 	}
 	for _, p := range v.Payments {
@@ -488,11 +495,18 @@ func portalReceiptCard(v *app.PortalView) receiptCard {
 			IsReversed:  p.IsReversed,
 			IsReversal:  p.IsReversal,
 		}
-		// No download IDs on the public receipt: filenames as text only.
-		for _, name := range strings.Split(p.ProofNames, ",") {
-			if name = strings.TrimSpace(name); name != "" {
-				rp.Proofs = append(rp.Proofs, receiptProof{Filename: name})
+		// Token-bound downloads: each proof links to the portal endpoint,
+		// which re-validates token, ownership, and purpose per request.
+		for _, proof := range p.Proofs {
+			name := proof.Filename
+			if name == "" {
+				continue
 			}
+			rp.Proofs = append(rp.Proofs, receiptProof{
+				ID:       proof.ID.String(),
+				Filename: name,
+				URL:      "/o/" + token + "/attachments/" + proof.ID.String(),
+			})
 		}
 		card.Payments = append(card.Payments, rp)
 	}

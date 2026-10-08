@@ -15,7 +15,9 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
+	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/domain/payment"
+	"github.com/Adeyinka7789/ordora/internal/domain/product"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -25,9 +27,23 @@ import (
 type AttachmentHandler struct {
 	Service       *app.AttachmentService
 	PaymentLookup PaymentLookup
-	OrderService  *app.OrderService   // for re-rendering the fragment
+	OrderService  OrderLookup        // for re-rendering the fragment
 	PaymentSvc    *app.PaymentService // for re-rendering the fragment
+	ProductLookup ProductLookup
 	Renderer      *render.Renderer
+}
+
+// ProductLookup is the minimal interface the attachment handler needs to
+// validate a product exists before accepting gallery images.
+type ProductLookup interface {
+	Get(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*product.Product, error)
+}
+
+// OrderLookup is the minimal interface the attachment handler needs to
+// validate an order exists in the org (upload guard) and reload it for
+// fragment re-rendering. *app.OrderService satisfies it; tests stub it.
+type OrderLookup interface {
+	GetOrder(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*order.Order, error)
 }
 
 // PaymentLookup is the minimal interface the attachment handler needs to
@@ -144,6 +160,99 @@ func (h *AttachmentHandler) Download(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	_, _ = io.Copy(w, body)
+}
+
+// UploadToProduct handles POST /products/{id}/images. Only images are
+// accepted; the purpose defaults to gallery unless cover was requested.
+func (h *AttachmentHandler) UploadToProduct(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireWriteScope(w, r)
+	if !ok {
+		return
+	}
+	productID, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	if h.ProductLookup == nil {
+		http.Error(w, "product lookup not configured", http.StatusInternalServerError)
+		return
+	}
+	if _, err := h.ProductLookup.Get(r.Context(), scope, productID); err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// The upload form carries purpose=gallery or purpose=cover;
+	// readAndStore normalizes anything else to gallery.
+	a, err := h.readAndStore(r, scope, attachment.EntityProduct, productID)
+	if err != nil {
+		http.Error(w, humanizeAttachmentError(err), http.StatusBadRequest)
+		return
+	}
+	if !a.IsImage() {
+		_ = h.Service.Delete(r.Context(), scope, a.ID)
+		http.Error(w, "Only images (JPG, PNG, WEBP, GIF) are allowed for products.", http.StatusBadRequest)
+		return
+	}
+	// Catalog images are always gallery/cover — never general.
+	if !a.IsProductImage() {
+		_ = h.Service.SetPurpose(r.Context(), scope, a.ID, attachment.PurposeProductGallery)
+	}
+	http.Redirect(w, r, "/products/"+productID.String()+"?notice=Image+uploaded.", http.StatusSeeOther)
+}
+
+// SetProductCover handles POST /products/{id}/images/{imageID}/cover.
+func (h *AttachmentHandler) SetProductCover(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireWriteScope(w, r)
+	if !ok {
+		return
+	}
+	productID, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	imageID, ok := parseUUIDParam(w, r, "imageID")
+	if !ok {
+		return
+	}
+	if err := h.Service.SetCover(r.Context(), scope, productID, imageID); err != nil {
+		http.Error(w, "Could not set cover image.", http.StatusBadRequest)
+		return
+	}
+	http.Redirect(w, r, "/products/"+productID.String()+"?notice=Cover+image+set.", http.StatusSeeOther)
+}
+
+// DeleteProductImage handles POST /products/images/{id}/delete.
+func (h *AttachmentHandler) DeleteProductImage(w http.ResponseWriter, r *http.Request) {
+	scope, ok := requireWriteScope(w, r)
+	if !ok {
+		return
+	}
+	imageID, ok := parseUUIDParam(w, r, "id")
+	if !ok {
+		return
+	}
+	productIDStr := r.URL.Query().Get("product_id")
+	productID, err := uuid.Parse(productIDStr)
+	if err != nil {
+		http.Error(w, "missing product_id", http.StatusBadRequest)
+		return
+	}
+	// Only product images may be deleted here (never order/payment files).
+	a, _, err := h.Service.Open(r.Context(), scope, imageID)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if a.EntityType != attachment.EntityProduct || a.EntityID != productID {
+		http.NotFound(w, r)
+		return
+	}
+	if err := h.Service.Delete(r.Context(), scope, imageID); err != nil {
+		http.Error(w, "Could not delete image.", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/products/"+productID.String()+"?notice=Image+deleted.", http.StatusSeeOther)
 }
 
 // readAndStore parses a multipart upload and hands it to the service.

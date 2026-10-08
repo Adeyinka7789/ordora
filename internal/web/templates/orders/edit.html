@@ -112,6 +112,9 @@
                 <td class="py-2 px-space-sm">
                   <input type="text" name="items[{{ $i }}][description]" value="{{ $it.Description }}" required
                          class="w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+                  <input type="hidden" name="items[{{ $i }}][product_id]" value="{{ $it.ProductID }}">
+                  <input type="hidden" name="items[{{ $i }}][material]" value="{{ $it.Material }}">
+                  <input type="hidden" name="items[{{ $i }}][image_ref]" value="{{ $it.ImageRef }}">
                 </td>
                 <td class="py-2 px-space-sm">
                   <input type="text" name="items[{{ $i }}][quantity]" value="{{ $it.Quantity }}" required inputmode="decimal" class="qty-input w-full h-8 px-2 rounded bg-surface-container-low text-on-surface font-code-md text-code-md text-center focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">

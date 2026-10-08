@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -390,6 +391,24 @@ func requireWriteScope(w http.ResponseWriter, r *http.Request) (tenant.TenantSco
 		return tenant.TenantScope{}, false
 	}
 	return scope, true
+}
+
+// parseOptionalUUID parses an optional UUID form value; invalid/blank
+// yields uuid.Nil (no link).
+func parseOptionalUUID(raw string) uuid.UUID {
+	id, err := uuid.Parse(strings.TrimSpace(raw))
+	if err != nil {
+		return uuid.Nil
+	}
+	return id
+}
+
+// uuidToString renders a UUID for hidden form fields ("" when Nil).
+func uuidToString(id uuid.UUID) string {
+	if id == uuid.Nil {
+		return ""
+	}
+	return id.String()
 }
 
 // parseUUIDParam reads a UUID route parameter.

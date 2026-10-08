@@ -8,14 +8,18 @@
     {{ range .Products }}
       <li>
         <button type="button" class="picker-item w-full flex items-center justify-between p-space-md hover:bg-surface-container transition-colors text-left"
+                data-id="{{ .ID }}"
                 data-name="{{ .Name }}"
                 data-price="{{ printf "%.2f" (divf .UnitPrice.Amount 100) }}"
-                data-desc="{{ .Description }}">
+                data-desc="{{ .Description }}"
+                data-material="{{ .Material }}"
+                data-image="{{ index $.Covers .ID.String }}">
           <div class="flex flex-col min-w-0">
             <span class="font-label-md text-label-md font-semibold text-on-surface truncate">{{ .Name }}</span>
             {{ if .SKU }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .SKU }}</span>{{ end }}
+            {{ if .Material }}<span class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ .Material }}</span>{{ end }}
           </div>
-          <span class="font-code-md text-code-md font-bold text-primary tabular-nums whitespace-nowrap ml-space-sm">{{ currency .UnitPrice.Amount .Currency }}</span>
+          <span class="font-code-md text-code-md font-bold text-primary tabular-nums whitespace-nowrap ml-space-sm">{{ if .QuoteOnly }}Quote{{ else }}{{ currency .UnitPrice.Amount .Currency }}{{ end }}</span>
         </button>
       </li>
     {{ end }}

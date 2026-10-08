@@ -158,6 +158,7 @@
                 <tr class="border-b border-outline-variant/20">
                   <td class="py-space-md px-space-sm">
                     <span class="font-label-md text-label-md font-bold text-on-surface">{{ .Description }}</span>
+                    {{ if .Material }}<div class="font-body-sm text-body-sm text-on-surface-variant">{{ .Material }}</div>{{ end }}
                   </td>
                   <td class="py-space-md px-space-sm text-center font-code-md text-code-md font-semibold">{{ formatQty .Quantity }}</td>
                   <td class="py-space-md px-space-sm text-right font-code-md text-code-md tabular-nums">{{ currency .UnitPrice.Amount .UnitPrice.Currency }}</td>

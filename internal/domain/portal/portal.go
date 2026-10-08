@@ -40,7 +40,8 @@ type Order struct {
 	OrgTimezone string
 }
 
-// Item is one line item in a public order view.
+// Item is one line item in a public order view. Material/ImageRef are
+// snapshots taken at order time — later catalog edits don't change them.
 type Item struct {
 	Description    string
 	Quantity       float64
@@ -48,11 +49,14 @@ type Item struct {
 	SubtotalMinor  int64
 	Currency       string
 	Position       int
+	Material       string
+	ImageRef       string // product cover attachment id at order time (may be "")
 }
 
 // Payment is one payment line for the public receipt. ProofNames carries
-// the filenames of payment-proof attachments (staff-side uploads); the
-// files themselves stay behind staff auth.
+// the filenames of payment-proof attachments (staff-side uploads);
+// ProofIDs carries the matching attachment ids (same order) so the portal
+// can link token-bound downloads.
 type Payment struct {
 	Method      string
 	Reference   string
@@ -64,4 +68,5 @@ type Payment struct {
 	IsReversal  bool
 	ProofCount  int
 	ProofNames  string
+	ProofIDs    string
 }

@@ -49,13 +49,15 @@ func (r *PublicOrderRepo) LookupOrgBySlug(ctx context.Context, slug string) (*ap
 	return out, nil
 }
 
-// ListProductsBySlug returns the shop's active catalog for the public
+// ListProductsBySlug returns the shop's visible catalog for the public
 // intake form. Unknown slugs yield an empty list.
 func (r *PublicOrderRepo) ListProductsBySlug(ctx context.Context, slug string) ([]app.PublicProduct, error) {
 	var out []app.PublicProduct
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `
-			SELECT product_id, product_name, product_description, unit_price_minor, currency
+			SELECT product_id, product_name, product_description, product_short,
+			       product_material, product_category, unit_price_minor, currency,
+			       quote_only, starting_from, availability, cover_image_id, product_questions
 			FROM get_public_products($1)
 		`
 		rows, err := tx.Query(ctx, q, slug)
@@ -65,14 +67,36 @@ func (r *PublicOrderRepo) ListProductsBySlug(ctx context.Context, slug string) (
 		defer rows.Close()
 		for rows.Next() {
 			var p app.PublicProduct
-			if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.UnitPriceMinor, &p.Currency); err != nil {
+			var coverID *uuid.UUID
+			var questionsRaw []byte
+			if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.ShortDescription,
+				&p.Material, &p.Category, &p.UnitPriceMinor, &p.Currency,
+				&p.QuoteOnly, &p.StartingFrom, &p.Availability,
+				&coverID, &questionsRaw); err != nil {
 				return fmt.Errorf("public_order_repo: scan product: %w", err)
 			}
+			if coverID != nil {
+				p.CoverImageID = *coverID
+			}
+			p.Questions = unmarshalPublicQuestions(questionsRaw)
 			out = append(out, p)
 		}
 		return rows.Err()
 	})
 	return out, err
+}
+
+// unmarshalPublicQuestions decodes the questions JSONB from
+// get_public_products. The keys match product.ProductQuestion encoding.
+func unmarshalPublicQuestions(raw []byte) []app.ProductQuestion {
+	if len(raw) == 0 {
+		return nil
+	}
+	var qs []app.ProductQuestion
+	if err := json.Unmarshal(raw, &qs); err != nil {
+		return nil
+	}
+	return qs
 }
 
 // CreatePublicOrder runs the SECURITY DEFINER function that creates the
@@ -82,7 +106,7 @@ func (r *PublicOrderRepo) CreatePublicOrder(ctx context.Context, in app.PublicOr
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `
 			SELECT * FROM create_public_order(
-				$1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11
+				$1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12::jsonb
 			)
 		`
 		orderID := r.ids.New()
@@ -93,6 +117,10 @@ func (r *PublicOrderRepo) CreatePublicOrder(ctx context.Context, in app.PublicOr
 		if err != nil {
 			return err
 		}
+		answers, err := marshalPublicAnswers(in.Answers)
+		if err != nil {
+			return err
+		}
 
 		var res app.PublicOrderResult
 		if err := tx.QueryRow(ctx, q,
@@ -100,6 +128,7 @@ func (r *PublicOrderRepo) CreatePublicOrder(ctx context.Context, in app.PublicOr
 			in.Description, in.ExpectedDate, in.BudgetMinor,
 			items,
 			orderID, customerID, auditID,
+			answers,
 		).Scan(&res.OrderID, &res.OrderNumber, &res.OrgName, &res.OrgPhone, &res.TotalMinor, &res.Currency); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return app.ErrPublicOrgNotFound
@@ -119,6 +148,24 @@ func (r *PublicOrderRepo) CreatePublicOrder(ctx context.Context, in app.PublicOr
 	return out, nil
 }
 
+// marshalPublicAnswers encodes product-question answers for
+// create_public_order: [{product, q, a}]. Empty yields '[]'.
+func marshalPublicAnswers(in []app.PublicAnswer) (string, error) {
+	type answer struct {
+		Product string `json:"product"`
+		Q       string `json:"q"`
+		A       string `json:"a"`
+	}
+	out := make([]answer, 0, len(in))
+	for _, a := range in {
+		out = append(out, answer{Product: a.Product, Q: a.Q, A: a.A})
+	}
+	raw, err := json.Marshal(out)
+	if err != nil {
+		return "", fmt.Errorf("public_order_repo: marshal answers: %w", err)
+	}
+	return string(raw), nil
+}
 // marshalPublicItems encodes product lines for create_public_order:
 // [{id, product_id, qty}] with qty as an exact 3-decimal numeric string.
 // Item ids are generated here so the function stays free of extension

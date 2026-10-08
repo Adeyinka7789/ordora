@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/portal"
 )
 
@@ -74,7 +75,8 @@ func (r *PortalRepo) ListPayments(ctx context.Context, orderID uuid.UUID) ([]por
 			var p portal.Payment
 			if err := rows.Scan(&p.Method, &p.Reference, &p.PaidAt,
 				&p.AmountMinor, &p.Currency, &p.Notes,
-				&p.IsReversed, &p.IsReversal, &p.ProofCount, &p.ProofNames); err != nil {
+				&p.IsReversed, &p.IsReversal, &p.ProofCount, &p.ProofNames,
+				&p.ProofIDs); err != nil {
 				return err
 			}
 			out = append(out, p)
@@ -84,7 +86,62 @@ func (r *PortalRepo) ListPayments(ctx context.Context, orderID uuid.UUID) ([]por
 	return out, err
 }
 
-// ListItems returns the line items for one order.
+// GetPortalAttachment resolves one proof file through the portal token.
+// All authorization (token validity, org match, order/payment ownership,
+// purpose allowlist) happens inside the SECURITY DEFINER function.
+func (r *PortalRepo) GetPortalAttachment(ctx context.Context, tokenHash []byte, attachmentID uuid.UUID) (*app.PortalAttachment, error) {
+	var out *app.PortalAttachment
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `SELECT * FROM get_portal_attachment($1, $2)`
+		var a app.PortalAttachment
+		if err := tx.QueryRow(ctx, q, tokenHash, attachmentID).Scan(
+			&a.ID, &a.OrderID, &a.OrgID, &a.Filename,
+			&a.MimeType, &a.SizeBytes, &a.StorageKey,
+		); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrPortalTokenNotFound
+			}
+			return fmt.Errorf("portal_repo: attachment: %w", err)
+		}
+		out = &a
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, ErrPortalTokenNotFound
+	}
+	return out, nil
+}
+
+// GetPublicProductImage resolves one catalog image. The function only
+// returns rows for images on active, visible products of non-suspended
+// orgs; anything else is a 404 with no existence signal.
+func (r *PortalRepo) GetPublicProductImage(ctx context.Context, attachmentID uuid.UUID) (*app.PublicProductImage, error) {
+	var out *app.PublicProductImage
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `SELECT * FROM get_public_product_image($1)`
+		var img app.PublicProductImage
+		if err := tx.QueryRow(ctx, q, attachmentID).Scan(
+			&img.StorageKey, &img.MimeType, &img.Filename, &img.SizeBytes,
+		); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrPortalTokenNotFound
+			}
+			return fmt.Errorf("portal_repo: product image: %w", err)
+		}
+		out = &img
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, ErrPortalTokenNotFound
+	}
+	return out, nil
+}
 func (r *PortalRepo) ListItems(ctx context.Context, orderID uuid.UUID) ([]portal.Item, error) {
 	var out []portal.Item
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
@@ -97,7 +154,8 @@ func (r *PortalRepo) ListItems(ctx context.Context, orderID uuid.UUID) ([]portal
 		for rows.Next() {
 			var it portal.Item
 			if err := rows.Scan(&it.Description, &it.Quantity, &it.UnitPriceMinor,
-				&it.SubtotalMinor, &it.Currency, &it.Position); err != nil {
+				&it.SubtotalMinor, &it.Currency, &it.Position,
+				&it.Material, &it.ImageRef); err != nil {
 				return err
 			}
 			out = append(out, it)

@@ -22,6 +22,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/domain/measurement"
 	"github.com/Adeyinka7789/ordora/internal/domain/money"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
+	"github.com/Adeyinka7789/ordora/internal/domain/product"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 )
 
@@ -38,6 +39,12 @@ type IDGen interface {
 // CustomerReader is the subset of CustomerRepo the order service needs.
 type CustomerReader interface {
 	GetByID(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*customer.Customer, error)
+}
+
+// ProductReader is the subset of ProductRepo the order service needs: reload
+// a catalog product to enforce quote-only pricing server-side.
+type ProductReader interface {
+	GetByID(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*product.Product, error)
 }
 
 // OrderWriter is the write side of the order repo.
@@ -84,6 +91,7 @@ type MeasurementStore interface {
 type OrderService struct {
 	db           TxRunner
 	customers    CustomerReader
+	products     ProductReader
 	orders       OrderWriter
 	orderRead    OrderReader
 	numbers      NumberAllocator
@@ -98,6 +106,7 @@ type OrderService struct {
 type OrderServiceDeps struct {
 	DB           TxRunner
 	Customers    CustomerReader
+	Products     ProductReader // optional; nil skips quote-only enforcement
 	Orders       OrderWriter
 	OrderRead    OrderReader
 	Numbers      NumberAllocator
@@ -115,6 +124,7 @@ func NewOrderService(d OrderServiceDeps) *OrderService {
 	return &OrderService{
 		db:           d.DB,
 		customers:    d.Customers,
+		products:     d.Products,
 		orders:       d.Orders,
 		orderRead:    d.OrderRead,
 		numbers:      d.Numbers,
@@ -157,6 +167,47 @@ type CreateOrderItemInput struct {
 	Description    string
 	QuantityScaled int64
 	UnitPriceMinor int64
+	// Product snapshot: link + frozen catalog details. Empty for
+	// free-hand lines.
+	ProductID uuid.UUID
+	Material  string
+	ImageRef  string
+}
+
+// attachItemSnapshot freezes catalog details onto a newly built item.
+func attachItemSnapshot(item *order.Item, in CreateOrderItemInput) {
+	if in.ProductID != uuid.Nil {
+		item.AttachProduct(in.ProductID, in.Material, in.ImageRef)
+	}
+}
+
+// resolveItemPrice enforces quote-only pricing server-side. The staff form
+// submits whatever price the picker filled in, so when the line links a
+// catalog product that is quote_only, the unit price is forced to 0
+// regardless of the submitted value (mirrors create_public_order).
+//
+// product.ErrNotFound (deleted product, cross-org id) clears the link and
+// keeps submitted values, so a stale picker row degrades to a free-hand
+// line instead of failing the order. Any other lookup error aborts the
+// operation: a transient database failure must never silently convert a
+// catalog line into a free-hand one.
+// No linked product (or no product reader) leaves the input untouched.
+func (s *OrderService) resolveItemPrice(ctx context.Context, scope tenant.TenantScope, in *CreateOrderItemInput) error {
+	if in.ProductID == uuid.Nil || s.products == nil {
+		return nil
+	}
+	p, err := s.products.GetByID(ctx, scope, in.ProductID)
+	if err != nil {
+		if errors.Is(err, product.ErrNotFound) {
+			in.ProductID = uuid.Nil
+			return nil
+		}
+		return err
+	}
+	if p.QuoteOnly {
+		in.UnitPriceMinor = 0
+	}
+	return nil
 }
 
 // -----------------------------------------------------------------------------
@@ -216,6 +267,9 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 		o.PublicTokenHash = tokenHash
 
 		for i, itemIn := range in.Items {
+			if err := s.resolveItemPrice(ctx, scope, &itemIn); err != nil {
+				return fmt.Errorf("item %d: %w", i, err)
+			}
 			unit, err := money.New(itemIn.UnitPriceMinor, o.Currency)
 			if err != nil {
 				return fmt.Errorf("item %d: %w", i, err)
@@ -224,6 +278,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 			if err != nil {
 				return fmt.Errorf("item %d: %w", i, err)
 			}
+			attachItemSnapshot(item, itemIn)
 			if err := o.AddItem(item); err != nil {
 				return err
 			}
@@ -337,6 +392,9 @@ func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope
 
 		o.Items = nil
 		for i, itemIn := range in.Items {
+			if err := s.resolveItemPrice(ctx, scope, &itemIn); err != nil {
+				return fmt.Errorf("item %d: %w", i, err)
+			}
 			unit, err := money.New(itemIn.UnitPriceMinor, o.Currency)
 			if err != nil {
 				return fmt.Errorf("item %d: %w", i, err)
@@ -345,6 +403,7 @@ func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope
 			if err != nil {
 				return fmt.Errorf("item %d: %w", i, err)
 			}
+			attachItemSnapshot(item, itemIn)
 			if err := o.AddItem(item); err != nil {
 				return err
 			}

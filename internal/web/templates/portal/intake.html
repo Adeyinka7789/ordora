@@ -1,6 +1,10 @@
 {{ define "portal/intake.html" }}
 <div class="w-full max-w-3xl mx-auto px-margin md:px-margin-desktop py-space-lg md:py-space-xl flex flex-col gap-space-lg">
 
+  {{ if .Preview }}
+  <div role="status" class="p-space-md rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">Preview — this is exactly what customers see on your public link. Test submissions will create real orders, so use a test name if you try it.</div>
+  {{ end }}
+
   <div class="flex flex-col gap-space-sm">
     <span class="font-label-md text-label-md uppercase tracking-wider text-primary font-semibold">Place an Order</span>
     <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Order from {{ .OrgName }}</h1>
@@ -50,22 +54,79 @@
 
       {{ if .Products }}
         <div class="flex flex-col gap-space-sm">
-          <span class="font-label-md text-label-md text-on-surface">Pick from the menu <span class="text-on-surface-variant font-normal">(enter a quantity for anything you want)</span></span>
+          <span class="font-label-md text-label-md text-on-surface">Pick from the catalog <span class="text-on-surface-variant font-normal">(enter a quantity for anything you want)</span></span>
+          <div class="flex flex-col md:flex-row gap-space-sm">
+            <input type="search" id="catalog-search" placeholder="Search products…" autocomplete="off"
+                   class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container md:flex-1">
+            {{ if .Categories }}
+            <select id="catalog-category"
+                    class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+              <option value="">All categories</option>
+              {{ range .Categories }}<option value="{{ . }}">{{ . }}</option>{{ end }}
+            </select>
+            {{ end }}
+          </div>
+          <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
           {{ range .Products }}
-            <div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low">
+            {{ $pid := .ID }}
+            <div class="catalog-card flex gap-space-sm p-space-sm rounded-lg bg-surface-container-low" data-name="{{ .Name }} {{ .Material }} {{ .Category }}" data-category="{{ .Category }}">
+              {{ if .CoverImageID }}
+              <img src="/public/product-images/{{ .CoverImageID }}" alt="{{ .Name }}" loading="lazy"
+                   class="w-20 h-20 rounded-lg object-cover shrink-0 bg-surface-container">
+              {{ end }}
               <div class="flex-1 flex flex-col min-w-0">
-                <span class="font-label-md text-label-md text-on-surface font-semibold truncate">{{ .Name }}</span>
-                {{ if .Description }}<span class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ .Description }}</span>{{ end }}
-                <span class="font-code-md text-code-md text-primary font-bold">{{ currency .PriceMinor .Currency }}</span>
+                <span class="font-label-md text-label-md text-on-surface font-semibold">{{ .Name }}</span>
+                {{ if .ShortDescription }}<span class="font-body-sm text-body-sm text-on-surface-variant">{{ .ShortDescription }}</span>
+                {{ else if .Description }}<span class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ .Description }}</span>{{ end }}
+                <span class="font-body-sm text-body-sm text-on-surface-variant">
+                  {{ if .Material }}{{ .Material }}{{ end }}{{ if and .Material .Category }} · {{ end }}{{ if .Category }}{{ .Category }}{{ end }}
+                </span>
+                {{ if eq .Availability "low_stock" }}<span class="font-label-sm text-label-sm text-amber-700 font-semibold">Low stock</span>{{ end }}
+                {{ if eq .Availability "made_to_order" }}<span class="font-label-sm text-label-sm text-on-surface-variant">Made to order</span>{{ end }}
+                <span class="font-code-md text-code-md text-primary font-bold">
+                  {{ if .QuoteOnly }}Request quote{{ else }}{{ if .StartingFrom }}Starting from {{ end }}{{ currency .PriceMinor .Currency }}{{ end }}
+                </span>
+                {{ range .Questions }}
+                <label class="flex flex-col gap-0.5 mt-1">
+                  <span class="font-label-sm text-label-sm text-on-surface">{{ .Label }}{{ if .Required }} *{{ end }}</span>
+                  <input type="text" name="pq_{{ $pid }}_{{ .Key }}" value="{{ index $.Answers (printf "pq_%s_%s" $pid .Key) }}" maxlength="500" {{ if .Required }}data-required-question="1"{{ end }}
+                         class="h-8 px-2 rounded bg-surface-container-lowest text-on-surface font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
+                </label>
+                {{ end }}
               </div>
               <label class="flex flex-col gap-1 shrink-0">
                 <span class="font-label-sm text-label-sm text-on-surface-variant">Qty</span>
                 <input type="number" name="qty_{{.ID}}" value="{{ index $.Quantities .ID }}" min="0" step="1" inputmode="numeric" placeholder="0"
-                       class="h-9 w-20 px-3 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md text-center focus:outline-none focus:ring-2 focus:ring-primary-container">
+                       class="catalog-qty h-9 w-20 px-3 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md text-center focus:outline-none focus:ring-2 focus:ring-primary-container">
               </label>
             </div>
           {{ end }}
+          </div>
+          <p id="catalog-empty" class="hidden font-body-md text-body-md text-on-surface-variant">No products match your search.</p>
         </div>
+        <script>
+        (function () {
+          var search = document.getElementById('catalog-search');
+          var cat = document.getElementById('catalog-category');
+          var cards = Array.prototype.slice.call(document.querySelectorAll('.catalog-card'));
+          var empty = document.getElementById('catalog-empty');
+          function apply() {
+            var q = (search.value || '').toLowerCase().trim();
+            var c = cat ? cat.value : '';
+            var shown = 0;
+            cards.forEach(function (el) {
+              var okQ = !q || (el.getAttribute('data-name') || '').toLowerCase().indexOf(q) >= 0;
+              var okC = !c || el.getAttribute('data-category') === c;
+              var show = okQ && okC;
+              el.style.display = show ? '' : 'none';
+              if (show) shown++;
+            });
+            if (empty) empty.classList.toggle('hidden', shown > 0);
+          }
+          if (search) search.addEventListener('input', apply);
+          if (cat) cat.addEventListener('change', apply);
+        })();
+        </script>
       {{ end }}
 
       <label class="flex flex-col gap-1">

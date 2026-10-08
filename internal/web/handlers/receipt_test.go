@@ -202,7 +202,7 @@ func testReceiptCard() receiptCard {
 			{
 				MethodLabel: "Bank transfer", Reference: "REF-123", PaidAt: now,
 				AmountMinor: 30000, Currency: "NGN", Notes: "Deposit",
-				Proofs: []receiptProof{{ID: uuid.NewString(), Filename: "transfer_receipt_30k.pdf"}},
+				Proofs: []receiptProof{{ID: uuid.NewString(), Filename: "transfer_receipt_30k.pdf", URL: "/attachments/" + uuid.NewString()}},
 			},
 			{
 				MethodLabel: "Cash", PaidAt: now,

@@ -59,11 +59,18 @@
         <div class="flex flex-col divide-y divide-outline-variant/20">
           {{ range .Items }}
             <div class="flex items-start justify-between gap-space-sm py-space-sm">
-              <div class="flex flex-col">
-                <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .Description }}</span>
-                <span class="font-label-sm text-label-sm text-on-surface-variant">Qty: {{ formatQty .Quantity }}</span>
+              <div class="flex gap-space-sm min-w-0">
+                {{ if .ImageRef }}
+                <img src="/public/product-images/{{ .ImageRef }}" alt="" loading="lazy"
+                     class="w-12 h-12 rounded-lg object-cover shrink-0 bg-surface-container-low">
+                {{ end }}
+                <div class="flex flex-col min-w-0">
+                  <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .Description }}</span>
+                  {{ if .Material }}<span class="font-label-sm text-label-sm text-on-surface-variant">{{ .Material }}</span>{{ end }}
+                  <span class="font-label-sm text-label-sm text-on-surface-variant">Qty: {{ formatQty .Quantity }}</span>
+                </div>
               </div>
-              <div class="flex flex-col items-end">
+              <div class="flex flex-col items-end shrink-0">
                 <span class="font-code-md text-code-md font-bold text-on-surface tabular-nums">{{ currency .Subtotal.Amount .Subtotal.Currency }}</span>
                 <span class="font-label-sm text-label-sm text-outline tabular-nums">{{ currency .UnitPrice.Amount .UnitPrice.Currency }} each</span>
               </div>

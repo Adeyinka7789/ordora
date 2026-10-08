@@ -72,13 +72,15 @@ func (r *OrderRepo) CreateTx(ctx context.Context, tx pgx.Tx, o *order.Order) err
 
 func (r *OrderRepo) insertItemTx(ctx context.Context, tx pgx.Tx, orgID, orderID uuid.UUID, it *order.Item) error {
 	const q = `
-		INSERT INTO order_items (id, organization_id, order_id, description, quantity, unit_price_minor, subtotal_minor, position, created_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+		INSERT INTO order_items (id, organization_id, order_id, description, quantity, unit_price_minor, subtotal_minor, position, created_at,
+		                         product_id, material, image_ref)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 	`
 	_, err := tx.Exec(ctx, q,
 		it.ID, orgID, orderID, it.Description,
 		quantityToNumeric(it.Quantity), it.UnitPrice.Amount(), it.Subtotal.Amount(),
 		it.Position, time.Now(),
+		nullIfNilUUID(it.ProductID), nullIfEmpty(it.Material), nullIfEmpty(it.ImageRef),
 	)
 	if err != nil {
 		return fmt.Errorf("order_repo: insert item: %w", Classify(err))
@@ -155,7 +157,8 @@ func (r *OrderRepo) GetByIDForUpdate(ctx context.Context, tx pgx.Tx, scope tenan
 
 func (r *OrderRepo) loadItemsTx(ctx context.Context, tx pgx.Tx, orderID uuid.UUID, currency string) ([]*order.Item, error) {
 	const q = `
-		SELECT id, description, quantity, unit_price_minor, subtotal_minor, position
+		SELECT id, description, quantity, unit_price_minor, subtotal_minor, position,
+		       product_id, COALESCE(material,''), COALESCE(image_ref,'')
 		FROM order_items
 		WHERE order_id = $1
 		ORDER BY position ASC, id ASC
@@ -175,22 +178,40 @@ func (r *OrderRepo) loadItemsTx(ctx context.Context, tx pgx.Tx, orderID uuid.UUI
 			unitPrice     int64
 			subtotalMinor int64
 			position      int
+			productID     *uuid.UUID
+			material      string
+			imageRef      string
 		)
-		if err := rows.Scan(&id, &desc, &qtyNumeric, &unitPrice, &subtotalMinor, &position); err != nil {
+		if err := rows.Scan(&id, &desc, &qtyNumeric, &unitPrice, &subtotalMinor, &position,
+			&productID, &material, &imageRef); err != nil {
 			return nil, fmt.Errorf("order_repo: scan item: %w", err)
 		}
 		up, _ := money.New(unitPrice, currency)
 		st, _ := money.New(subtotalMinor, currency)
-		items = append(items, &order.Item{
+		it := &order.Item{
 			ID:          id,
 			Description: desc,
 			Quantity:    numericToQuantity(qtyNumeric),
 			UnitPrice:   up,
 			Subtotal:    st,
 			Position:    position,
-		})
+			Material:    material,
+			ImageRef:    imageRef,
+		}
+		if productID != nil {
+			it.ProductID = *productID
+		}
+		items = append(items, it)
 	}
 	return items, rows.Err()
+}
+
+// nullIfNilUUID stores uuid.Nil as NULL.
+func nullIfNilUUID(id uuid.UUID) any {
+	if id == uuid.Nil {
+		return nil
+	}
+	return id
 }
 
 // -----------------------------------------------------------------------------

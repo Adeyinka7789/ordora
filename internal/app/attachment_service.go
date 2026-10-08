@@ -20,6 +20,7 @@ type AttachmentRepoStore interface {
 	GetByID(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*attachment.Attachment, error)
 	ListForEntity(ctx context.Context, scope tenant.TenantScope, entityType attachment.EntityType, entityID uuid.UUID) ([]*attachment.Attachment, error)
 	ListForEntities(ctx context.Context, scope tenant.TenantScope, entityType attachment.EntityType, entityIDs []uuid.UUID) (map[uuid.UUID][]*attachment.Attachment, error)
+	SetPurpose(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, purpose string) error
 	Delete(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error
 }
 
@@ -98,11 +99,28 @@ func (s *AttachmentService) Upload(ctx context.Context, scope tenant.TenantScope
 	}
 	a.Purpose = attachment.NormalizePurpose(in.Purpose)
 
+	// A new cover demotes older covers BEFORE the insert: the partial
+	// unique index rejects a second cover, so create-then-demote would
+	// fail. Demotion is best-effort; a lost race retries once below.
+	if a.EntityType == attachment.EntityProduct && a.IsCover() {
+		s.demoteOtherCovers(ctx, scope, a.EntityID, uuid.Nil)
+	}
+
 	if err := s.blobs.Put(ctx, key, in.Body, in.Size); err != nil {
 		return nil, fmt.Errorf("attachment: store bytes: %w", err)
 	}
 
 	if err := s.repo.Create(ctx, scope, a); err != nil {
+		if a.IsCover() && isCoverConflict(err) {
+			// Lost a cover race after our demotion: demote whatever is
+			// there now and retry once, then give up with the error.
+			s.demoteOtherCovers(ctx, scope, a.EntityID, a.ID)
+			if err2 := s.repo.Create(ctx, scope, a); err2 == nil {
+				return a, nil
+			} else {
+				err = err2
+			}
+		}
 		// Roll back the storage write — best effort.
 		_ = s.blobs.Delete(ctx, key)
 		return nil, err
@@ -157,6 +175,79 @@ func (s *AttachmentService) Delete(ctx context.Context, scope tenant.TenantScope
 	// Best-effort byte removal.
 	_ = s.blobs.Delete(ctx, a.StorageKey)
 	return nil
+}
+
+// SetPurpose changes an attachment's purpose. Product images stay within
+// the gallery/cover set; other entities keep their existing purpose.
+func (s *AttachmentService) SetPurpose(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, purpose string) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
+	purpose = attachment.NormalizePurpose(purpose)
+	a, err := s.repo.GetByID(ctx, scope, id)
+	if err != nil {
+		return err
+	}
+	if a.EntityType == attachment.EntityProduct &&
+		purpose != attachment.PurposeProductGallery &&
+		purpose != attachment.PurposeProductCover {
+		purpose = attachment.PurposeProductGallery
+	}
+	return s.repo.SetPurpose(ctx, scope, id, purpose)
+}
+
+// SetCover promotes one product image to cover, demoting any existing
+// cover back to gallery. The attachment must already belong to the product.
+func (s *AttachmentService) SetCover(ctx context.Context, scope tenant.TenantScope, productID, attachmentID uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
+	a, err := s.repo.GetByID(ctx, scope, attachmentID)
+	if err != nil {
+		return err
+	}
+	if a.EntityType != attachment.EntityProduct || a.EntityID != productID {
+		return attachment.ErrNotFound
+	}
+	if !a.IsImage() {
+		return attachment.ErrMimeNotAllowed
+	}
+	s.demoteOtherCovers(ctx, scope, productID, attachmentID)
+	if err := s.repo.SetPurpose(ctx, scope, attachmentID, attachment.PurposeProductCover); err != nil {
+		if isCoverConflict(err) {
+			// Lost a cover race: demote again and retry the promotion once.
+			s.demoteOtherCovers(ctx, scope, productID, attachmentID)
+			return s.repo.SetPurpose(ctx, scope, attachmentID, attachment.PurposeProductCover)
+		}
+		return err
+	}
+	return nil
+}
+
+// demoteOtherCovers demotes every cover on a product except one.
+// Best-effort: failures are ignored because the partial unique index is
+// the real invariant; this just keeps the common path conflict-free.
+func (s *AttachmentService) demoteOtherCovers(ctx context.Context, scope tenant.TenantScope, productID, except uuid.UUID) {
+	list, err := s.repo.ListForEntity(ctx, scope, attachment.EntityProduct, productID)
+	if err != nil {
+		return
+	}
+	for _, other := range list {
+		if other.IsCover() && other.ID != except {
+			_ = s.repo.SetPurpose(ctx, scope, other.ID, attachment.PurposeProductGallery)
+		}
+	}
+}
+
+// isCoverConflict reports a unique-violation from the one-cover-per-product
+// index (SQLSTATE 23505). pgconn.PgError is matched structurally so the app
+// layer keeps no driver import.
+func isCoverConflict(err error) bool {
+	var coder interface{ SQLState() string }
+	if errors.As(err, &coder) {
+		return coder.SQLState() == "23505"
+	}
+	return false
 }
 
 // buildStorageKey produces a sharded, opaque key like "2026/10/<uuid>".

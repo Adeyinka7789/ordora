@@ -50,6 +50,8 @@
       {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "description") }}
     </label>
 
+    {{ template "products/_catalog_fields.html" (dict "Material" .Product.Material "Color" .Product.Color "ShortDescription" .Product.ShortDescription "InternalNotes" .Product.InternalNotes "Specs" .Product.Specs "ProductionDays" .Product.ProductionDays "QuoteOnly" .Product.QuoteOnly "StartingFrom" .Product.StartingFrom "Hidden" .Product.Hidden "Availability" .Product.Availability "Category" .Product.Category "QuestionRows" .QuestionRows) }}
+
     <div class="flex items-center gap-space-sm pt-space-xs">
       <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save Changes</button>
       <a href="/products/{{ .Product.ID }}" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">Cancel</a>

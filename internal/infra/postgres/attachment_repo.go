@@ -132,6 +132,21 @@ func (r *AttachmentRepo) Delete(ctx context.Context, scope tenant.TenantScope, i
 	})
 }
 
+// SetPurpose changes an attachment's purpose (e.g. promote a gallery
+// image to cover). Tenant-scoped: only rows in the org are touched.
+func (r *AttachmentRepo) SetPurpose(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, purpose string) error {
+	return r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		ct, err := tx.Exec(ctx, `UPDATE attachments SET purpose = $2 WHERE id = $1`, id, purpose)
+		if err != nil {
+			return fmt.Errorf("attachment_repo: set purpose: %w", Classify(err))
+		}
+		if ct.RowsAffected() == 0 {
+			return attachment.ErrNotFound
+		}
+		return nil
+	})
+}
+
 func scanAttachment(row scannable) (*attachment.Attachment, error) {
 	var (
 		id         uuid.UUID

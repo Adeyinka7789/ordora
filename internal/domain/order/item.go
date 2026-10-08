@@ -21,6 +21,11 @@ type Item struct {
 	UnitPrice   money.Money
 	Subtotal    money.Money // Quantity/QuantityScale * UnitPrice, computed
 	Position    int
+	// Product snapshot: link + frozen catalog details. Nil/empty when the
+	// line was typed free-hand. Later product edits never touch these.
+	ProductID uuid.UUID
+	Material  string
+	ImageRef  string
 }
 
 // QuantityScale is the divisor applied to Quantity to get the real value.
@@ -59,6 +64,14 @@ func NewItem(id uuid.UUID, description string, quantity int64, unitPrice money.M
 		Subtotal:    subtotal,
 		Position:    position,
 	}, nil
+}
+
+// AttachProduct freezes catalog details onto the line item. Call right
+// after NewItem when the line came from the catalog.
+func (i *Item) AttachProduct(productID uuid.UUID, material, imageRef string) {
+	i.ProductID = productID
+	i.Material = strings.TrimSpace(material)
+	i.ImageRef = strings.TrimSpace(imageRef)
 }
 
 // SetQuantity changes the quantity and recomputes subtotal.

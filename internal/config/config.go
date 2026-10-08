@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -181,6 +182,12 @@ func Load() (*Config, error) {
 
 	if err := c.validate(); err != nil {
 		return nil, err
+	}
+	// Console email in production boots fine but writes password-reset and
+	// verification links to stdout (logs). Warn loudly so the risk is
+	// visible; set ORDORA_EMAIL_MODE=smtp with SMTP settings for delivery.
+	if c.Env == "production" && c.Email.Mode == "console" {
+		slog.Warn("config: ORDORA_EMAIL_MODE=console in production writes reset/verification links to logs — anyone with log access could take over accounts; switch to smtp")
 	}
 	return c, nil
 }
