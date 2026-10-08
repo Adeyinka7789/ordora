@@ -2,12 +2,14 @@
 //
 // Strategy:
 //   - Static assets (/static/*): cache-first. Rarely change; fast response.
-//   - HTML pages: network-first with cache fallback. Fresh content when online.
+//   - HTML pages: NEVER cached. Authenticated pages contain per-user,
+//     per-org data — caching them leaks data across accounts on shared
+//     devices and shows stale business data offline. Navigations always go
+//     to the network, falling back to the pre-cached /offline page.
 //   - Offline: fallback to a cached /offline page.
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const STATIC_CACHE = `ordora-static-${VERSION}`;
-const PAGE_CACHE = `ordora-pages-${VERSION}`;
 
 // Static assets to pre-cache on install. These are the things every page
 // needs and that rarely change.
@@ -27,7 +29,8 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate: clean up old caches.
+// Activate: clean up old caches — including the retired v1 page cache
+// (ordora-pages-*) that may hold authenticated HTML from before the fix.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
@@ -35,7 +38,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k !== STATIC_CACHE && k !== PAGE_CACHE)
+            .filter((k) => k !== STATIC_CACHE)
             .map((k) => caches.delete(k))
         )
       )
@@ -52,19 +55,6 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // Never intercept auth or API-like paths — always fresh.
-  if (url.pathname.startsWith('/login') ||
-      url.pathname.startsWith('/logout') ||
-      url.pathname.startsWith('/register') ||
-      url.pathname.startsWith('/verify') ||
-      url.pathname.startsWith('/password/') ||
-      url.pathname.startsWith('/health') ||
-      url.pathname.startsWith('/ready') ||
-      url.pathname.startsWith('/o/') ||       // public portal — always fresh
-      url.pathname.startsWith('/order/')) {   // public intake — always fresh
-    return;
-  }
-
   // Static assets: cache-first.
   if (url.pathname.startsWith('/static/')) {
     event.respondWith(
@@ -73,21 +63,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML pages: network-first, fall back to cache, then offline page.
+  // HTML navigations: network-only with offline fallback. Never read from
+  // or write to the cache, so no authenticated content is ever stored.
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(
-      fetch(req)
-        .then((res) => {
-          // Cache successful HTML responses (but not redirects).
-          if (res.ok && res.type === 'basic') {
-            const copy = res.clone();
-            caches.open(PAGE_CACHE).then((cache) => cache.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() =>
-          caches.match(req).then((cached) => cached || caches.match('/offline'))
-        )
+      fetch(req).catch(() => caches.match('/offline'))
     );
     return;
   }

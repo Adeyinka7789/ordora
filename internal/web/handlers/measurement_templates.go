@@ -100,7 +100,7 @@ func (h *MeasurementTemplateHandler) Index(w http.ResponseWriter, r *http.Reques
 
 // New renders a blank form, or a clone prefilled from ?clone=<id>.
 func (h *MeasurementTemplateHandler) New(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -125,7 +125,7 @@ func (h *MeasurementTemplateHandler) New(w http.ResponseWriter, r *http.Request)
 
 // Create handles POST /settings/measurements.
 func (h *MeasurementTemplateHandler) Create(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -162,7 +162,7 @@ func (h *MeasurementTemplateHandler) Create(w http.ResponseWriter, r *http.Reque
 
 // Edit renders the edit form for an own template.
 func (h *MeasurementTemplateHandler) Edit(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -191,7 +191,7 @@ func (h *MeasurementTemplateHandler) Edit(w http.ResponseWriter, r *http.Request
 
 // Update handles POST /settings/measurements/{id}.
 func (h *MeasurementTemplateHandler) Update(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -237,7 +237,7 @@ func (h *MeasurementTemplateHandler) Update(w http.ResponseWriter, r *http.Reque
 
 // Delete handles POST /settings/measurements/{id}/delete.
 func (h *MeasurementTemplateHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}

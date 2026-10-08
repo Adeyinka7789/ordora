@@ -175,6 +175,9 @@ var (
 // -----------------------------------------------------------------------------
 
 func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope, in CreateOrderInput) (*order.Order, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if err := s.validateCreateInput(in); err != nil {
 		return nil, err
 	}
@@ -312,6 +315,9 @@ type UpdateOrderInput struct {
 }
 
 func (s *OrderService) UpdateOrder(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, in UpdateOrderInput) (*order.Order, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if strings.TrimSpace(in.Title) == "" {
 		return nil, ErrOrderTitleRequired
 	}
@@ -438,6 +444,9 @@ func (s *OrderService) saveMeasurementTx(ctx context.Context, tx pgx.Tx, scope t
 // -----------------------------------------------------------------------------
 
 func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, to order.Status) (*order.Order, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if !to.IsValid() {
 		return nil, order.ErrInvalidTransition
 	}
@@ -500,6 +509,9 @@ func GeneratePublicToken() (raw string, hash []byte, err error) {
 
 // RegeneratePublicToken creates a fresh public token for an order.
 func (s *OrderService) RegeneratePublicToken(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) (string, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return "", err
+	}
 	raw, hash, err := GeneratePublicToken()
 	if err != nil {
 		return "", err

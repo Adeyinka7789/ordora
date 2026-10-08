@@ -114,7 +114,7 @@ func (h *ProductHandler) renderIndex(w http.ResponseWriter, r *http.Request, pag
 // New.
 
 func (h *ProductHandler) New(w http.ResponseWriter, r *http.Request) {
-	if _, ok := requireScope(w, r); !ok {
+	if _, ok := requireWriteScope(w, r); !ok {
 		return
 	}
 	page := productFormPage{
@@ -125,7 +125,7 @@ func (h *ProductHandler) New(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -211,7 +211,7 @@ func (h *ProductHandler) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) Edit(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -242,7 +242,7 @@ func (h *ProductHandler) Edit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -311,7 +311,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) Archive(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -328,7 +328,7 @@ func (h *ProductHandler) Archive(w http.ResponseWriter, r *http.Request) {
 
 // Unarchive handles POST /products/{id}/unarchive (undo for Archive).
 func (h *ProductHandler) Unarchive(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}

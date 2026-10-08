@@ -123,7 +123,7 @@ func (h *CustomerHandler) renderIndex(w http.ResponseWriter, r *http.Request, pa
 // -----------------------------------------------------------------------------
 
 func (h *CustomerHandler) New(w http.ResponseWriter, r *http.Request) {
-	if _, ok := requireScope(w, r); !ok {
+	if _, ok := requireWriteScope(w, r); !ok {
 		return
 	}
 	page := customerFormPage{
@@ -135,7 +135,7 @@ func (h *CustomerHandler) New(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -237,7 +237,7 @@ func (h *CustomerHandler) Show(w http.ResponseWriter, r *http.Request) {
 // -----------------------------------------------------------------------------
 
 func (h *CustomerHandler) Edit(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -266,7 +266,7 @@ func (h *CustomerHandler) Edit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -334,7 +334,7 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 // -----------------------------------------------------------------------------
 
 func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -374,6 +374,22 @@ func requireScope(w http.ResponseWriter, r *http.Request) (tenant.TenantScope, b
 		return tenant.TenantScope{}, false
 	}
 	return s.Scope, true
+}
+
+// requireWriteScope is requireScope plus role authorization. Every mutating
+// tenant handler must funnel through here so VIEWER (read-only) users get a
+// 403 instead of writing data. Route-level middleware.RequireWrite enforces
+// the same rule; this is defense-in-depth for direct handler calls and tests.
+func requireWriteScope(w http.ResponseWriter, r *http.Request) (tenant.TenantScope, bool) {
+	scope, ok := requireScope(w, r)
+	if !ok {
+		return tenant.TenantScope{}, false
+	}
+	if err := scope.RequireWrite(); err != nil {
+		http.Error(w, "You do not have permission to modify data.", http.StatusForbidden)
+		return tenant.TenantScope{}, false
+	}
+	return scope, true
 }
 
 // parseUUIDParam reads a UUID route parameter.

@@ -15,6 +15,10 @@ import (
 // admin_browsable_tables table, never from user input. The only user
 // input that reaches the query is the search string, which goes through
 // a parameterized argument.
+//
+// Sensitive data is never exposed: session/token tables are blocked
+// entirely, and secret columns (hashes, TOTP, reset tokens) are stripped
+// from every browse, even if the whitelist row still exists.
 type AdminDataRepo struct {
 	adminDB *DB
 }
@@ -59,8 +63,38 @@ func (r *AdminDataRepo) ListTables(ctx context.Context) ([]BrowsableTable, error
 	return out, err
 }
 
+// deniedTables can never be browsed, even if a whitelist row exists.
+// They hold session tokens, password-reset secrets, and IP metadata.
+var deniedTables = map[string]struct{}{
+	"sessions":               {},
+	"admin_sessions":         {},
+	"impersonation_sessions": {},
+	"auth_tokens":            {},
+}
+
+// isDeniedColumn reports whether a column must never leave the server.
+// Covers password hashes, session/public/join/manage token hashes, TOTP
+// secrets, and any future *_secret / *token_hash column.
+func isDeniedColumn(name string) bool {
+	lower := strings.ToLower(name)
+	switch lower {
+	case "password_hash", "totp_secret":
+		return true
+	}
+	if strings.Contains(lower, "token_hash") {
+		return true
+	}
+	if strings.Contains(lower, "secret") {
+		return true
+	}
+	return false
+}
+
 // GetTable returns one whitelist entry.
 func (r *AdminDataRepo) GetTable(ctx context.Context, name string) (*BrowsableTable, error) {
+	if _, denied := deniedTables[strings.ToLower(name)]; denied {
+		return nil, ErrNotFound
+	}
 	var t *BrowsableTable
 	err := r.adminDB.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `
@@ -144,6 +178,9 @@ type RowResult struct {
 // All values flow through parameters. The table name and columns are
 // validated against the whitelist + information_schema before use.
 func (r *AdminDataRepo) BrowseTable(ctx context.Context, t *BrowsableTable, search string, limit, offset int) (*RowResult, error) {
+	if _, denied := deniedTables[strings.ToLower(t.TableName)]; denied {
+		return nil, ErrNotFound
+	}
 	if limit <= 0 || limit > t.MaxLimit {
 		limit = t.MaxLimit
 	}
@@ -155,6 +192,18 @@ func (r *AdminDataRepo) BrowseTable(ctx context.Context, t *BrowsableTable, sear
 	cols, err := r.DescribeTable(ctx, t.TableName)
 	if err != nil {
 		return nil, err
+	}
+	// Strip secret columns before building the SELECT. A table left with
+	// no visible columns is treated as non-browsable.
+	visible := cols[:0]
+	for _, c := range cols {
+		if !isDeniedColumn(c.Name) {
+			visible = append(visible, c)
+		}
+	}
+	cols = visible
+	if len(cols) == 0 {
+		return nil, ErrNotFound
 	}
 	colNames := make([]string, 0, len(cols))
 	for _, c := range cols {

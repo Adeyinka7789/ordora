@@ -26,7 +26,7 @@ type PaymentHandler struct {
 
 // Record handles POST /orders/{id}/payments.
 func (h *PaymentHandler) Record(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -81,7 +81,7 @@ func (h *PaymentHandler) Record(w http.ResponseWriter, r *http.Request) {
 
 // Reverse handles POST /payments/{id}/reverse.
 func (h *PaymentHandler) Reverse(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}

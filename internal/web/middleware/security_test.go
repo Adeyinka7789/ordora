@@ -21,11 +21,12 @@ func okHandler() http.Handler {
 }
 
 func TestSecurityHeaders(t *testing.T) {
+	// Baseline headers are always present; HSTS only on HTTPS (see below).
 	rec := httptest.NewRecorder()
 	SecurityHeaders(okHandler()).ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
 	for _, h := range []string{
 		"Content-Security-Policy", "X-Content-Type-Options", "X-Frame-Options",
-		"Referrer-Policy", "Permissions-Policy", "Strict-Transport-Security",
+		"Referrer-Policy", "Permissions-Policy",
 	} {
 		if rec.Header().Get(h) == "" {
 			t.Errorf("missing security header %s", h)
@@ -36,6 +37,30 @@ func TestSecurityHeaders(t *testing.T) {
 		if !containsStr(csp, want) {
 			t.Errorf("CSP missing %q: %s", want, csp)
 		}
+	}
+	// Plain HTTP must NOT carry HSTS.
+	if got := rec.Header().Get("Strict-Transport-Security"); got != "" {
+		t.Errorf("plain HTTP must not send HSTS, got %q", got)
+	}
+
+	// Trusted proxy reporting https (prod Caddy on localhost) must send HSTS.
+	rec = httptest.NewRecorder()
+	httpsReq := httptest.NewRequest("GET", "/", nil)
+	httpsReq.RemoteAddr = "127.0.0.1:8080"
+	httpsReq.Header.Set("X-Forwarded-Proto", "https")
+	SecurityHeaders(okHandler()).ServeHTTP(rec, httpsReq)
+	if got := rec.Header().Get("Strict-Transport-Security"); got == "" {
+		t.Error("https via trusted proxy must send HSTS")
+	}
+
+	// Spoofed X-Forwarded-Proto from an untrusted peer must NOT send HSTS.
+	rec = httptest.NewRecorder()
+	spoofReq := httptest.NewRequest("GET", "/", nil)
+	spoofReq.RemoteAddr = "203.0.113.7:1234"
+	spoofReq.Header.Set("X-Forwarded-Proto", "https")
+	SecurityHeaders(okHandler()).ServeHTTP(rec, spoofReq)
+	if got := rec.Header().Get("Strict-Transport-Security"); got != "" {
+		t.Errorf("spoofed proto must not send HSTS, got %q", got)
 	}
 }
 
@@ -146,5 +171,60 @@ func TestRateLimit_BlocksOverLimit(t *testing.T) {
 	}
 	if last != http.StatusTooManyRequests {
 		t.Errorf("expected 429 after exceeding limit, got %d", last)
+	}
+}
+
+func withRole(r *http.Request, role tenant.Role) *http.Request {
+	s := &auth.ResolvedSession{
+		Scope: tenant.TenantScope{OrgID: uuid.New(), UserID: uuid.New(), Role: role},
+	}
+	return r.WithContext(withSession(r.Context(), s))
+}
+
+func TestRequireWrite(t *testing.T) {
+	// VIEWER is blocked.
+	rec := httptest.NewRecorder()
+	RequireWrite(okHandler()).ServeHTTP(rec,
+		withRole(httptest.NewRequest("POST", "/orders", nil), tenant.RoleViewer))
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("viewer: got %d, want 403", rec.Code)
+	}
+
+	// Writers pass through.
+	for _, role := range []tenant.Role{
+		tenant.RoleOwner, tenant.RoleAdmin, tenant.RoleManager,
+		tenant.RoleStaff, tenant.RoleAccountant,
+	} {
+		rec := httptest.NewRecorder()
+		RequireWrite(okHandler()).ServeHTTP(rec,
+			withRole(httptest.NewRequest("POST", "/orders", nil), role))
+		if rec.Code != http.StatusOK {
+			t.Errorf("%s: got %d, want 200", role, rec.Code)
+		}
+	}
+
+	// Anonymous redirects to login.
+	rec = httptest.NewRecorder()
+	RequireWrite(okHandler()).ServeHTTP(rec, httptest.NewRequest("POST", "/orders", nil))
+	if rec.Code != http.StatusSeeOther {
+		t.Errorf("anonymous: got %d, want 303", rec.Code)
+	}
+}
+
+func TestClientIP_IgnoresSpoofedHeaders(t *testing.T) {
+	// Direct connection with forged XFF: header must be ignored.
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "203.0.113.7:1234"
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+	if got := ClientIP(req); got != "203.0.113.7" {
+		t.Errorf("spoofed XFF: got %q, want direct peer", got)
+	}
+
+	// Trusted proxy (loopback): first XFF entry wins.
+	req = httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "127.0.0.1:8080"
+	req.Header.Set("X-Forwarded-For", "1.2.3.4, 5.6.7.8")
+	if got := ClientIP(req); got != "1.2.3.4" {
+		t.Errorf("trusted proxy XFF: got %q, want 1.2.3.4", got)
 	}
 }

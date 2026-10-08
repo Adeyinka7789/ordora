@@ -5,9 +5,7 @@ package admin
 
 import (
 	"errors"
-	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Adeyinka7789/ordora/internal/auth"
@@ -117,19 +115,8 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, h.Cfg.Admin.Path+"/login", http.StatusSeeOther)
 }
 
+// clientIP delegates to the shared trusted-proxy-aware extractor so audit
+// logs cannot be spoofed with a forged X-Forwarded-For from an untrusted peer.
 func clientIP(r *http.Request) string {
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		if i := strings.IndexByte(fwd, ','); i >= 0 {
-			return strings.TrimSpace(fwd[:i])
-		}
-		return strings.TrimSpace(fwd)
-	}
-	if rip := r.Header.Get("X-Real-IP"); rip != "" {
-		return strings.TrimSpace(rip)
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
+	return middleware.ClientIP(r)
 }

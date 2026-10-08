@@ -546,6 +546,19 @@ func run() error {
 		return middleware.RequireTenant(middleware.RequireFlag(flagProvider, flag)(h))
 	}
 
+	// gatedWrite is gated plus role authorization: VIEWER (read-only) users
+	// get 403 on every mutation. All POST/DELETE business routes must use
+	// this (or tenantWrite below) instead of gated.
+	gatedWrite := func(flag string, h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireWrite(middleware.RequireFlag(flagProvider, flag)(h)))
+	}
+
+	// tenantWrite wraps a tenant route that has no feature flag but mutates
+	// data (settings, measurement templates). Same 403-for-VIEWER rule.
+	tenantWrite := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireWrite(h))
+	}
+
 	// Per-IP limiter for credential-bearing POSTs (business + admin
 	// login, registration, password reset). Brute-force protection;
 	// account lockout additionally applies to business login.
@@ -748,12 +761,12 @@ func run() error {
 
 	// ---- Customers (requires auth + tenant) ----
 	mux.Handle("GET /customers", gated("customers", http.HandlerFunc(customerH.Index)))
-	mux.Handle("GET /customers/new", gated("customers", http.HandlerFunc(customerH.New)))
-	mux.Handle("POST /customers", gated("customers", http.HandlerFunc(customerH.Create)))
+	mux.Handle("GET /customers/new", gatedWrite("customers", http.HandlerFunc(customerH.New)))
+	mux.Handle("POST /customers", gatedWrite("customers", http.HandlerFunc(customerH.Create)))
 	mux.Handle("GET /customers/{id}", gated("customers", http.HandlerFunc(customerH.Show)))
-	mux.Handle("GET /customers/{id}/edit", gated("customers", http.HandlerFunc(customerH.Edit)))
-	mux.Handle("POST /customers/{id}", gated("customers", http.HandlerFunc(customerH.Update)))
-	mux.Handle("POST /customers/{id}/delete", gated("customers", http.HandlerFunc(customerH.Delete)))
+	mux.Handle("GET /customers/{id}/edit", gatedWrite("customers", http.HandlerFunc(customerH.Edit)))
+	mux.Handle("POST /customers/{id}", gatedWrite("customers", http.HandlerFunc(customerH.Update)))
+	mux.Handle("POST /customers/{id}/delete", gatedWrite("customers", http.HandlerFunc(customerH.Delete)))
 
 	// ---- Search  ----
 	mux.Handle("GET /reports", gated("reports", http.HandlerFunc(reportH.Index)))
@@ -776,13 +789,13 @@ func run() error {
 
 	// ---- Settings + profile ----
 	mux.Handle("GET /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.Settings)))
-	mux.Handle("POST /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.UpdateSettings)))
+	mux.Handle("POST /settings", tenantWrite(http.HandlerFunc(settingsH.UpdateSettings)))
 	mux.Handle("GET /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Index)))
-	mux.Handle("GET /settings/measurements/new", middleware.RequireTenant(http.HandlerFunc(measTmplH.New)))
-	mux.Handle("POST /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Create)))
-	mux.Handle("GET /settings/measurements/{id}/edit", middleware.RequireTenant(http.HandlerFunc(measTmplH.Edit)))
-	mux.Handle("POST /settings/measurements/{id}", middleware.RequireTenant(http.HandlerFunc(measTmplH.Update)))
-	mux.Handle("POST /settings/measurements/{id}/delete", middleware.RequireTenant(http.HandlerFunc(measTmplH.Delete)))
+	mux.Handle("GET /settings/measurements/new", tenantWrite(http.HandlerFunc(measTmplH.New)))
+	mux.Handle("POST /settings/measurements", tenantWrite(http.HandlerFunc(measTmplH.Create)))
+	mux.Handle("GET /settings/measurements/{id}/edit", tenantWrite(http.HandlerFunc(measTmplH.Edit)))
+	mux.Handle("POST /settings/measurements/{id}", tenantWrite(http.HandlerFunc(measTmplH.Update)))
+	mux.Handle("POST /settings/measurements/{id}/delete", tenantWrite(http.HandlerFunc(measTmplH.Delete)))
 	mux.Handle("GET /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.Profile)))
 	mux.Handle("POST /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.UpdateProfile)))
 	mux.Handle("POST /profile/password", middleware.RequireAuth(http.HandlerFunc(settingsH.ChangePassword)))
@@ -792,54 +805,59 @@ func run() error {
 	// ---- Middleware chain ----
 	// ---- Products ----
 	mux.Handle("GET /products", gated("products", http.HandlerFunc(productH.Index)))
-	mux.Handle("GET /products/new", gated("products", http.HandlerFunc(productH.New)))
-	mux.Handle("POST /products", gated("products", http.HandlerFunc(productH.Create)))
+	mux.Handle("GET /products/new", gatedWrite("products", http.HandlerFunc(productH.New)))
+	mux.Handle("POST /products", gatedWrite("products", http.HandlerFunc(productH.Create)))
 	mux.Handle("GET /products/picker", gated("products", http.HandlerFunc(productH.Picker)))
 	mux.Handle("GET /products/{id}", gated("products", http.HandlerFunc(productH.Show)))
-	mux.Handle("GET /products/{id}/edit", gated("products", http.HandlerFunc(productH.Edit)))
-	mux.Handle("POST /products/{id}", gated("products", http.HandlerFunc(productH.Update)))
-	mux.Handle("POST /products/{id}/archive", gated("products", http.HandlerFunc(productH.Archive)))
-	mux.Handle("POST /products/{id}/unarchive", gated("products", http.HandlerFunc(productH.Unarchive)))
+	mux.Handle("GET /products/{id}/edit", gatedWrite("products", http.HandlerFunc(productH.Edit)))
+	mux.Handle("POST /products/{id}", gatedWrite("products", http.HandlerFunc(productH.Update)))
+	mux.Handle("POST /products/{id}/archive", gatedWrite("products", http.HandlerFunc(productH.Archive)))
+	mux.Handle("POST /products/{id}/unarchive", gatedWrite("products", http.HandlerFunc(productH.Unarchive)))
 	//
 	// Order (outermost to innermost):
 	//   Recover -> RequestID -> Logger -> Session -> CSRF -> mux
 
 	// ---- Orders (requires auth + tenant) ----
 	mux.Handle("GET /orders", gated("orders", http.HandlerFunc(orderH.Index)))
-	mux.Handle("GET /orders/new", gated("orders", http.HandlerFunc(orderH.New)))
-	mux.Handle("POST /orders", gated("orders", http.HandlerFunc(orderH.Create)))
+	mux.Handle("GET /orders/new", gatedWrite("orders", http.HandlerFunc(orderH.New)))
+	mux.Handle("POST /orders", gatedWrite("orders", http.HandlerFunc(orderH.Create)))
 	mux.Handle("GET /orders/{id}", gated("orders", http.HandlerFunc(orderH.Show)))
-	mux.Handle("GET /orders/{id}/edit", gated("orders", http.HandlerFunc(orderH.Edit)))
-	mux.Handle("POST /orders/{id}", gated("orders", http.HandlerFunc(orderH.Update)))
-	mux.Handle("POST /orders/{id}/status", gated("orders", http.HandlerFunc(orderH.ChangeStatus)))
+	mux.Handle("GET /orders/{id}/edit", gatedWrite("orders", http.HandlerFunc(orderH.Edit)))
+	mux.Handle("POST /orders/{id}", gatedWrite("orders", http.HandlerFunc(orderH.Update)))
+	mux.Handle("POST /orders/{id}/status", gatedWrite("orders", http.HandlerFunc(orderH.ChangeStatus)))
 	mux.Handle("GET /measurements/fields", gated("orders", http.HandlerFunc(orderH.MeasurementFields)))
 	mux.Handle("GET /orders/{id}/receipt", gated("orders", http.HandlerFunc(orderH.Receipt)))
-	mux.Handle("POST /orders/{id}/public-token/regenerate", gated("orders", http.HandlerFunc(orderH.RegenerateToken)))
+	mux.Handle("POST /orders/{id}/public-token/regenerate", gatedWrite("orders", http.HandlerFunc(orderH.RegenerateToken)))
 	//
 	// ---- Payments ----
-	mux.Handle("POST /orders/{id}/payments", gated("orders", http.HandlerFunc(paymentH.Record)))
-	mux.Handle("POST /payments/{id}/attachments", gated("orders", http.HandlerFunc(attachH.UploadToPayment)))
-	mux.Handle("POST /payments/{id}/reverse", gated("orders", http.HandlerFunc(paymentH.Reverse)))
+	mux.Handle("POST /orders/{id}/payments", gatedWrite("orders", http.HandlerFunc(paymentH.Record)))
+	mux.Handle("POST /payments/{id}/attachments", gatedWrite("orders", http.HandlerFunc(attachH.UploadToPayment)))
+	mux.Handle("POST /payments/{id}/reverse", gatedWrite("orders", http.HandlerFunc(paymentH.Reverse)))
 
-	mux.Handle("POST /orders/{id}/costs", gated("orders", http.HandlerFunc(costH.Add)))
-	mux.Handle("POST /costs/{id}", gated("orders", http.HandlerFunc(costH.Update)))
-	mux.Handle("POST /costs/{id}/delete", gated("orders", http.HandlerFunc(costH.Delete)))
+	mux.Handle("POST /orders/{id}/costs", gatedWrite("orders", http.HandlerFunc(costH.Add)))
+	mux.Handle("POST /costs/{id}", gatedWrite("orders", http.HandlerFunc(costH.Update)))
+	mux.Handle("POST /costs/{id}/delete", gatedWrite("orders", http.HandlerFunc(costH.Delete)))
 	// ---- Aso-ebi groups (requires auth + tenant + tailoring trade) ----
 	// Tailoring-only: hidden from other business types entirely.
 	tailored := func(h http.Handler) http.Handler {
 		return middleware.RequireTenant(middleware.RequireTailoring(
 			middleware.RequireFlag(flagProvider, "orders")(h)))
 	}
+	// tailoredWrite adds role authorization for group mutations.
+	tailoredWrite := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireWrite(middleware.RequireTailoring(
+			middleware.RequireFlag(flagProvider, "orders")(h))))
+	}
 	mux.Handle("GET /groups", tailored(http.HandlerFunc(groupH.Index)))
-	mux.Handle("GET /groups/new", tailored(http.HandlerFunc(groupH.New)))
-	mux.Handle("POST /groups", tailored(http.HandlerFunc(groupH.Create)))
+	mux.Handle("GET /groups/new", tailoredWrite(http.HandlerFunc(groupH.New)))
+	mux.Handle("POST /groups", tailoredWrite(http.HandlerFunc(groupH.Create)))
 	mux.Handle("GET /groups/{id}", tailored(http.HandlerFunc(groupH.Show)))
-	mux.Handle("POST /groups/{id}/orders", tailored(http.HandlerFunc(groupH.AddOrder)))
-	mux.Handle("POST /groups/{id}/orders/{orderID}/remove", tailored(http.HandlerFunc(groupH.RemoveOrder)))
-	mux.Handle("POST /groups/{id}/orders/{orderID}/paid", tailored(http.HandlerFunc(groupH.SetPaid)))
-	mux.Handle("POST /groups/{id}/orders/{orderID}/collected", tailored(http.HandlerFunc(groupH.SetCollected)))
-	mux.Handle("POST /groups/{id}/join-toggle", tailored(http.HandlerFunc(groupH.ToggleJoin)))
-	mux.Handle("POST /groups/{id}/delete", tailored(http.HandlerFunc(groupH.Delete)))
+	mux.Handle("POST /groups/{id}/orders", tailoredWrite(http.HandlerFunc(groupH.AddOrder)))
+	mux.Handle("POST /groups/{id}/orders/{orderID}/remove", tailoredWrite(http.HandlerFunc(groupH.RemoveOrder)))
+	mux.Handle("POST /groups/{id}/orders/{orderID}/paid", tailoredWrite(http.HandlerFunc(groupH.SetPaid)))
+	mux.Handle("POST /groups/{id}/orders/{orderID}/collected", tailoredWrite(http.HandlerFunc(groupH.SetCollected)))
+	mux.Handle("POST /groups/{id}/join-toggle", tailoredWrite(http.HandlerFunc(groupH.ToggleJoin)))
+	mux.Handle("POST /groups/{id}/delete", tailoredWrite(http.HandlerFunc(groupH.Delete)))
 	// ---- Public Aso-ebi join + bride manage (no login) ----
 	// Join slug is public (WhatsApp groups); bride manage needs ?key=.
 	// Rate-limited like other public POSTs (abuse guard).
@@ -862,7 +880,7 @@ func run() error {
 	// ---- Occasion calendar ----
 	mux.Handle("GET /calendar", gated("orders", http.HandlerFunc(calendarH.Index)))
 	// ---- Attachments ----
-	mux.Handle("POST /orders/{id}/attachments", gated("orders", http.HandlerFunc(attachH.UploadToOrder)))
+	mux.Handle("POST /orders/{id}/attachments", gatedWrite("orders", http.HandlerFunc(attachH.UploadToOrder)))
 	mux.Handle("GET /attachments/{id}", gated("orders", http.HandlerFunc(attachH.Download)))
 	// Session must run before CSRF (CSRF does not need it but templates do).
 	// Session must run before any handler that reads the context.

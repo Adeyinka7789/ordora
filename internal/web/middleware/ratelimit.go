@@ -3,6 +3,7 @@ package middleware
 import (
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,9 +33,10 @@ type limiter struct {
 
 // RateLimit returns a middleware that enforces a per-IP request limit.
 //
-// Client IP is taken from X-Forwarded-For or the request's RemoteAddr.
-// Behind a reverse proxy (nginx, Cloudflare), configure the proxy to set
-// X-Forwarded-For, or this will bucket everyone into one slot.
+// Client IP comes from RemoteAddr, except when the direct peer is a trusted
+// proxy (loopback/private, e.g. local Caddy) — then X-Forwarded-For (first
+// entry) or X-Real-IP is used. Headers from untrusted peers are ignored so
+// attackers cannot spoof their IP to dodge limits.
 //
 // In-memory only. Not suitable for multi-server. Fine for V1.
 func RateLimit(cfg RateLimitConfig) func(http.Handler) http.Handler {
@@ -110,22 +112,41 @@ func ClientIP(r *http.Request) string {
 }
 
 // clientIP extracts the best-guess client IP.
+//
+// X-Forwarded-For / X-Real-IP are only honored when the direct TCP peer is
+// a trusted proxy (loopback or private network — the production Caddy on
+// the same host, or a LAN reverse proxy). Otherwise they are ignored and
+// RemoteAddr is used, so a client that reaches the app directly cannot
+// rotate fake IPs to bypass login/register/reset rate limits.
 func clientIP(r *http.Request) string {
-	// X-Forwarded-For: client, proxy1, proxy2 — take the first.
-	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-		for i := 0; i < len(fwd); i++ {
-			if fwd[i] == ',' {
-				return fwd[:i]
-			}
-		}
-		return fwd
-	}
-	if rip := r.Header.Get("X-Real-IP"); rip != "" {
-		return rip
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	peer, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		peer = r.RemoteAddr
 	}
-	return host
+	if isTrustedProxy(peer) {
+		// X-Forwarded-For: client, proxy1, proxy2 — take the leftmost.
+		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+			if i := strings.IndexByte(fwd, ','); i >= 0 {
+				return strings.TrimSpace(fwd[:i])
+			}
+			return strings.TrimSpace(fwd)
+		}
+		if rip := strings.TrimSpace(r.Header.Get("X-Real-IP")); rip != "" {
+			return rip
+		}
+	}
+	if peer != "" {
+		return peer
+	}
+	return r.RemoteAddr
+}
+
+// isTrustedProxy reports whether the direct peer is expected to be our
+// reverse proxy rather than the end client.
+func isTrustedProxy(host string) bool {
+	ip := net.ParseIP(strings.TrimSpace(host))
+	if ip == nil {
+		return false
+	}
+	return ip.IsLoopback() || ip.IsPrivate()
 }

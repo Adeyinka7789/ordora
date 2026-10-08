@@ -111,6 +111,9 @@ func (r *Renderer) PageWithShell(w http.ResponseWriter, status int, layout, frag
 		Shell   Shell
 	}{Data: data, Content: template.HTML(buf.String()), Shell: shell} //nolint:gosec
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	// Authenticated pages carry per-user, per-org data: never let browsers,
+	// proxies, or the service worker persist them (shared-device leak).
+	w.Header().Set("Cache-Control", "private, no-store")
 	w.WriteHeader(status)
 	if err := r.tmpl.ExecuteTemplate(w, layout, view); err != nil {
 		slog.Error("render: layout exec", "layout", layout, "err", err)
@@ -146,6 +149,7 @@ func (r *Renderer) PagePublic(w http.ResponseWriter, status int, layout, fragmen
 func (r *Renderer) Fragment(w http.ResponseWriter, req *http.Request, status int, fragment string, data any) {
 	if req.Header.Get("HX-Request") == "true" {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "private, no-store")
 		w.WriteHeader(status)
 		if err := r.tmpl.ExecuteTemplate(w, fragment, data); err != nil {
 			slog.Error("render: fragment exec", "fragment", fragment, "err", err)

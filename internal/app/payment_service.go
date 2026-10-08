@@ -100,6 +100,9 @@ var (
 // -----------------------------------------------------------------------------
 
 func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantScope, in RecordPaymentInput) (*order.Order, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if in.Amount <= 0 {
 		return nil, ErrPaymentAmountRequired
 	}
@@ -210,6 +213,9 @@ type ReverseInput struct {
 }
 
 func (s *PaymentService) ReversePayment(ctx context.Context, scope tenant.TenantScope, in ReverseInput) (*order.Order, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if in.Reason == "" {
 		return nil, ErrReasonRequired
 	}

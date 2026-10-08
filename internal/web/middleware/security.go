@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"net"
 	"net/http"
+	"strings"
 )
 
 // SecurityHeaders sets baseline response headers on every response.
@@ -16,8 +18,12 @@ import (
 // remains the primary XSS defense. The follow-up is nonce-based
 // script-src (propagate nonces through templates and HTMX swaps).
 //
-// HSTS is safe to send on plain HTTP (browsers ignore it there); behind
-// the production reverse proxy it takes effect.
+// HSTS is only emitted when the request actually arrived over HTTPS:
+// direct TLS (r.TLS != nil) or a trusted proxy reporting
+// X-Forwarded-Proto: https (production Caddy terminates TLS and forwards
+// plain HTTP from localhost). Plain-HTTP responses carry no HSTS header.
+// includeSubDomains is deliberately absent: single-domain deploys must not
+// force HTTPS on subdomains the operator may not control.
 func SecurityHeaders(next http.Handler) http.Handler {
 	const csp = "default-src 'self'; " +
 		"script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; " +
@@ -36,7 +42,28 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 		h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-		h.Set("Strict-Transport-Security", "max-age=31536000")
+		if isHTTPS(r) {
+			h.Set("Strict-Transport-Security", "max-age=31536000")
+		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isHTTPS reports whether the request arrived over TLS. Trusts
+// X-Forwarded-Proto only from a trusted proxy peer (see clientIP), so a
+// direct-HTTP client cannot induce HSTS output.
+func isHTTPS(r *http.Request) bool {
+	if r.TLS != nil {
+		return true
+	}
+	if strings.EqualFold(strings.TrimSpace(r.Header.Get("X-Forwarded-Proto")), "https") {
+		if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+			if isTrustedProxy(host) {
+				return true
+			}
+		} else if isTrustedProxy(r.RemoteAddr) {
+			return true
+		}
+	}
+	return false
 }

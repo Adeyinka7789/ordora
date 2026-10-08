@@ -25,7 +25,7 @@ type CostHandler struct {
 
 // Add handles POST /orders/{id}/costs.
 func (h *CostHandler) Add(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -83,7 +83,7 @@ func (h *CostHandler) Add(w http.ResponseWriter, r *http.Request) {
 
 // Update handles POST /costs/{id}.
 func (h *CostHandler) Update(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -140,7 +140,7 @@ func (h *CostHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 // Delete handles POST /costs/{id}/delete.
 func (h *CostHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}

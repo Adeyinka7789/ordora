@@ -65,6 +65,9 @@ type CreateGroupInput struct {
 // (secret, ?key= — shown once to the tailor for the bride).
 // The manage raw is never stored — only its SHA-256 hash.
 func (s *GroupService) CreateGroup(ctx context.Context, scope tenant.TenantScope, in CreateGroupInput) (*group.Group, string, string, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, "", "", err
+	}
 	now := s.now()
 	g, err := group.NewFull(s.ids.New(), scope.OrgID, in.Name, in.OccasionDate,
 		strings.TrimSpace(in.Notes), in.PriceMinor, in.Currency, in.Fabric,
@@ -118,6 +121,9 @@ func (s *GroupService) CreateGroup(ctx context.Context, scope tenant.TenantScope
 
 // DeleteGroup removes a group; member orders are kept (unlinked).
 func (s *GroupService) DeleteGroup(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
 	return s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		if err := s.groups.Delete(ctx, scope, id); err != nil {
 			return err
@@ -137,10 +143,16 @@ func (s *GroupService) DeleteGroup(ctx context.Context, scope tenant.TenantScope
 
 // AddOrder links an order into a group.
 func (s *GroupService) AddOrder(ctx context.Context, scope tenant.TenantScope, groupID, orderID uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
 	return s.groups.AddOrder(ctx, scope, groupID, orderID)
 }
 
 // RemoveOrder unlinks an order from a group.
 func (s *GroupService) RemoveOrder(ctx context.Context, scope tenant.TenantScope, groupID, orderID uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
 	return s.groups.RemoveOrder(ctx, scope, groupID, orderID)
 }

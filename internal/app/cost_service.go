@@ -107,6 +107,9 @@ var (
 // -----------------------------------------------------------------------------
 
 func (s *CostService) AddCost(ctx context.Context, scope tenant.TenantScope, in AddCostInput) (*cost.Cost, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	// Load the order to verify ownership and get currency.
 	o, err := s.orders.GetByID(ctx, scope, in.OrderID)
 	if err != nil {
@@ -142,6 +145,9 @@ func (s *CostService) AddCost(ctx context.Context, scope tenant.TenantScope, in 
 // -----------------------------------------------------------------------------
 
 func (s *CostService) UpdateCost(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, in UpdateCostInput) (*cost.Cost, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	c, err := s.costs.GetByID(ctx, scope, id)
 	if err != nil {
 		return nil, err
@@ -165,6 +171,9 @@ func (s *CostService) UpdateCost(ctx context.Context, scope tenant.TenantScope, 
 // -----------------------------------------------------------------------------
 
 func (s *CostService) DeleteCost(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
 	return s.costs.Delete(ctx, scope, id)
 }
 

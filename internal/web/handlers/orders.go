@@ -212,7 +212,7 @@ func (h *OrderHandler) renderIndex(w http.ResponseWriter, r *http.Request, page 
 // -----------------------------------------------------------------------------
 
 func (h *OrderHandler) New(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -315,7 +315,7 @@ func parseUUIDOrNil(s string) uuid.UUID {
 }
 
 func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -396,7 +396,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *OrderHandler) Edit(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -464,7 +464,7 @@ func (h *OrderHandler) Edit(w http.ResponseWriter, r *http.Request) {
 
 // Update handles POST /orders/{id}.
 func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -537,7 +537,7 @@ func (h *OrderHandler) Update(w http.ResponseWriter, r *http.Request) {
 //
 // Returns the timeline fragment if HTMX, otherwise redirects to the order.
 func (h *OrderHandler) ChangeStatus(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -894,7 +894,7 @@ func formatMoneyMinor(minor int64) string {
 // RegenerateToken creates a fresh public portal token for the order and
 // redirects back to the order detail with the raw token in the URL.
 func (h *OrderHandler) RegenerateToken(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}

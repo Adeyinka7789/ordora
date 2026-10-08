@@ -75,6 +75,9 @@ type UploadInput struct {
 // crashes between 2 and 3, we leak a storage object — an acceptable tradeoff
 // (garbage collection of orphans is a later job).
 func (s *AttachmentService) Upload(ctx context.Context, scope tenant.TenantScope, in UploadInput) (*attachment.Attachment, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if in.Size <= 0 {
 		return nil, attachment.ErrSizeZero
 	}
@@ -141,6 +144,9 @@ func (s *AttachmentService) ListForEntities(ctx context.Context, scope tenant.Te
 // Delete removes an attachment: metadata first, then bytes. If the bytes
 // fail to delete, we log and continue — the metadata is authoritative.
 func (s *AttachmentService) Delete(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
 	a, err := s.repo.GetByID(ctx, scope, id)
 	if err != nil {
 		return err

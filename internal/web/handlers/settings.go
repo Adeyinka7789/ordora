@@ -111,6 +111,10 @@ func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	if err := s.Scope.RequireWrite(); err != nil {
+		http.Error(w, "You do not have permission to modify data.", http.StatusForbidden)
+		return
+	}
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return

@@ -97,6 +97,9 @@ chmod 755 /opt/ordora /opt/ordora/releases /opt/ordora/shared
 
 # ------------------------------------------------------------------ env ---
 if [ ! -f /etc/ordora/ordora.env ]; then
+  # Cryptographically random admin path: never a known default. Printed at
+  # the end of this script — store it in a password manager.
+  ADMIN_PATH="/ops-$(openssl rand -hex 16)"
   cat >/etc/ordora/ordora.env <<ENV
 ORDORA_ENV=production
 ORDORA_BASE_URL=https://${DOMAIN}
@@ -119,12 +122,13 @@ ORDORA_STORAGE_MODE=local
 ORDORA_STORAGE_LOCAL_DIR=/opt/ordora/shared/uploads
 ORDORA_SUPPORT_EMAIL=support@${DOMAIN}
 ORDORA_CONTACT_FILE=/opt/ordora/shared/contact.json
-# TODO: set a long random path, keep it secret
-ORDORA_ADMIN_PATH=/ops-change-me-please
+ORDORA_ADMIN_PATH=${ADMIN_PATH}
 ORDORA_ADMIN_SESSION_COOKIE=ordora_admin_session
 ORDORA_ADMIN_SESSION_TTL_HOURS=8
 ENV
-  echo "==> Wrote /etc/ordora/ordora.env (edit SMTP + ADMIN_PATH!)"
+  echo "==> Wrote /etc/ordora/ordora.env"
+  echo "    Admin panel: https://${DOMAIN}${ADMIN_PATH}  (KEEP SECRET — store in password manager)"
+  echo "    TODO: set SMTP settings in /etc/ordora/ordora.env if you want real email delivery."
 else
   echo "==> /etc/ordora/ordora.env exists, leaving it (DB passwords unchanged)"
   echo "    This run's generated passwords were NOT applied. To rotate, edit the file."
@@ -231,8 +235,11 @@ cat <<NEXT
 
 ================= DONE — next steps =================
 1. DNS: point ${DOMAIN} (A record) at this VPS IP.
-2. Fill secrets on the server: edit /etc/ordora/ordora.env
-   (SMTP settings, ORDORA_ADMIN_PATH) and /opt/ordora/shared/contact.json.
+2. Fill secrets on the server: set SMTP settings in /etc/ordora/ordora.env
+   if you want real email delivery, and edit
+   /opt/ordora/shared/contact.json.
+   Admin path was generated randomly above — do NOT change it to a
+   guessable value. Rotate with: /ops-$(openssl rand -hex 16).
 3. Add the deploy key: paste your GitHub Actions public key into
    /home/deploy/.ssh/authorized_keys
 4. GitHub → Settings → Secrets → Actions:

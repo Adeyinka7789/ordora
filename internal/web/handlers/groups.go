@@ -100,7 +100,7 @@ func (h *GroupHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 // New renders the create form.
 func (h *GroupHandler) New(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -126,7 +126,7 @@ func (h *GroupHandler) New(w http.ResponseWriter, r *http.Request) {
 
 // Create handles POST /groups.
 func (h *GroupHandler) Create(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -224,13 +224,17 @@ func (h *GroupHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if d.Group.JoinSlug == "" || d.Group.JoinTokenHash == nil || d.Group.ManageTokenHash == nil {
-		slugRaw, _, err1 := app.GeneratePublicToken()
-		_, joinHash, err2 := app.GeneratePublicToken()
-		_, manageHash, err3 := app.GeneratePublicToken()
-		if err1 == nil && err2 == nil && err3 == nil {
-			slug := slugRaw[:16]
-			if err := h.Repo.EnsureTokens(r.Context(), scope, id, slug, joinHash, manageHash); err == nil {
-				d, _ = h.Repo.Get(r.Context(), scope, id)
+		// Token minting is a write: only writers trigger it. Viewers just
+		// see the group without links until a writer opens it once.
+		if scope.Role.CanWrite() {
+			slugRaw, _, err1 := app.GeneratePublicToken()
+			_, joinHash, err2 := app.GeneratePublicToken()
+			_, manageHash, err3 := app.GeneratePublicToken()
+			if err1 == nil && err2 == nil && err3 == nil {
+				slug := slugRaw[:16]
+				if err := h.Repo.EnsureTokens(r.Context(), scope, id, slug, joinHash, manageHash); err == nil {
+					d, _ = h.Repo.Get(r.Context(), scope, id)
+				}
 			}
 		}
 	}
@@ -286,7 +290,7 @@ func (h *GroupHandler) Show(w http.ResponseWriter, r *http.Request) {
 
 // SetPaid flips the manual Paid tick (tailor side; bride uses manage link).
 func (h *GroupHandler) SetPaid(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -312,7 +316,7 @@ func (h *GroupHandler) SetPaid(w http.ResponseWriter, r *http.Request) {
 
 // SetCollected flips pickup status.
 func (h *GroupHandler) SetCollected(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -338,7 +342,7 @@ func (h *GroupHandler) SetCollected(w http.ResponseWriter, r *http.Request) {
 
 // ToggleJoin opens/closes public intake.
 func (h *GroupHandler) ToggleJoin(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -360,7 +364,7 @@ func (h *GroupHandler) ToggleJoin(w http.ResponseWriter, r *http.Request) {
 
 // AddOrder handles POST /groups/{id}/orders (order_number field).
 func (h *GroupHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -407,7 +411,7 @@ func (h *GroupHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 
 // RemoveOrder handles POST /groups/{id}/orders/{orderID}/remove.
 func (h *GroupHandler) RemoveOrder(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
@@ -428,7 +432,7 @@ func (h *GroupHandler) RemoveOrder(w http.ResponseWriter, r *http.Request) {
 
 // Delete handles POST /groups/{id}/delete (orders are kept).
 func (h *GroupHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}

@@ -69,6 +69,9 @@ var (
 
 // Create validates and persists a new product.
 func (s *ProductService) Create(ctx context.Context, scope tenant.TenantScope, in CreateProductInput) (*product.Product, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if strings.TrimSpace(in.Name) == "" {
 		return nil, ErrProductNameRequired
 	}
@@ -101,6 +104,9 @@ func (s *ProductService) Create(ctx context.Context, scope tenant.TenantScope, i
 
 // Update loads, mutates, and persists a product.
 func (s *ProductService) Update(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, in UpdateProductInput) (*product.Product, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	if strings.TrimSpace(in.Name) == "" {
 		return nil, ErrProductNameRequired
 	}
@@ -125,11 +131,17 @@ func (s *ProductService) Update(ctx context.Context, scope tenant.TenantScope, i
 
 // Archive soft-deletes a product.
 func (s *ProductService) Archive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
 	return s.store.Archive(ctx, scope, id, s.now())
 }
 
 // Unarchive restores an archived product (undo for Archive).
 func (s *ProductService) Unarchive(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) error {
+	if err := scope.RequireWrite(); err != nil {
+		return err
+	}
 	return s.store.Unarchive(ctx, scope, id, s.now())
 }
 

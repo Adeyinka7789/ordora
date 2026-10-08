@@ -38,12 +38,23 @@ type PaymentLookup interface {
 
 // Upload handles POST /orders/{id}/attachments.
 func (h *AttachmentHandler) UploadToOrder(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}
 	orderID, ok := parseUUIDParam(w, r, "id")
 	if !ok {
+		return
+	}
+
+	// Validate the order exists in this org before storing bytes. Without
+	// this, any UUID would create orphaned attachments inside the org.
+	if h.OrderService == nil {
+		http.Error(w, "order lookup not configured", http.StatusInternalServerError)
+		return
+	}
+	if _, err := h.OrderService.GetOrder(r.Context(), scope, orderID); err != nil {
+		http.NotFound(w, r)
 		return
 	}
 
@@ -65,7 +76,7 @@ func (h *AttachmentHandler) UploadToOrder(w http.ResponseWriter, r *http.Request
 // After upload, it re-renders the whole payments fragment for the parent
 // order, since the receipt needs to appear under the payment row that owns it.
 func (h *AttachmentHandler) UploadToPayment(w http.ResponseWriter, r *http.Request) {
-	scope, ok := requireScope(w, r)
+	scope, ok := requireWriteScope(w, r)
 	if !ok {
 		return
 	}

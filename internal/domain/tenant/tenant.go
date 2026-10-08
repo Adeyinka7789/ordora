@@ -52,7 +52,23 @@ type TenantScope struct {
 
 var ErrNoTenant = errors.New("tenant: no tenant scope in context")
 
+// ErrReadOnly is returned when a read-only role attempts a write.
+var ErrReadOnly = errors.New("tenant: role cannot modify data")
+
 // IsZero reports whether the scope is unset.
 func (s TenantScope) IsZero() bool {
 	return s.OrgID == uuid.Nil && s.UserID == uuid.Nil
+}
+
+// RequireWrite returns ErrReadOnly unless the scope's role may create or
+// modify data. Call at the top of every mutating service/handler path so
+// VIEWER (and unknown future read-only roles) fail closed.
+func (s TenantScope) RequireWrite() error {
+	if s.IsZero() {
+		return ErrNoTenant
+	}
+	if !s.Role.CanWrite() {
+		return ErrReadOnly
+	}
+	return nil
 }

@@ -130,6 +130,9 @@ func (s *SettingsService) GetOrg(ctx context.Context, scope tenant.TenantScope) 
 
 // UpdateOrg applies changes to the org.
 func (s *SettingsService) UpdateOrg(ctx context.Context, scope tenant.TenantScope, in UpdateOrgInput) (*org.Organization, error) {
+	if err := scope.RequireWrite(); err != nil {
+		return nil, err
+	}
 	slug, err := org.NewSlug(in.Slug)
 	if err != nil {
 		return nil, ErrOrgSlugInvalid
