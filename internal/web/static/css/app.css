@@ -1,5 +1,10 @@
 /* app.css — minimal overrides. All visual design is via Tailwind (loaded in the layout). */
 
+/* The hidden attribute must always win: Tailwind display utilities
+   (.flex, .grid, ...) otherwise override it and "hidden" panels stay
+   visible (intake review, wizard mobile bar, dialogs). */
+[hidden] { display: none !important; }
+
 /* ---- Global accessibility foundation (every layout loads this file) ---- */
 
 /* Skip link: first tab stop, visible on focus. */

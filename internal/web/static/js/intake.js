@@ -226,24 +226,30 @@
   if (reviewBtn) reviewBtn.addEventListener('click', function () {
     if (!reviewPanel || !form) return;
     var items = selected();
-    var html = '<dl class="grid grid-cols-[140px_1fr] gap-x-space-sm gap-y-1 font-body-md text-body-md">';
-    html += '<dt class="text-on-surface-variant">Name</dt><dd class="text-on-surface font-semibold">' + esc(field('customer_name')) + '</dd>';
-    var contact = field('customer_email') + (field('customer_email') && field('customer_phone') ? ' · ' : '') + field('customer_phone');
-    html += '<dt class="text-on-surface-variant">Contact</dt><dd class="text-on-surface">' + esc(contact || '—') + '</dd>';
-    html += '</dl>';
-    if (items.length) {
-      html += '<ul class="flex flex-col gap-1">';
-      items.forEach(function (it) {
-        var d = it.card.dataset;
-        html += '<li class="flex justify-between gap-2 font-body-md text-body-md"><span class="text-on-surface">' +
-          esc(d.name) + ' × ' + it.qty + '</span><span class="tabular-nums text-on-surface-variant">' +
-          (d.quote ? 'Request quote' : money(it.qty * (parseFloat(d.price) || 0), d.currency)) + '</span></li>';
-      });
-      html += '</ul>';
-    }
-    if (field('description')) {
-      html += '<div><div class="font-label-md text-label-md text-on-surface font-semibold">Anything else</div>' +
-        '<p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">' + esc(field('description')) + '</p></div>';
+    var hasDesc = !!field('description');
+    var html = '';
+    if (!items.length && !hasDesc) {
+      html += '<p class="font-body-md text-body-md text-on-surface-variant">Nothing to review yet — add a product above or describe what you need, then come back.</p>';
+    } else {
+      html += '<dl class="grid grid-cols-[140px_1fr] gap-x-space-sm gap-y-1 font-body-md text-body-md">';
+      html += '<dt class="text-on-surface-variant">Name</dt><dd class="text-on-surface font-semibold">' + esc(field('customer_name')) + '</dd>';
+      var contact = field('customer_email') + (field('customer_email') && field('customer_phone') ? ' · ' : '') + field('customer_phone');
+      html += '<dt class="text-on-surface-variant">Contact</dt><dd class="text-on-surface">' + esc(contact || '—') + '</dd>';
+      html += '</dl>';
+      if (items.length) {
+        html += '<ul class="flex flex-col gap-1">';
+        items.forEach(function (it) {
+          var d = it.card.dataset;
+          html += '<li class="flex justify-between gap-2 font-body-md text-body-md"><span class="text-on-surface">' +
+            esc(d.name) + ' × ' + it.qty + '</span><span class="tabular-nums text-on-surface-variant">' +
+            (d.quote ? 'Request quote' : money(it.qty * (parseFloat(d.price) || 0), d.currency)) + '</span></li>';
+        });
+        html += '</ul>';
+      }
+      if (hasDesc) {
+        html += '<div><div class="font-label-md text-label-md text-on-surface font-semibold">Anything else</div>' +
+          '<p class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">' + esc(field('description')) + '</p></div>';
+      }
     }
     reviewBody.innerHTML = html;
     ['order-card', 'request-summary'].forEach(function (id) {

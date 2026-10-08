@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -158,9 +159,14 @@ func (h *OnboardingHandler) finish(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
-	// Best-effort: even if the write fails, the dashboard remains usable and
-	// the wizard simply shows again next login.
-	_ = h.Auth.CompleteOnboarding(r.Context(), s.User.ID)
+	// Do not redirect until the flag is durably written. Previously this error
+	// was ignored, which made a missing migration/DB permission look like a
+	// successful redirect followed by an onboarding loop.
+	if err := h.Auth.CompleteOnboarding(r.Context(), s.User.ID); err != nil {
+		slog.Error("complete onboarding", "user_id", s.User.ID, "err", err)
+		http.Error(w, "Could not save your onboarding status. Please try again.", http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 

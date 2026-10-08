@@ -115,6 +115,7 @@ func TestA11yCSSContracts(t *testing.T) {
 		".skip-link",     // every layout loads app.css
 		":focus-visible", // global keyboard focus
 		".breadcrumbs",   // admin layout skips chrome.css
+		"[hidden]",       // hidden attribute beats Tailwind display utilities
 	} {
 		if !strings.Contains(string(appCSS), want) {
 			t.Errorf("app.css missing %q", want)
