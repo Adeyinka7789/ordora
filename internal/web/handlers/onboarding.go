@@ -55,6 +55,12 @@ func (h *OnboardingHandler) Show(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	// Impersonated admins never see the wizard — send them to the dashboard
+	// instead of trapping them in a skip → dashboard → onboarding loop.
+	if middleware.IsImpersonating(r.Context()) {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		return
+	}
 	if !s.User.NeedsOnboarding() {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
@@ -91,6 +97,11 @@ func (h *OnboardingHandler) CreateCustomer(w http.ResponseWriter, r *http.Reques
 	s := middleware.SessionFromContext(r.Context())
 	if s == nil || s.User == nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	// Impersonation bypass: don't mutate the owner's onboarding state.
+	if middleware.IsImpersonating(r.Context()) {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
 	if !s.User.NeedsOnboarding() {
@@ -153,6 +164,12 @@ func (h *OnboardingHandler) finish(w http.ResponseWriter, r *http.Request) {
 	s := middleware.SessionFromContext(r.Context())
 	if s == nil || s.User == nil {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	// Impersonated admins must not flip the owner's onboarding flag; just
+	// send them to the dashboard (also breaks the synthetic-session loop).
+	if middleware.IsImpersonating(r.Context()) {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
 	if err := r.ParseForm(); err != nil {

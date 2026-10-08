@@ -32,7 +32,9 @@ func (h *DashboardHandler) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// First-run users belong in the wizard, even via a deep link.
-	if s.User != nil && s.User.NeedsOnboarding() {
+	// Impersonated admin sessions bypass the wizard entirely: the synthetic
+	// session is a debug view and must never trap the admin in a loop.
+	if s.User != nil && s.User.NeedsOnboarding() && !middleware.IsImpersonating(r.Context()) {
 		http.Redirect(w, r, "/onboarding", http.StatusSeeOther)
 		return
 	}

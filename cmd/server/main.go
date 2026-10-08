@@ -483,11 +483,12 @@ func run() error {
 	buildImpersonatedSession := func(ctx context.Context, orgID uuid.UUID) (*auth.ResolvedSession, error) {
 		var ownerID uuid.UUID
 		var ownerName, ownerEmail, orgName, orgSlug, orgCurrency, orgTimezone, orgCategory string
+		var ownerOnboardedAt *time.Time
 
 		err := adminDB.WithTx(ctx, func(tx pgx.Tx) error {
 			const q = `
 				SELECT m.user_id, u.name, u.email::text, o.name, o.slug::text, o.currency::text, o.timezone,
-				       COALESCE(o.business_category,'')
+				       COALESCE(o.business_category,''), u.onboarding_completed_at
 				FROM organization_members m
 				JOIN users u ON u.id = m.user_id
 				JOIN organizations o ON o.id = m.organization_id
@@ -496,7 +497,7 @@ func run() error {
 				LIMIT 1
 			`
 			return tx.QueryRow(ctx, q, orgID).Scan(&ownerID, &ownerName, &ownerEmail,
-				&orgName, &orgSlug, &orgCurrency, &orgTimezone, &orgCategory)
+				&orgName, &orgSlug, &orgCurrency, &orgTimezone, &orgCategory, &ownerOnboardedAt)
 		})
 		if err != nil {
 			return nil, err
@@ -505,9 +506,18 @@ func run() error {
 		// Minimal user object. We need Email + Name for the shell.
 		email, _ := user.NewEmail(ownerEmail)
 		u := &user.User{
-			ID:    ownerID,
-			Email: email,
-			Name:  ownerName,
+			ID:                    ownerID,
+			Email:                 email,
+			Name:                  ownerName,
+			OnboardingCompletedAt: ownerOnboardedAt,
+		}
+		// Impersonation is an admin debug view: never force the wizard.
+		// If the owner never finished onboarding, the admin would otherwise
+		// loop forever (synthetic user has nil timestamp, skip/complete
+		// writes the flag but the next request rebuilds the same nil user).
+		if u.OnboardingCompletedAt == nil {
+			now := time.Now()
+			u.OnboardingCompletedAt = &now
 		}
 		return &auth.ResolvedSession{
 			User: u,
