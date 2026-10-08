@@ -45,9 +45,9 @@ type Product struct {
 
 // Availability states for the public catalog.
 const (
-	AvailabilityInStock    = "in_stock"
-	AvailabilityLowStock   = "low_stock"
-	AvailabilityOutOfStock = "out_of_stock"
+	AvailabilityInStock     = "in_stock"
+	AvailabilityLowStock    = "low_stock"
+	AvailabilityOutOfStock  = "out_of_stock"
 	AvailabilityMadeToOrder = "made_to_order"
 )
 

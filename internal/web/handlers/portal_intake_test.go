@@ -43,9 +43,9 @@ func TestParseIntakeAnswers_ResolvesLabelsAndFilters(t *testing.T) {
 
 	form := url.Values{}
 	form.Set("pq_"+p1+"_color", "Navy")
-	form.Set("pq_"+p1+"_notes", "  ") // blank dropped
+	form.Set("pq_"+p1+"_notes", "  ")              // blank dropped
 	form.Set("pq_"+uuid.NewString()+"_color", "X") // unknown product dropped
-	form.Set("pq_"+p1+"_nope", "Y")               // unknown key kept with raw key
+	form.Set("pq_"+p1+"_nope", "Y")                // unknown key kept with raw key
 	req := httptest.NewRequest("POST", "/order/x", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if err := req.ParseForm(); err != nil {

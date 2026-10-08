@@ -226,11 +226,11 @@ func (h *PortalHandler) intakeProducts(r *http.Request, slug string) []intakePro
 		v := intakeProductView{
 			ID: p.ID.String(), Name: p.Name, Description: p.Description,
 			ShortDescription: p.ShortDescription, Material: p.Material,
-			Category: p.Category,
+			Category:   p.Category,
 			PriceMinor: p.UnitPriceMinor, Currency: p.Currency,
 			QuoteOnly: p.QuoteOnly, StartingFrom: p.StartingFrom,
 			Availability: p.Availability,
-			Specs: p.Specs, Color: p.Color, ProductionDays: p.ProductionDays,
+			Specs:        p.Specs, Color: p.Color, ProductionDays: p.ProductionDays,
 		}
 		if p.CoverImageID != uuid.Nil {
 			v.CoverImageID = p.CoverImageID.String()

@@ -186,6 +186,7 @@ func marshalPublicAnswers(in []app.PublicAnswer) (string, error) {
 	}
 	return string(raw), nil
 }
+
 // marshalPublicItems encodes product lines for create_public_order:
 // [{id, product_id, qty}] with qty as an exact 3-decimal numeric string.
 // Item ids are generated here so the function stays free of extension

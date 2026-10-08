@@ -20,12 +20,12 @@ func TestNavA11yFoundations(t *testing.T) {
 	r.PageWithShell(rec, 200, "layouts/app.html", "errors/404.html", nil, Shell{})
 	body := rec.Body.String()
 	for _, want := range []string{
-		`href="#main-content"`,  // skip link
-		`class="skip-link"`,     // ...styled, not just present
-		`id="main-content"`,     // ...with a target
-		`data-snav="dashboard"`, // ungated link marks sections (rest gated by flags)
-		`id="offline-banner"`,   // connection status chrome
-		`id="ordora-toasts"`,    // toast host
+		`href="#main-content"`,   // skip link
+		`class="skip-link"`,      // ...styled, not just present
+		`id="main-content"`,      // ...with a target
+		`data-snav="dashboard"`,  // ungated link marks sections (rest gated by flags)
+		`id="offline-banner"`,    // connection status chrome
+		`id="ordora-toasts"`,     // toast host
 		`/static/js/htmx.min.js`, // self-hosted htmx, not unpkg
 		`/static/css/fonts.css`,  // self-hosted fonts, not Google
 	} {

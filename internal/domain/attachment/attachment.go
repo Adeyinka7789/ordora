@@ -51,11 +51,11 @@ type Attachment struct {
 
 // Attachment purposes.
 const (
-	PurposeGeneral       = "general"
-	PurposeInspiration   = "inspiration"
-	PurposePaymentProof  = "payment_proof"
+	PurposeGeneral        = "general"
+	PurposeInspiration    = "inspiration"
+	PurposePaymentProof   = "payment_proof"
 	PurposeProductGallery = "product_gallery"
-	PurposeProductCover  = "product_cover"
+	PurposeProductCover   = "product_cover"
 )
 
 // NormalizePurpose maps arbitrary input to a valid purpose.

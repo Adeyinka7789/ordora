@@ -27,7 +27,7 @@ import (
 type AttachmentHandler struct {
 	Service       *app.AttachmentService
 	PaymentLookup PaymentLookup
-	OrderService  OrderLookup        // for re-rendering the fragment
+	OrderService  OrderLookup         // for re-rendering the fragment
 	PaymentSvc    *app.PaymentService // for re-rendering the fragment
 	ProductLookup ProductLookup
 	Renderer      *render.Renderer

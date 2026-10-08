@@ -269,18 +269,18 @@ func scanProduct(row scannable) (*product.Product, error) {
 		createdAt   time.Time
 		updatedAt   time.Time
 
-		material      string
-		color         string
-		shortDesc     string
-		notes         string
-		specs         string
-		prodDays      *int
-		quoteOnly     bool
-		startingFrom  bool
-		hidden        bool
-		availability  string
-		category      string
-		questionsRaw  []byte
+		material     string
+		color        string
+		shortDesc    string
+		notes        string
+		specs        string
+		prodDays     *int
+		quoteOnly    bool
+		startingFrom bool
+		hidden       bool
+		availability string
+		category     string
+		questionsRaw []byte
 	)
 	if err := row.Scan(&id, &orgID, &name, &description, &sku, &priceMinor, &currency, &active, &createdBy, &createdAt, &updatedAt,
 		&material, &color, &shortDesc, &notes, &specs, &prodDays,
