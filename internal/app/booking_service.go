@@ -126,6 +126,7 @@ type PublicBooking struct {
 	Status      string
 	ServiceName string
 	OrgName     string
+	ProductID   *uuid.UUID
 }
 
 // BookingConfig is the anonymous booking configuration for one slug.

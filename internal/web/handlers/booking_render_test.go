@@ -89,18 +89,20 @@ func TestBookConfirmationRenders(t *testing.T) {
 		Token        string
 		TotalMinor   int64
 		Currency     string
+		BookAgain    string
 	}{
 		Title: "Booking received", CustomerName: "Ada",
 		OrderNumber: "ORD-1", OrgName: "Glam Salon",
 		Start: "Mon 12 Jan, 09:00", End: "10:00",
 		Token: "tok123", TotalMinor: 15000, Currency: "NGN",
+		BookAgain: "/book/glam?service=abc",
 	})
 	if err != nil {
 		t.Fatalf("book/confirmation.html: %v", err)
 	}
 	for _, want := range []string{
 		"Booking received", "Ada", "ORD-1", "Mon 12 Jan, 09:00",
-		"/o/tok123", "Track your booking",
+		"/o/tok123", "Track your booking", "Book again", "/book/glam?service=abc",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("confirmation missing %q", want)

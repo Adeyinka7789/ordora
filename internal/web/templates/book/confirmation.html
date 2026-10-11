@@ -34,5 +34,11 @@
   </div>
 
   <a href="/" class="font-label-md text-label-md text-primary hover:underline font-semibold">Back to home</a>
+  {{ if .BookAgain }}
+  <a href="{{ .BookAgain }}" class="h-11 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center justify-center gap-2 transition-colors">
+    <span aria-hidden="true" class="material-symbols-outlined text-[18px]">replay</span>
+    <span>Book again</span>
+  </a>
+  {{ end }}
 </div>
 {{ end }}

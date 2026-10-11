@@ -110,6 +110,9 @@ func TestBookingFullLoop(t *testing.T) {
 	if tracked.ServiceName != "Box Braids" || tracked.Status != "REQUESTED" {
 		t.Fatalf("tracking mismatch: %+v", tracked)
 	}
+	if tracked.ProductID == nil || *tracked.ProductID != productID {
+		t.Fatalf("tracking must carry the service for rebooking: %+v", tracked)
+	}
 	if !tracked.StartAt.Equal(start) {
 		t.Fatalf("tracking start: got %v want %v", tracked.StartAt, start)
 	}

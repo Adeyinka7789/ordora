@@ -280,11 +280,13 @@ func (h *BookHandler) BookSubmit(w http.ResponseWriter, r *http.Request) {
 		Token        string
 		TotalMinor   int64
 		Currency     string
+		BookAgain    string
 	}{
 		Title: "Booking received", CustomerName: res.CustomerName,
 		OrderNumber: res.OrderNumber, OrgName: res.OrgName,
 		Start: res.Start.Format("Mon 02 Jan, 15:04"), End: res.End.Format("15:04"),
 		Token: res.RawToken, TotalMinor: res.TotalMinor, Currency: res.Currency,
+		BookAgain: "/book/" + slug + "?service=" + serviceID.String(),
 	})
 }
 

@@ -53,6 +53,15 @@
     </div>
     <p class="font-headline-md text-headline-md text-on-primary-fixed font-bold">{{ .When }}</p>
     <p class="font-body-md text-body-md text-on-primary-fixed">{{ if .ServiceName }}{{ .ServiceName }} · {{ end }}{{ statusLabel .Status }}</p>
+    {{ if .BookAgain }}
+    <div>
+      <a href="{{ .BookAgain }}"
+         class="h-9 px-space-md rounded bg-surface-container-lowest/20 hover:bg-surface-container-lowest/30 text-on-primary-fixed font-label-md text-label-md font-semibold inline-flex items-center gap-2">
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">replay</span>
+        <span>Book again</span>
+      </a>
+    </div>
+    {{ end }}
   </div>
   {{ end }}
 

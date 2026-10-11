@@ -52,6 +52,9 @@ type bookingTrackView struct {
 	When        string // "Mon 02 Jan, 15:04 – 16:00" in the org timezone
 	Status      string // raw status for statusLabel
 	ServiceName string
+	// BookAgain carries the prefilled rebooking link; empty when the
+	// service is unknown (very old rows).
+	BookAgain string
 }
 
 type portalItemView struct {
@@ -99,14 +102,14 @@ func (h *PortalHandler) Show(w http.ResponseWriter, r *http.Request) {
 		View:            v,
 		OrderForStepper: stepper,
 		Items:           buildItemViews(v),
-		Booking:         h.trackBooking(r, token),
+		Booking:         h.trackBooking(r, token, v.OrgSlug),
 	}
 	h.Renderer.PagePublic(w, http.StatusOK, "layouts/public.html", "portal/show.html", data)
 }
 
 // trackBooking loads the appointment behind an order for the tracking
 // page. Best-effort and silent: ordinary orders simply show no block.
-func (h *PortalHandler) trackBooking(r *http.Request, token string) *bookingTrackView {
+func (h *PortalHandler) trackBooking(r *http.Request, token, orgSlug string) *bookingTrackView {
 	if h.Booking == nil {
 		return nil
 	}
@@ -115,12 +118,17 @@ func (h *PortalHandler) trackBooking(r *http.Request, token string) *bookingTrac
 		return nil
 	}
 	loc := app.BookingTimezone(b.Timezone)
-	return &bookingTrackView{
+	v := &bookingTrackView{
 		When: b.StartAt.In(loc).Format("Mon 02 Jan, 15:04") +
 			" – " + b.EndAt.In(loc).Format("15:04"),
 		Status:      b.Status,
 		ServiceName: b.ServiceName,
 	}
+	// Prefilled rebooking link (service unknown on no rows: no button).
+	if b.ProductID != nil && orgSlug != "" {
+		v.BookAgain = "/book/" + orgSlug + "?service=" + b.ProductID.String()
+	}
+	return v
 }
 
 func (h *PortalHandler) notFound(w http.ResponseWriter, r *http.Request) {

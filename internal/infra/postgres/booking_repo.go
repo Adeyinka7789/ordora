@@ -671,12 +671,13 @@ func (r *BookingRepo) BookingByToken(ctx context.Context, hash []byte) (*app.Pub
 	var out *app.PublicBooking
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `
-			SELECT start_at, end_at, timezone, status, service_name, org_name
+			SELECT start_at, end_at, timezone, status, service_name, org_name, product_id
 			FROM get_booking_by_token($1)
 		`
 		var b app.PublicBooking
 		if err := tx.QueryRow(ctx, q, hash).Scan(
 			&b.StartAt, &b.EndAt, &b.Timezone, &b.Status, &b.ServiceName, &b.OrgName,
+			&b.ProductID,
 		); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return nil
