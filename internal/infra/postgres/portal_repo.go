@@ -94,6 +94,7 @@ func (r *PortalRepo) GetByOrderID(ctx context.Context, orderID uuid.UUID) (*port
 	}
 	return out, nil
 }
+
 // ListPayments returns the payment lines for one order (receipt view).
 // Uses the SECURITY DEFINER function from migration 0032. Only
 // filenames/counts of proof attachments are exposed; file downloads

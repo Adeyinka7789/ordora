@@ -228,14 +228,14 @@ func run() error {
 
 	paymentRepo := postgres.NewPaymentRepo(db)
 	paymentService := app.NewPaymentService(app.PaymentServiceDeps{
-		DB:          db,
-		Payments:    paymentRepo,
-		PaymentRead: paymentRepo,
-		Orders:      orderRepo,
-		Audit:       auditRepo,
-		Outbox:      outboxRepo,
-		Orgs:        postgres.NewOrgRepo(db),
-		IDs:         id.Generator{},
+		DB:           db,
+		Payments:     paymentRepo,
+		PaymentRead:  paymentRepo,
+		Orders:       orderRepo,
+		Audit:        auditRepo,
+		Outbox:       outboxRepo,
+		Orgs:         postgres.NewOrgRepo(db),
+		IDs:          id.Generator{},
 		BaseURL:      cfg.BaseURL,
 		PortalSecret: cfg.PortalSecret,
 	})
@@ -353,11 +353,11 @@ func run() error {
 	})
 	// ---- Booking module (appointments; order stays the record) ----
 	bookingService := app.NewBookingService(app.BookingServiceDeps{
-		DB:     db,
-		Store:  postgres.NewBookingRepo(db, id.Generator{}),
-		Orders: orderService,
-		Outbox: outboxRepo,
-		IDs:    id.Generator{},
+		DB:           db,
+		Store:        postgres.NewBookingRepo(db, id.Generator{}),
+		Orders:       orderService,
+		Outbox:       outboxRepo,
+		IDs:          id.Generator{},
 		BaseURL:      cfg.BaseURL,
 		PortalSecret: cfg.PortalSecret,
 	})
@@ -591,15 +591,15 @@ func run() error {
 	// ---- Public portal ----
 	portalRepo := postgres.NewPortalRepo(db)
 	portalService := app.NewPortalService(app.PortalServiceDeps{
-		Repo:  portalRepo,
-		Blobs: blobs,
+		Repo:           portalRepo,
+		Blobs:          blobs,
 		TrackingSecret: cfg.PortalSecret,
 	})
 	publicOrderRepo := postgres.NewPublicOrderRepo(db, id.Generator{})
 	publicOrderService := app.NewPublicOrderService(app.PublicOrderServiceDeps{
-		DB:     publicOrderRepo,
-		Outbox: outboxRepo,
-		IDs:    id.Generator{},
+		DB:      publicOrderRepo,
+		Outbox:  outboxRepo,
+		IDs:     id.Generator{},
 		BaseURL: cfg.BaseURL,
 	})
 	portalH := &handlers.PortalHandler{

@@ -68,17 +68,17 @@ func NewPaymentService(d PaymentServiceDeps) *PaymentService {
 		d.Now = time.Now
 	}
 	return &PaymentService{
-		db:        d.DB,
-		payments:  d.Payments,
-		paymentR:  d.PaymentRead,
-		orders:    d.Orders,
-		customers: d.Customers,
-		audit:     d.Audit,
-		outbox:    d.Outbox,
-		orgs:      d.Orgs,
-		ids:       d.IDs,
-		now:       d.Now,
-		baseURL:   d.BaseURL,
+		db:           d.DB,
+		payments:     d.Payments,
+		paymentR:     d.PaymentRead,
+		orders:       d.Orders,
+		customers:    d.Customers,
+		audit:        d.Audit,
+		outbox:       d.Outbox,
+		orgs:         d.Orgs,
+		ids:          d.IDs,
+		now:          d.Now,
+		baseURL:      d.BaseURL,
 		portalSecret: d.PortalSecret,
 	}
 }

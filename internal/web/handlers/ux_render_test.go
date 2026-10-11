@@ -183,6 +183,9 @@ func TestUXSidebarGroupsTailoringGate(t *testing.T) {
 	if got := sidebarWith(true); !strings.Contains(got, "/groups") {
 		t.Error("tailoring sidebar must link /groups")
 	}
+	if got := sidebarWith(false); !strings.Contains(got, `data-snav="orders"`) || !strings.Contains(got, `href="/orders"`) {
+		t.Error("sidebar must link Orders for the normal orders-enabled shell")
+	}
 	if got := sidebarWith(false); !strings.Contains(got, "/calendar") {
 		t.Error("calendar stays visible to all trades")
 	}

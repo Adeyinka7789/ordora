@@ -126,7 +126,7 @@ type OrderServiceDeps struct {
 	Audit        AuditWriter
 	Outbox       OutboxWriter
 	Measurements MeasurementStore // optional; nil disables measurement saving
-	Orgs         OrgReader         // optional; nil skips owner email enrichment
+	Orgs         OrgReader        // optional; nil skips owner email enrichment
 	IDs          IDGen
 	Now          func() time.Time
 	// BaseURL is the public app origin (cfg.BaseURL). PortalSecret signs

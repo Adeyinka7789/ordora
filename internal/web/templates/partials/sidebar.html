@@ -34,6 +34,14 @@
           <span class="sidebar-label">Dashboard</span>
         </div>
       </a>
+      {{ if flag "orders" .Shell.OrgID }}
+        <a href="/orders" data-snav="orders" title="Orders" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">receipt_long</span>
+            <span class="sidebar-label">Orders</span>
+          </div>
+        </a>
+      {{ end }}
       {{ if flag "customers" .Shell.OrgID }}
         <a href="/customers" data-snav="customers" title="Customers" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
           <div class="flex items-center gap-space-sm">

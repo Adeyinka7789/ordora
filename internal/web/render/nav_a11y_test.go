@@ -46,7 +46,7 @@ func TestNavA11yFoundations(t *testing.T) {
 		t.Fatalf("read sidebar: %v", err)
 	}
 	for _, want := range []string{
-		`data-snav="dashboard"`, `data-snav="customers"`, `data-snav="products"`,
+		`data-snav="dashboard"`, `data-snav="orders"`, `data-snav="customers"`, `data-snav="products"`,
 		`data-snav="payments"`, `data-snav="groups"`, `data-snav="calendar"`,
 		`data-snav="storefront"`, `data-snav="reports"`, `data-snav="settings"`,
 		`data-snav="profile"`, `data-snav="support"`,
