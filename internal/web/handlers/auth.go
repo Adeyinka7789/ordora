@@ -245,7 +245,7 @@ func (h *AuthHandler) Forgot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email := r.PostFormValue("email")
-	_ = h.Auth.RequestPasswordReset(r.Context(), email)
+	_ = h.Auth.RequestPasswordReset(r.Context(), email, h.Cfg.BaseURL)
 	h.renderAuth(w, r, http.StatusOK, "auth/forgot.html", authPage{
 		Title:  "Reset your password",
 		Notice: "If that email is registered, a reset link is on the way.",

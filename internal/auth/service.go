@@ -481,7 +481,7 @@ func (s *Service) CompleteOnboarding(ctx context.Context, userID uuid.UUID) erro
 
 // RequestPasswordReset generates a reset token and emails it. Always returns
 // nil (even for unknown emails) so callers cannot probe for registered users.
-func (s *Service) RequestPasswordReset(ctx context.Context, rawEmail string) error {
+func (s *Service) RequestPasswordReset(ctx context.Context, rawEmail, baseURL string) error {
 	email, err := user.NewEmail(rawEmail)
 	if err != nil {
 		return nil // swallow invalid email; response is identical
@@ -509,7 +509,7 @@ func (s *Service) RequestPasswordReset(ctx context.Context, rawEmail string) err
 	if err := s.tokens.Create(ctx, t); err != nil {
 		return err
 	}
-	link := "/password/reset?token=" + raw
+	link := baseURL + "/password/reset?token=" + raw
 	return s.mailer.SendPasswordReset(ctx, u.Email, u.Name, link)
 }
 
