@@ -18,7 +18,9 @@
             <p style="margin:0;font-size:14px;white-space:pre-wrap;">{{.Description}}</p>
           </td></tr>
         </table>
+        {{if .AdminURL}}
         <a href="{{.AdminURL}}" style="display:inline-block;margin-top:24px;padding:12px 20px;background:#0077BE;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">View and confirm</a>
+        {{end}}
       </td>
     </tr>
   </table>

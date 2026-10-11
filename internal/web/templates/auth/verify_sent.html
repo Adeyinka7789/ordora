@@ -21,6 +21,16 @@
   </div>
 {{ end }}
 
+<details class="mt-space-md p-space-sm rounded bg-surface-container-low">
+  <summary class="font-label-md text-label-md text-on-surface-variant cursor-pointer">Didn't get the email? Resend it</summary>
+  <form method="post" action="/verify/resend" class="mt-space-sm flex flex-col gap-2">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+    <input type="email" name="email" required placeholder="you@example.com" value="{{ .Email }}"
+           class="h-10 px-3 rounded border border-outline-variant bg-surface font-body-md text-body-md">
+    <button type="submit" class="h-10 px-3 rounded bg-primary text-on-primary font-label-md text-label-md font-semibold">Resend verification link</button>
+  </form>
+</details>
+
 <p class="text-center font-label-md text-label-md text-on-surface-variant mt-space-lg">
   <a href="/login" class="text-primary hover:underline">Go to sign in</a>
 </p>

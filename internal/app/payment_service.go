@@ -37,8 +37,13 @@ type PaymentService struct {
 	customers CustomerReader
 	audit     AuditWriter
 	outbox    OutboxWriter
+	orgs      OrgReader
 	ids       IDGen
 	now       func() time.Time
+	// baseURL + portalSecret build absolute customer tracking links for
+	// emails. Empty disables the links (templates hide the buttons).
+	baseURL      string
+	portalSecret string
 }
 
 type PaymentServiceDeps struct {
@@ -49,8 +54,13 @@ type PaymentServiceDeps struct {
 	Customers   CustomerReader
 	Audit       AuditWriter
 	Outbox      OutboxWriter
+	Orgs        OrgReader // optional; nil skips org-name enrichment
 	IDs         IDGen
 	Now         func() time.Time
+	// BaseURL is the public app origin (cfg.BaseURL). PortalSecret signs
+	// customer tracking links (cfg.PortalSecret).
+	BaseURL      string
+	PortalSecret string
 }
 
 func NewPaymentService(d PaymentServiceDeps) *PaymentService {
@@ -65,9 +75,18 @@ func NewPaymentService(d PaymentServiceDeps) *PaymentService {
 		customers: d.Customers,
 		audit:     d.Audit,
 		outbox:    d.Outbox,
+		orgs:      d.Orgs,
 		ids:       d.IDs,
 		now:       d.Now,
+		baseURL:   d.BaseURL,
+		portalSecret: d.PortalSecret,
 	}
+}
+
+// trackingLink returns the absolute customer tracking URL for an order, or
+// "" when links are unconfigured (templates hide the button on "").
+func (s *PaymentService) trackingLink(orderID uuid.UUID) string {
+	return TrackingLink(s.baseURL, s.portalSecret, orderID)
 }
 
 // -----------------------------------------------------------------------------
@@ -111,6 +130,14 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 	}
 	if in.PaidAt.After(s.now().Add(time.Minute)) {
 		return nil, ErrPaidAtInFuture
+	}
+
+	// Org name for the payment mail. Best-effort, read before the tx.
+	var mailOrgName string
+	if s.orgs != nil {
+		if o, err := s.orgs.GetByID(ctx, scope.OrgID); err == nil && o != nil {
+			mailOrgName = o.Name
+		}
 	}
 
 	var updated *order.Order
@@ -176,7 +203,7 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 		if s.outbox != nil && s.customers != nil {
 			cust, err := s.customers.GetByID(ctx, scope, o.CustomerID)
 			if err == nil && cust.Email != "" {
-				if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "payment.recorded", map[string]any{
+				payload := map[string]any{
 					"PaymentID":     p.ID.String(),
 					"OrderID":       o.ID.String(),
 					"OrderNumber":   o.Number,
@@ -188,8 +215,12 @@ func (s *PaymentService) RecordPayment(ctx context.Context, scope tenant.TenantS
 					"Method":        string(p.Method),
 					"CustomerName":  cust.Name,
 					"CustomerEmail": cust.Email,
-					"PortalURL":     "",
-				}); err != nil {
+					"PortalURL":     s.trackingLink(o.ID),
+				}
+				if mailOrgName != "" {
+					payload["OrgName"] = mailOrgName
+				}
+				if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "payment.recorded", payload); err != nil {
 					return err
 				}
 			}

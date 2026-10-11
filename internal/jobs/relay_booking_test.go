@@ -128,3 +128,47 @@ func TestRelay_BookingEventsDispatchOnce(t *testing.T) {
 		t.Errorf("idempotency key: got %q want %q", key, want)
 	}
 }
+
+// TestRelay_FailedDispatchIsRetained proves a malformed event is not marked
+// dispatched. The row must remain visible for retry/inspection with its
+// attempt count and error preserved.
+func TestRelay_FailedDispatchIsRetained(t *testing.T) {
+	db := openRelayDB(t)
+	ctx := context.Background()
+	orgID := uuid.New()
+	id := insertOutboxRow(t, db, orgID, "booking.submitted", map[string]any{
+		// The relay expects BookingSubmitted.CustomerName to be a string; this
+		// deliberately breaks JSON decoding without affecting other rows.
+		"CustomerName": 42,
+	})
+	t.Cleanup(func() {
+		_ = db.WithTenant(ctx, orgID, func(tx pgx.Tx) error {
+			_, err := tx.Exec(ctx, `DELETE FROM outbox WHERE id = $1`, id)
+			return err
+		})
+	})
+
+	if err := NewOutboxRelay(db, OutboxRelayConfig{}).tick(ctx); err != nil {
+		t.Fatalf("tick: %v", err)
+	}
+
+	var dispatched *string
+	var attempts int
+	var lastError string
+	if err := db.WithTenant(ctx, orgID, func(tx pgx.Tx) error {
+		return tx.QueryRow(ctx, `
+			SELECT dispatched_at::text, attempts, COALESCE(last_error, '')
+			  FROM outbox WHERE id = $1`, id).Scan(&dispatched, &attempts, &lastError)
+	}); err != nil {
+		t.Fatalf("inspect failed outbox: %v", err)
+	}
+	if dispatched != nil {
+		t.Fatalf("failed event must remain undispatched, got %v", *dispatched)
+	}
+	if attempts != 1 {
+		t.Errorf("attempts = %d, want 1", attempts)
+	}
+	if lastError == "" {
+		t.Error("failed event must retain its error")
+	}
+}

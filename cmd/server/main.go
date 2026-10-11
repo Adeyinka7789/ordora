@@ -117,6 +117,10 @@ func run() error {
 	_ = mailer // used by services
 
 	// ---- Auth service ----
+	// outboxRepo is built here (before first use) so registration,
+	// verification and password-reset mails go through the durable
+	// outbox instead of blocking on SMTP.
+	outboxRepo := postgres.NewOutboxRepo(db)
 	authMailer := email.NewAuthMailer(mailer, emailRenderer)
 	authService := auth.NewService(auth.Deps{
 		DB:       db,
@@ -128,6 +132,8 @@ func run() error {
 		Attempts: postgres.NewLoginAttemptRepo(db),
 		IDs:      id.Generator{},
 		Mailer:   authMailer,
+		Outbox:   outboxRepo,
+		BaseURL:  cfg.BaseURL,
 		IdleTTL:  cfg.Session.IdleTTL,
 	})
 
@@ -184,7 +190,6 @@ func run() error {
 	custRepo := postgres.NewCustomerRepo(db)
 
 	// ---- Services ----
-	outboxRepo := postgres.NewOutboxRepo(db)
 	auditRepo := postgres.NewAuditRepo(db)
 	orderRepo := postgres.NewOrderRepo(db)
 
@@ -215,7 +220,10 @@ func run() error {
 		Audit:        auditRepo,
 		Outbox:       outboxRepo,
 		Measurements: measurementRepo,
+		Orgs:         postgres.NewOrgRepo(db),
 		IDs:          id.Generator{},
+		BaseURL:      cfg.BaseURL,
+		PortalSecret: cfg.PortalSecret,
 	})
 
 	paymentRepo := postgres.NewPaymentRepo(db)
@@ -226,7 +234,10 @@ func run() error {
 		Orders:      orderRepo,
 		Audit:       auditRepo,
 		Outbox:      outboxRepo,
+		Orgs:        postgres.NewOrgRepo(db),
 		IDs:         id.Generator{},
+		BaseURL:      cfg.BaseURL,
+		PortalSecret: cfg.PortalSecret,
 	})
 	paymentH := &handlers.PaymentHandler{
 		Service:     paymentService,
@@ -286,6 +297,7 @@ func run() error {
 		Renderer:     renderer,
 		Costs:        costService,
 		Groups:       postgres.NewGroupRepo(db),
+		BaseURL:      cfg.BaseURL,
 	}
 
 	// ---- Aso-ebi groups + calendar ----
@@ -346,6 +358,8 @@ func run() error {
 		Orders: orderService,
 		Outbox: outboxRepo,
 		IDs:    id.Generator{},
+		BaseURL:      cfg.BaseURL,
+		PortalSecret: cfg.PortalSecret,
 	})
 	settingsH := &handlers.SettingsHandler{
 		Service:  settingsService,
@@ -579,12 +593,14 @@ func run() error {
 	portalService := app.NewPortalService(app.PortalServiceDeps{
 		Repo:  portalRepo,
 		Blobs: blobs,
+		TrackingSecret: cfg.PortalSecret,
 	})
 	publicOrderRepo := postgres.NewPublicOrderRepo(db, id.Generator{})
 	publicOrderService := app.NewPublicOrderService(app.PublicOrderServiceDeps{
 		DB:     publicOrderRepo,
 		Outbox: outboxRepo,
 		IDs:    id.Generator{},
+		BaseURL: cfg.BaseURL,
 	})
 	portalH := &handlers.PortalHandler{
 		Portal:   portalService,
@@ -593,6 +609,7 @@ func run() error {
 		Blobs:    blobs,
 		IDs:      id.Generator{},
 		Renderer: renderer,
+		BaseURL:  cfg.BaseURL,
 	}
 	bookH := &handlers.BookHandler{
 		Booking:  bookingService,
@@ -863,6 +880,7 @@ func run() error {
 	mux.Handle("POST /login", authLimit(http.HandlerFunc(authH.Login)))
 	mux.HandleFunc("POST /logout", authH.Logout)
 	mux.HandleFunc("GET /verify", authH.VerifyEmail)
+	mux.Handle("POST /verify/resend", authLimit(http.HandlerFunc(authH.ResendVerification)))
 	mux.HandleFunc("GET /password/forgot", authH.ForgotPage)
 	mux.Handle("POST /password/forgot", authLimit(http.HandlerFunc(authH.Forgot)))
 	mux.HandleFunc("GET /password/reset", authH.ResetPage)

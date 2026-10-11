@@ -35,6 +35,9 @@ type OrderHandler struct {
 	Renderer     *render.Renderer
 	Costs        *app.CostService
 	Groups       *postgres.GroupRepo
+	// BaseURL is the canonical app origin (cfg.BaseURL) for shareable and
+	// emailed links. Empty falls back to the request host.
+	BaseURL string
 }
 
 // -----------------------------------------------------------------------------
@@ -756,11 +759,7 @@ func (h *OrderHandler) Show(w http.ResponseWriter, r *http.Request) {
 	// If a fresh token was just generated, display it once.
 	if raw := queryValue(r, "token"); raw != "" {
 		page.TokenRaw = raw
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
-		page.PortalURL = scheme + "://" + r.Host + "/o/" + raw
+		page.PortalURL = canonicalLink(h.BaseURL, r, "/o/"+raw)
 	}
 
 	if v := queryValue(r, "notice"); v != "" {

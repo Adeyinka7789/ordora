@@ -382,16 +382,18 @@ func (s *EggService) RejectOrder(ctx context.Context, scope tenant.TenantScope, 
 	return nil
 }
 
-// eggCompleteSteps walks an in-flight order to delivered.
+// eggCompleteSteps walks an in-flight order to delivered. The final
+// COMPLETED step is sent separately (with mail); these move silently.
 var eggCompleteSteps = []order.Status{
 	order.StatusInProgress,
 	order.StatusReady,
 	order.StatusOutForDelivery,
 	order.StatusDelivered,
-	order.StatusCompleted,
 }
 
 // CompleteOrder walks a confirmed order through to COMPLETED after delivery.
+// Intermediate states move silently so the customer gets one completion
+// mail, not a "ready / out for delivery / delivered" volley for eggs.
 func (s *EggService) CompleteOrder(ctx context.Context, scope tenant.TenantScope, orderID uuid.UUID) error {
 	if err := scope.RequireWrite(); err != nil {
 		return err
@@ -404,9 +406,10 @@ func (s *EggService) CompleteOrder(ctx context.Context, scope tenant.TenantScope
 		return ErrEggBadStatus
 	}
 	for _, next := range eggCompleteSteps {
-		if _, err := s.orders.ChangeStatus(ctx, scope, orderID, next); err != nil {
+		if _, err := s.orders.ChangeStatusSilent(ctx, scope, orderID, next); err != nil {
 			return err
 		}
 	}
-	return nil
+	_, err = s.orders.ChangeStatus(ctx, scope, orderID, order.StatusCompleted)
+	return err
 }

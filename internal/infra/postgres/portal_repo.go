@@ -58,6 +58,42 @@ func (r *PortalRepo) GetByTokenHash(ctx context.Context, tokenHash []byte) (*por
 	return out, nil
 }
 
+// GetByOrderID reads one order by id through the tracking-link function
+// (0066). The caller must already have authorized the id — PortalService
+// only calls this after verifying an HMAC tracking token.
+func (r *PortalRepo) GetByOrderID(ctx context.Context, orderID uuid.UUID) (*portal.Order, error) {
+	var out *portal.Order
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		const q = `SELECT * FROM get_order_by_id_public($1)`
+		row := tx.QueryRow(ctx, q, orderID)
+		var o portal.Order
+		if err := row.Scan(
+			&o.OrderID, &o.OrganizationID, &o.OrderNumber, &o.Title,
+			&o.Description, &o.Status, &o.Currency,
+			&o.SubtotalMinor, &o.DiscountMinor, &o.TaxMinor,
+			&o.TotalMinor, &o.AmountPaidMinor,
+			&o.ExpectedCompletion, &o.DeliveredAt, &o.CreatedAt,
+			&o.CustomerName, &o.CustomerEmail, &o.CustomerPhone,
+			&o.CustomerAddress,
+			&o.OrgName, &o.OrgSlug, &o.OrgEmail, &o.OrgPhone,
+			&o.OrgAddress, &o.OrgCurrency, &o.OrgTimezone,
+		); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrPortalTokenNotFound
+			}
+			return fmt.Errorf("portal_repo: scan by id: %w", err)
+		}
+		out = &o
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, ErrPortalTokenNotFound
+	}
+	return out, nil
+}
 // ListPayments returns the payment lines for one order (receipt view).
 // Uses the SECURITY DEFINER function from migration 0032. Only
 // filenames/counts of proof attachments are exposed; file downloads

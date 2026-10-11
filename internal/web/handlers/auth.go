@@ -135,9 +135,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	verifyURL := h.Cfg.BaseURL + "/verify?token=" + result.VerifyToken
-	if err := h.Auth.SendVerificationEmail(r.Context(), result.User, verifyURL); err != nil {
-		slog.Error("auth: send verify email", "err", err, "user_id", result.User.ID)
-	}
+	// Delivery is the auth service's job (durable outbox with worker
+	// retry, direct-send fallback). The raw link stays on this page as a
+	// development fallback only.
 
 	page = authPage{
 		Title:      "Check your email",
@@ -228,6 +228,23 @@ func (h *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	h.renderAuth(w, r, http.StatusOK, "auth/verify_sent.html", authPage{
 		Title:  "Email verified",
 		Notice: "Your email is verified. You can now sign in.",
+	})
+}
+
+// ResendVerification handles POST /verify/resend: issues a fresh token
+// and queues the mail. The response is identical for unknown emails,
+// already-verified accounts and successes (no account oracle).
+func (h *AuthHandler) ResendVerification(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	email := r.PostFormValue("email")
+	_ = h.Auth.ResendVerification(r.Context(), email, h.Cfg.BaseURL)
+	h.renderAuth(w, r, http.StatusOK, "auth/verify_sent.html", authPage{
+		Title:  "Check your email",
+		Notice: "If that email is registered and unverified, a fresh verification link is on the way.",
+		Email:  email,
 	})
 }
 

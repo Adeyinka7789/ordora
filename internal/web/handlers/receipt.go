@@ -192,6 +192,17 @@ func absoluteURL(r *http.Request, path string) string {
 	return scheme + "://" + r.Host + path
 }
 
+// canonicalLink builds a shareable absolute URL, preferring the configured
+// BaseURL (correct behind proxies and in emails) over the request host.
+// The request fallback only serves unwired callers (tests); production
+// handlers always carry cfg.BaseURL.
+func canonicalLink(baseURL string, r *http.Request, path string) string {
+	if strings.TrimSpace(baseURL) != "" {
+		return app.AbsURL(baseURL, path)
+	}
+	return absoluteURL(r, path)
+}
+
 // -----------------------------------------------------------------------------
 // Staff receipt: GET /orders/{id}/receipt
 // -----------------------------------------------------------------------------
@@ -246,7 +257,7 @@ func (h *OrderHandler) Receipt(w http.ResponseWriter, r *http.Request) {
 	// the "Client link" button (?token=...). Without it, share text carries
 	// the order summary and the owner forwards the downloaded PDF/PNG.
 	if raw := queryValue(r, "token"); raw != "" {
-		clientURL := absoluteURL(r, "/o/"+raw+"/receipt")
+		clientURL := canonicalLink(h.BaseURL, r, "/o/"+raw+"/receipt")
 		page.ClientLink = clientURL
 		page.HasToken = true
 		page.Card.ReceiptURL = clientURL
@@ -254,7 +265,7 @@ func (h *OrderHandler) Receipt(w http.ResponseWriter, r *http.Request) {
 		page.MailtoURL = receiptMailto(d.customerEmail(), "Receipt "+d.Order.Number+" from "+d.Org.Name, summary)
 		page.WhatsAppURL = receiptWhatsApp(d.customerPhone(), summary)
 	} else {
-		page.Card.ReceiptURL = absoluteURL(r, "/orders/"+oid.String()+"/receipt")
+		page.Card.ReceiptURL = canonicalLink(h.BaseURL, r, "/orders/"+oid.String()+"/receipt")
 		summary := receiptShareText(card, "")
 		page.MailtoURL = receiptMailto(d.customerEmail(), "Receipt "+d.Order.Number+" from "+d.Org.Name, summary)
 		page.WhatsAppURL = receiptWhatsApp(d.customerPhone(), summary)
@@ -435,7 +446,7 @@ func (h *PortalHandler) Receipt(w http.ResponseWriter, r *http.Request) {
 	}
 
 	card := portalReceiptCard(v, token)
-	card.ReceiptURL = absoluteURL(r, "/o/"+token+"/receipt")
+	card.ReceiptURL = canonicalLink(h.BaseURL, r, "/o/"+token+"/receipt")
 	data := portalReceiptPage{
 		Title:   "Receipt " + v.OrderNumber,
 		OrgName: v.OrgName,

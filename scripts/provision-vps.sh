@@ -100,6 +100,10 @@ if [ ! -f /etc/ordora/ordora.env ]; then
   # Cryptographically random admin path: never a known default. Printed at
   # the end of this script — store it in a password manager.
   ADMIN_PATH="/ops-$(openssl rand -hex 16)"
+  # Tracking-link secret: signs the long-lived /o/o1_... links in customer
+  # emails. Rotating it invalidates old email links (portal bearer tokens
+  # are unaffected), so generate once and keep it.
+  PORTAL_SECRET="$(openssl rand -hex 32)"
   cat >/etc/ordora/ordora.env <<ENV
 ORDORA_ENV=production
 ORDORA_BASE_URL=https://${DOMAIN}
@@ -125,6 +129,7 @@ ORDORA_CONTACT_FILE=/opt/ordora/shared/contact.json
 ORDORA_ADMIN_PATH=${ADMIN_PATH}
 ORDORA_ADMIN_SESSION_COOKIE=ordora_admin_session
 ORDORA_ADMIN_SESSION_TTL_HOURS=8
+ORDORA_PORTAL_SECRET=${PORTAL_SECRET}
 ENV
   echo "==> Wrote /etc/ordora/ordora.env"
   echo "    Admin panel: https://${DOMAIN}${ADMIN_PATH}  (KEEP SECRET — store in password manager)"

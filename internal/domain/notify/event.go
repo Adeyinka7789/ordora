@@ -11,6 +11,8 @@ import (
 // Event names. These are the strings that land in the outbox.event_name column.
 const (
 	EventUserRegistered       = "user.registered"
+	EventUserVerified         = "user.verified"
+	EventPasswordReset        = "password.reset"
 	EventOrderCreated         = "order.created"
 	EventPaymentRecorded      = "payment.recorded"
 	EventOrderStatusChanged   = "order.status_changed"
@@ -27,6 +29,7 @@ type Kind string
 
 const (
 	KindWelcomeVerify      Kind = "WELCOME_VERIFY"
+	KindWelcome            Kind = "WELCOME"
 	KindPasswordReset      Kind = "PASSWORD_RESET"
 	KindOrderCreatedCust   Kind = "ORDER_CREATED_CUSTOMER"
 	KindOrderCreatedOwner  Kind = "ORDER_CREATED_OWNER"
@@ -48,6 +51,25 @@ type UserRegistered struct {
 	Name      string
 	VerifyURL string // pre-built
 	OrgName   string
+}
+
+// UserVerified is emitted when a user confirms their email. It drives the
+// post-activation welcome mail (platform pitch + navigation guide).
+type UserVerified struct {
+	UserID  uuid.UUID
+	Email   string
+	Name    string
+	OrgName string
+	BaseURL string // app origin; the template derives section links from it
+}
+
+// PasswordReset is emitted when a password reset is requested. The link is
+// pre-built (the raw token exists only here) and the worker renders it.
+type PasswordReset struct {
+	UserID   uuid.UUID
+	Email    string
+	Name     string
+	ResetURL string // pre-built
 }
 
 // OrderCreated is emitted when a business creates an order.

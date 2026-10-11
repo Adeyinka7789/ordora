@@ -84,6 +84,29 @@ func TestPublicFuncs_Smoke(t *testing.T) {
 	}
 }
 
+// TestNotificationMigrationsPresent is the migration smoke check for the
+// durable tracking lookup and outbox retry functions. It intentionally reads
+// schema_migrations rather than relying only on Go tests, because SQL
+// function bodies are not compiled by the Go toolchain.
+func TestNotificationMigrationsPresent(t *testing.T) {
+	db := openSmokeDB(t)
+	defer db.Close()
+
+	for _, version := range []string{"0066_tracking_lookup", "0067_outbox_retry"} {
+		var present bool
+		if err := db.WithTenant(context.Background(), uuid.New(), func(tx pgx.Tx) error {
+			return tx.QueryRow(context.Background(),
+				`SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)`, version,
+			).Scan(&present)
+		}); err != nil {
+			t.Fatalf("check migration %s: %v", version, err)
+		}
+		if !present {
+			t.Fatalf("migration %s is not recorded as applied", version)
+		}
+	}
+}
+
 // TestProductAttachment_WritePath proves the full PRODUCT write path through
 // the real repo: CHECK constraint + RLS + scan round-trip. Metadata only —
 // no storage bytes are touched (repo.Delete is DB-only), and setupDB cleans

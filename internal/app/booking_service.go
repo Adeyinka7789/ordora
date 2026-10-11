@@ -254,6 +254,11 @@ type BookingService struct {
 	outbox OutboxWriter
 	ids    IDGen
 	now    func() time.Time
+	// baseURL builds absolute links for emails; portalSecret signs
+	// customer tracking links. Empty disables the links (templates hide
+	// the buttons).
+	baseURL      string
+	portalSecret string
 }
 
 type BookingServiceDeps struct {
@@ -263,6 +268,10 @@ type BookingServiceDeps struct {
 	Outbox OutboxWriter
 	IDs    IDGen
 	Now    func() time.Time
+	// BaseURL is the public app origin (cfg.BaseURL). PortalSecret signs
+	// customer tracking links (cfg.PortalSecret).
+	BaseURL      string
+	PortalSecret string
 }
 
 func NewBookingService(d BookingServiceDeps) *BookingService {
@@ -272,6 +281,7 @@ func NewBookingService(d BookingServiceDeps) *BookingService {
 	return &BookingService{
 		db: d.DB, store: d.Store, orders: d.Orders,
 		outbox: d.Outbox, ids: d.IDs, now: d.Now,
+		baseURL: d.BaseURL, portalSecret: d.PortalSecret,
 	}
 }
 
@@ -475,17 +485,28 @@ func (s *BookingService) setStatus(ctx context.Context, scope tenant.TenantScope
 		}
 	case booking.StatusCompleted:
 		// Walk the visit to done. Must start CONFIRMED (set by confirm).
+		// Intermediate states move silently — one appointment completion
+		// must not spam "ready", "out for delivery" and "delivered" for
+		// a haircut. Only the final COMPLETED step mails the customer.
 		if o.Status != order.StatusConfirmed {
 			return nil, ErrBookingBadStatus
 		}
 		for _, next := range []order.Status{
 			order.StatusInProgress, order.StatusReady,
 			order.StatusOutForDelivery, order.StatusDelivered,
-			order.StatusCompleted,
 		} {
-			if _, err := s.orders.ChangeStatus(ctx, scope, o.ID, next); err != nil {
+			if s.orders == nil {
+				return nil, ErrBookingBadStatus
+			}
+			if _, err := s.orders.ChangeStatusSilent(ctx, scope, o.ID, next); err != nil {
 				return nil, err
 			}
+		}
+		if s.orders == nil {
+			return nil, ErrBookingBadStatus
+		}
+		if _, err := s.orders.ChangeStatus(ctx, scope, o.ID, order.StatusCompleted); err != nil {
+			return nil, err
 		}
 	case booking.StatusCancelled, booking.StatusNoShow:
 		// Close the commercial record unless already closed. DELIVERED
@@ -795,7 +816,7 @@ func (s *BookingService) SubmitBooking(ctx context.Context, in SubmitBookingInpu
 	// Owner learns of the request (the intake_received template shape is
 	// filled exactly — the renderer errors on missing keys).
 	if s.outbox != nil && res.OrgEmail != "" {
-		_ = s.outbox.Enqueue(ctx, cfg.OrgID, "booking.submitted", map[string]any{
+		enqueueRetry(ctx, s.outbox, cfg.OrgID, "booking.submitted", map[string]any{
 			"OrderID":       res.OrderID.String(),
 			"OrderNumber":   res.OrderNumber,
 			"CustomerName":  name,
@@ -804,8 +825,8 @@ func (s *BookingService) SubmitBooking(ctx context.Context, in SubmitBookingInpu
 			"Description":   "Booking: " + strings.TrimSpace(in.ServiceName) + " — " + start.Format("Mon 02 Jan, 15:04"),
 			"OrgName":       cfg.OrgName,
 			"OrgEmail":      res.OrgEmail,
-			"AdminURL":      "/dashboard/bookings?date=" + start.Format("2006-01-02"),
-		})
+			"AdminURL":      AbsURL(s.baseURL, "/dashboard/bookings?date="+start.Format("2006-01-02")),
+		}, "order_id", res.OrderID.String(), "org_id", cfg.OrgID.String())
 	}
 	return out, nil
 }
@@ -935,8 +956,11 @@ func (s *BookingService) validateMove(ctx context.Context, scope tenant.TenantSc
 // BookingNotify enqueues the customer mail for a reschedule. Other staff
 // actions deliberately enqueue nothing here: the linked order's own
 // status transitions already mail the customer (order.status_changed),
-// and a second mail per action would be a duplicate. Best-effort like
-// the rest of the outbox usage: failures never fail the mutation.
+// and a second mail per action would be a duplicate.
+//
+// Post-commit like the rest of the outbox usage, but retried and loud on
+// failure instead of discarded: failures never fail the mutation, yet
+// they no longer vanish silently.
 func (s *BookingService) BookingNotify(ctx context.Context, scope tenant.TenantScope, event string, b *Booking) {
 	if s.outbox == nil || b == nil || event != "booking.rescheduled" {
 		return
@@ -945,12 +969,12 @@ func (s *BookingService) BookingNotify(ctx context.Context, scope tenant.TenantS
 		return
 	}
 	loc := BookingTimezone(b.Timezone)
-	_ = s.outbox.Enqueue(ctx, scope.OrgID, event, map[string]any{
+	enqueueRetry(ctx, s.outbox, scope.OrgID, event, map[string]any{
 		"OrderID":       b.OrderID.String(),
 		"OrderNumber":   b.OrderNumber,
 		"CustomerName":  b.CustomerName,
 		"CustomerEmail": b.CustomerEmail,
 		"StartLabel":    b.StartAt.In(loc).Format("Mon 02 Jan, 15:04"),
-		"PortalURL":     "",
-	})
+		"PortalURL":     TrackingLink(s.baseURL, s.portalSecret, b.OrderID),
+	}, "booking_id", b.ID.String(), "order_id", b.OrderID.String())
 }

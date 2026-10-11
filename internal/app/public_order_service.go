@@ -189,6 +189,9 @@ type PublicOrderService struct {
 	outbox OutboxWriter
 	ids    IDGen
 	now    func() time.Time
+	// baseURL builds absolute owner links for emails. Empty falls back to
+	// the bare path (broken in email clients) — always wire cfg.BaseURL.
+	baseURL string
 }
 
 type PublicOrderServiceDeps struct {
@@ -196,13 +199,15 @@ type PublicOrderServiceDeps struct {
 	Outbox OutboxWriter
 	IDs    IDGen
 	Now    func() time.Time
+	// BaseURL is the public app origin (cfg.BaseURL).
+	BaseURL string
 }
 
 func NewPublicOrderService(d PublicOrderServiceDeps) *PublicOrderService {
 	if d.Now == nil {
 		d.Now = time.Now
 	}
-	return &PublicOrderService{db: d.DB, outbox: d.Outbox, ids: d.IDs, now: d.Now}
+	return &PublicOrderService{db: d.DB, outbox: d.Outbox, ids: d.IDs, now: d.Now, baseURL: d.BaseURL}
 }
 
 // EggConfig returns the perishable-module intake configuration for a slug.
@@ -293,10 +298,12 @@ func (s *PublicOrderService) Submit(ctx context.Context, in PublicOrderInput) (*
 	}
 
 	// Emit PublicIntakeReceived so the business owner gets notified.
+	// Post-commit and retried: a DB blip retries instead of silently
+	// dropping the owner's mail, and failures are logged with context.
 	if s.outbox != nil {
 		org, err := s.LookupOrg(ctx, in.Slug)
 		if err == nil && org.Email != "" {
-			_ = s.outbox.Enqueue(ctx, org.ID, "public.intake_received", map[string]any{
+			enqueueRetry(ctx, s.outbox, org.ID, "public.intake_received", map[string]any{
 				"OrderID":       result.OrderID.String(),
 				"OrderNumber":   result.OrderNumber,
 				"CustomerName":  result.CustomerName,
@@ -307,8 +314,8 @@ func (s *PublicOrderService) Submit(ctx context.Context, in PublicOrderInput) (*
 				"TotalMinor":    result.TotalMinor,
 				"OrgName":       org.Name,
 				"OrgEmail":      org.Email,
-				"AdminURL":      "/orders/" + result.OrderID.String(),
-			})
+				"AdminURL":      AbsURL(s.baseURL, "/orders/"+result.OrderID.String()),
+			}, "order_id", result.OrderID.String(), "org_id", org.ID.String())
 		}
 	}
 

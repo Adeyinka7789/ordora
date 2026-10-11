@@ -149,11 +149,18 @@ func (w *NotificationWorker) process(ctx context.Context, j claimJob) {
 		return
 	}
 
-	_ = w.db.WithTx(ctx, func(tx pgx.Tx) error {
+	// At-least-once: a crash between Send and this ack redelivers (the
+	// mail may send twice). Ack failures are logged loud — the previous
+	// `_ =` swallow hid stuck jobs.
+	if err := w.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `SELECT ack_notification_job($1, 'SENT', 0, '', '')`
 		_, err := tx.Exec(ctx, q, j.ID)
 		return err
-	})
+	}); err != nil {
+		slog.Error("notification worker: sent but ack failed; job will redeliver",
+			"id", j.ID, "kind", j.Kind, "to", j.Recipient, "err", err)
+		return
+	}
 	slog.Info("notification worker: sent", "kind", j.Kind, "to", j.Recipient)
 }
 
@@ -164,21 +171,28 @@ func (w *NotificationWorker) retryOrDead(ctx context.Context, id uuid.UUID, atte
 		return
 	}
 	backoff := backoffFor(next)
-	_ = w.db.WithTx(ctx, func(tx pgx.Tx) error {
+	if err := w.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `SELECT ack_notification_job($1, 'PENDING', $2, $3, $4)`
 		_, err := tx.Exec(ctx, q, id, next, cause.Error(), fmt.Sprintf("%d seconds", int(backoff.Seconds())))
 		return err
-	})
+	}); err != nil {
+		slog.Error("notification worker: retry ack failed; job will be reclaimed by lease expiry",
+			"id", id, "attempt", next, "err", err)
+		return
+	}
 	slog.Warn("notification worker: retry scheduled",
 		"id", id, "attempt", next, "backoff", backoff.String(), "err", cause.Error())
 }
 
 func (w *NotificationWorker) deadLetter(ctx context.Context, id uuid.UUID, reason string) {
-	_ = w.db.WithTx(ctx, func(tx pgx.Tx) error {
+	if err := w.db.WithTx(ctx, func(tx pgx.Tx) error {
 		const q = `SELECT ack_notification_job($1, 'DEAD', 0, $2, '')`
 		_, err := tx.Exec(ctx, q, id, reason)
 		return err
-	})
+	}); err != nil {
+		slog.Error("notification worker: dead-letter ack failed", "id", id, "reason", reason, "err", err)
+		return
+	}
 	slog.Error("notification worker: dead-lettered", "id", id, "reason", reason)
 }
 
@@ -203,6 +217,8 @@ func subjectFor(kind string) string {
 	switch notify.Kind(kind) {
 	case notify.KindWelcomeVerify:
 		return "Verify your Ordora email"
+	case notify.KindWelcome:
+		return "Welcome to Ordora — here's how to run your business on it"
 	case notify.KindPasswordReset:
 		return "Reset your Ordora password"
 	case notify.KindOrderCreatedCust:
@@ -227,6 +243,8 @@ func templateFor(kind string) string {
 	switch notify.Kind(kind) {
 	case notify.KindWelcomeVerify:
 		return "welcome_verify"
+	case notify.KindWelcome:
+		return "welcome"
 	case notify.KindPasswordReset:
 		return "password_reset"
 	case notify.KindOrderCreatedCust:

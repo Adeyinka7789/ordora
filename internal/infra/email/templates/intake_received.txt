@@ -7,6 +7,6 @@ Contact:   {{.CustomerName}} — {{.CustomerEmail}}{{if .CustomerPhone}} — {{.
 
 Request:
 {{.Description}}
-
+{{if .AdminURL}}
 View and confirm:
-{{.AdminURL}}
+{{.AdminURL}}{{end}}

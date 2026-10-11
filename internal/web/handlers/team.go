@@ -46,7 +46,7 @@ func (h *TeamHandler) Invite(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/settings?error="+url.QueryEscape(humanizeTeamError(err)), http.StatusSeeOther)
 		return
 	}
-	link := "/join/" + raw
+	link := h.Cfg.BaseURL + "/join/" + raw
 	q := url.Values{}
 	q.Set("notice", "Invite created. Share this link (expires in 7 days): "+link)
 	q.Set("invite_link", link)

@@ -20,6 +20,9 @@ import (
 // PortalRepoStore is the read contract for the public portal.
 type PortalRepoStore interface {
 	GetByTokenHash(ctx context.Context, tokenHash []byte) (*portal.Order, error)
+	// GetByOrderID resolves an order for a verified tracking token
+	// (0066). Only called after HMAC verification — never from raw input.
+	GetByOrderID(ctx context.Context, orderID uuid.UUID) (*portal.Order, error)
 	ListItems(ctx context.Context, orderID uuid.UUID) ([]portal.Item, error)
 	ListPayments(ctx context.Context, orderID uuid.UUID) ([]portal.Payment, error)
 	GetPortalAttachment(ctx context.Context, tokenHash []byte, attachmentID uuid.UUID) (*PortalAttachment, error)
@@ -54,15 +57,21 @@ type BlobStore interface {
 type PortalService struct {
 	repo  PortalRepoStore
 	blobs BlobStore
+	// trackingSecret verifies long-lived email tracking links (/o/o1_...).
+	// Empty disables them (bearer portal tokens keep working).
+	trackingSecret string
 }
 
 type PortalServiceDeps struct {
 	Repo  PortalRepoStore
 	Blobs BlobStore // optional; nil disables file downloads
+	// TrackingSecret signs/verifies email tracking links. Empty disables
+	// them — pass cfg.PortalSecret.
+	TrackingSecret string
 }
 
 func NewPortalService(d PortalServiceDeps) *PortalService {
-	return &PortalService{repo: d.Repo, blobs: d.Blobs}
+	return &PortalService{repo: d.Repo, blobs: d.Blobs, trackingSecret: d.TrackingSecret}
 }
 
 // PortalView is the projection the templates consume.
@@ -241,6 +250,18 @@ func (s *PortalService) Load(ctx context.Context, rawToken string) (*PortalView,
 		return nil, ErrPortalNotFound
 	}
 
+	// Long-lived email tracking links verify without a stored hash.
+	if orderID, ok := VerifyTrackingToken(s.trackingSecret, rawToken); ok {
+		po, err := s.repo.GetByOrderID(ctx, orderID)
+		if err != nil {
+			if errors.Is(err, ErrPortalNotFound) {
+				return nil, ErrPortalNotFound
+			}
+			return nil, err
+		}
+		return s.view(ctx, po)
+	}
+
 	hash := HashToken(rawToken)
 	po, err := s.repo.GetByTokenHash(ctx, hash)
 	if err != nil {
@@ -250,6 +271,13 @@ func (s *PortalService) Load(ctx context.Context, rawToken string) (*PortalView,
 		return nil, err
 	}
 
+	return s.view(ctx, po)
+}
+
+// view projects a portal.Order row into the template-facing PortalView.
+// Shared by the bearer-token and tracking-link paths so both render the
+// identical page (including the receipt).
+func (s *PortalService) view(ctx context.Context, po *portal.Order) (*PortalView, error) {
 	sub, _ := money.New(po.SubtotalMinor, po.Currency)
 	dis, _ := money.New(po.DiscountMinor, po.Currency)
 	tax, _ := money.New(po.TaxMinor, po.Currency)

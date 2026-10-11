@@ -89,12 +89,16 @@ func (r *OutboxRelay) tick(ctx context.Context) error {
 
 		for _, o := range rows {
 			if err := r.dispatch(ctx, tx, o); err != nil {
-				slog.Warn("outbox relay: dispatch failed",
+				// Record the failure but keep the row undispatched so it
+				// retries (claim skips rows past the attempt cap). ack is
+				// issued exactly once — the old code acked twice, wiping
+				// the recorded error with a second success ack.
+				slog.Warn("outbox relay: dispatch failed, will retry",
 					"event", o.EventName, "id", o.ID, "err", err)
-				// Continue: don't fail the whole batch for one event.
-				// We'll record last_error but still mark dispatched so we
-				// don't spin on a bad payload forever.
-				_, _ = tx.Exec(ctx, `SELECT ack_outbox($1, $2)`, o.ID, err.Error())
+				if _, err := tx.Exec(ctx, `SELECT ack_outbox($1, $2)`, o.ID, err.Error()); err != nil {
+					return err
+				}
+				continue
 			}
 			if _, err := tx.Exec(ctx,
 				`SELECT ack_outbox($1, '')`, o.ID); err != nil {
@@ -111,6 +115,10 @@ func (r *OutboxRelay) dispatch(ctx context.Context, tx pgx.Tx, o outboxRow) erro
 	switch o.EventName {
 	case notify.EventUserRegistered:
 		return r.dispatchUserRegistered(ctx, tx, o)
+	case notify.EventUserVerified:
+		return r.dispatchUserVerified(ctx, tx, o)
+	case notify.EventPasswordReset:
+		return r.dispatchPasswordReset(ctx, tx, o)
 	case notify.EventOrderCreated:
 		return r.dispatchOrderCreated(ctx, tx, o)
 	case notify.EventPaymentRecorded:
@@ -137,6 +145,33 @@ func (r *OutboxRelay) dispatchUserRegistered(ctx context.Context, tx pgx.Tx, o o
 		return err
 	}
 	return r.enqueue(ctx, tx, o.OrganizationID, notify.KindWelcomeVerify, p.Email, p, idemKey(o, p.Email))
+}
+
+// dispatchUserVerified mails the post-activation welcome guide. The
+// template derives section links from BaseURL, so no per-link fields are
+// needed in the payload.
+func (r *OutboxRelay) dispatchUserVerified(ctx context.Context, tx pgx.Tx, o outboxRow) error {
+	var p notify.UserVerified
+	if err := json.Unmarshal(o.Payload, &p); err != nil {
+		return err
+	}
+	if p.Email == "" {
+		return nil
+	}
+	return r.enqueue(ctx, tx, o.OrganizationID, notify.KindWelcome, p.Email, p, idemKey(o, p.Email))
+}
+
+// dispatchPasswordReset mails a pre-built reset link. The raw token exists
+// only at request time, so the link arrives ready to render.
+func (r *OutboxRelay) dispatchPasswordReset(ctx context.Context, tx pgx.Tx, o outboxRow) error {
+	var p notify.PasswordReset
+	if err := json.Unmarshal(o.Payload, &p); err != nil {
+		return err
+	}
+	if p.Email == "" {
+		return nil
+	}
+	return r.enqueue(ctx, tx, o.OrganizationID, notify.KindPasswordReset, p.Email, p, idemKey(o, p.Email))
 }
 
 func (r *OutboxRelay) dispatchOrderCreated(ctx context.Context, tx pgx.Tx, o outboxRow) error {

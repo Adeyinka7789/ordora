@@ -14,6 +14,10 @@ import (
 type Config struct {
 	Env     string
 	BaseURL string
+	// PortalSecret signs long-lived customer tracking links (/o/trk_...).
+	// Empty disables tracking links in emails (buttons are omitted, exactly
+	// like today) — set ORDORA_PORTAL_SECRET in production to enable them.
+	PortalSecret string
 	// SupportEmail is shown in the app footer for complaints and help.
 	SupportEmail string
 	// ContactFile is the editable JSON file with public contact details
@@ -126,6 +130,7 @@ func Load() (*Config, error) {
 	c := &Config{
 		Env:          getEnv("ORDORA_ENV", "development"),
 		BaseURL:      getEnv("ORDORA_BASE_URL", "http://localhost:8080"),
+		PortalSecret: getEnv("ORDORA_PORTAL_SECRET", ""),
 		SupportEmail: getEnv("ORDORA_SUPPORT_EMAIL", "support@ordora.local"),
 		ContactFile:  getEnv("ORDORA_CONTACT_FILE", "contact.json"),
 		Sentry: SentryConfig{
@@ -188,6 +193,12 @@ func Load() (*Config, error) {
 	// visible; set ORDORA_EMAIL_MODE=smtp with SMTP settings for delivery.
 	if c.Env == "production" && c.Email.Mode == "console" {
 		slog.Warn("config: ORDORA_EMAIL_MODE=console in production writes reset/verification links to logs — anyone with log access could take over accounts; switch to smtp")
+	}
+	// Tracking links need a stable secret: without one every restart would
+	// invalidate old email links, so we refuse to sign and the app omits
+	// the buttons instead of emitting broken links.
+	if c.PortalSecret == "" {
+		slog.Warn("config: ORDORA_PORTAL_SECRET is empty — customer tracking links are disabled in emails; set a long random value to enable them")
 	}
 	return c, nil
 }

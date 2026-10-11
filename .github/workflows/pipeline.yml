@@ -40,6 +40,7 @@ jobs:
     env:
       ORDORA_ENV: development
       ORDORA_BASE_URL: http://localhost:8080
+      ORDORA_PORTAL_SECRET: ci-test-secret-do-not-use-in-prod
       ORDORA_HTTP_ADDR: :8080
       ORDORA_DB_HOST: localhost
       ORDORA_DB_PORT: "5432"

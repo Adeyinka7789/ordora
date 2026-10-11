@@ -1,0 +1,40 @@
+{{.OrgName}} · now on Ordora
+
+Welcome, {{.Name}} — your business HQ is ready.
+
+Your email is verified, so {{.OrgName}} is fully activated. Ordora runs
+your whole operation in one place: take orders from a public link or in
+person, track every payment, manage customers and products, and see
+exactly how the business is doing — no spreadsheets, no lost receipts,
+no "who paid?" confusion.
+
+START HERE — YOUR 5-MINUTE TOUR
+
+1. Open your dashboard. Today's orders, payments and what needs
+   attention, at a glance.
+   {{.BaseURL}}/dashboard
+
+2. Create your first order. Pick a customer (or add one), add items,
+   and share the tracking link — customers follow progress without
+   calling you.
+   {{.BaseURL}}/orders
+
+3. Add your customers and products. Reuse them on every order; prices
+   stay consistent.
+   {{.BaseURL}}/customers
+   {{.BaseURL}}/products
+
+4. Record payments as money lands. Balances update themselves; receipts
+   are one click.
+   {{.BaseURL}}/reports
+
+5. Invite your team. Owners add staff under Settings so everyone works
+   from the same book.
+   {{.BaseURL}}/settings
+
+Taking bookings, selling eggs by crate, or running aso-ebi groups?
+Those modules switch on automatically for the right business type —
+check your dashboard.
+
+Stuck anywhere? Just reply to this email or visit
+{{.BaseURL}}/support — a human reads every message.

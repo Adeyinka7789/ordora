@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/Adeyinka7789/ordora/internal/domain/notify"
 	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/domain/user"
@@ -29,6 +31,7 @@ type UserStore interface {
 
 type OrgStore interface {
 	CreateTx(ctx context.Context, tx pgx.Tx, o *org.Organization) error
+	GetByID(ctx context.Context, id uuid.UUID) (*org.Organization, error)
 }
 
 // TxRunner is the subset of TxRunner that auth needs. This allows
@@ -91,6 +94,9 @@ type Service struct {
 	now      Clock
 	outbox   OutboxWriter
 	idleTTL  time.Duration
+	// baseURL is the public app origin (cfg.BaseURL). Verification, reset
+	// and welcome links are built from it — never bare paths.
+	baseURL string
 }
 
 // Deps bundles the service dependencies.
@@ -108,6 +114,9 @@ type Deps struct {
 	Outbox   OutboxWriter
 	IDs      IDGen
 	Now      Clock
+	// BaseURL is the public app origin (cfg.BaseURL). All emailed links
+	// are built from it.
+	BaseURL string
 	// IdleTTL caps session lifetime without activity. Zero disables
 	// idle enforcement (absolute expiry still applies).
 	IdleTTL time.Duration
@@ -135,6 +144,7 @@ func NewService(d Deps) *Service {
 		now:      d.Now,
 		outbox:   d.Outbox,
 		idleTTL:  d.IdleTTL,
+		baseURL:  strings.TrimSuffix(strings.TrimSpace(d.BaseURL), "/"),
 	}
 }
 
@@ -280,11 +290,45 @@ func (s *Service) Register(ctx context.Context, in RegisterInput) (*RegisterResu
 		return nil, err
 	}
 
+	// Verification mail goes through the durable outbox (relay → worker
+	// with retry/backoff/DLQ). If the outbox itself is down we fall back
+	// to a direct send so registration still delivers; either way the
+	// handler never blocks on SMTP.
+	s.queueVerifyMail(ctx, orgID, u, o.Name, rawToken)
+
 	return &RegisterResult{
 		User:         u,
 		Organization: o,
 		VerifyToken:  rawToken,
 	}, nil
+}
+
+// verifyLink builds the absolute email-verification URL. Never a bare
+// path: email clients cannot resolve one.
+func (s *Service) verifyLink(rawToken string) string {
+	return s.baseURL + "/verify?token=" + rawToken
+}
+
+// queueVerifyMail enqueues a user.registered event for the worker, falling
+// back to a direct send when the outbox is unavailable or unwired.
+func (s *Service) queueVerifyMail(ctx context.Context, orgID uuid.UUID, u *user.User, orgName, rawToken string) {
+	link := s.verifyLink(rawToken)
+	if s.outbox == nil {
+		if err := s.mailer.SendVerifyEmail(ctx, u.Email, u.Name, link); err != nil {
+			slog.Error("auth: direct verify mail failed", "err", err, "user_id", u.ID)
+		}
+		return
+	}
+	payload := notify.UserRegistered{
+		UserID: u.ID, Email: u.Email.String(), Name: u.Name,
+		VerifyURL: link, OrgName: orgName,
+	}
+	if err := s.outbox.Enqueue(ctx, orgID, notify.EventUserRegistered, payload); err != nil {
+		slog.Error("auth: outbox enqueue failed, falling back to direct verify mail", "err", err, "user_id", u.ID)
+		if err := s.mailer.SendVerifyEmail(ctx, u.Email, u.Name, link); err != nil {
+			slog.Error("auth: direct verify mail failed", "err", err, "user_id", u.ID)
+		}
+	}
 }
 
 // buildUniqueSlug generates a candidate slug and, on collision, retries with
@@ -466,7 +510,42 @@ func (s *Service) VerifyEmail(ctx context.Context, rawToken string) (*user.User,
 	if err := s.users.MarkEmailVerified(ctx, t.UserID, now); err != nil {
 		return nil, err
 	}
-	return s.users.GetByID(ctx, t.UserID)
+	u, err := s.users.GetByID(ctx, t.UserID)
+	if err != nil {
+		return nil, err
+	}
+	// Post-activation welcome mail (platform pitch + navigation guide).
+	// Marketing, not transactional: best-effort enqueue, loud on failure.
+	s.queueWelcomeMail(ctx, u)
+	return u, nil
+}
+
+// queueWelcomeMail enqueues the user.verified welcome mail. It resolves the
+// user's first org for branding; when that fails the mail still goes out
+// with empty org fields rather than being dropped.
+func (s *Service) queueWelcomeMail(ctx context.Context, u *user.User) {
+	if s.outbox == nil {
+		return
+	}
+	var orgID uuid.UUID
+	var orgName string
+	if s.members != nil {
+		if memberships, err := s.members.ListForUser(ctx, u.ID); err == nil && len(memberships) > 0 {
+			orgID = memberships[0].OrgID
+			orgName = memberships[0].OrgName
+		}
+	}
+	if orgID == uuid.Nil {
+		slog.Warn("auth: welcome mail skipped; no org membership found", "user_id", u.ID)
+		return
+	}
+	payload := notify.UserVerified{
+		UserID: u.ID, Email: u.Email.String(), Name: u.Name,
+		OrgName: orgName, BaseURL: s.baseURL,
+	}
+	if err := s.outbox.Enqueue(ctx, orgID, notify.EventUserVerified, payload); err != nil {
+		slog.Error("auth: welcome mail enqueue failed", "err", err, "user_id", u.ID, "org_id", orgID)
+	}
 }
 
 // CompleteOnboarding records that the user finished or skipped the
@@ -510,7 +589,83 @@ func (s *Service) RequestPasswordReset(ctx context.Context, rawEmail, baseURL st
 		return err
 	}
 	link := baseURL + "/password/reset?token=" + raw
-	return s.mailer.SendPasswordReset(ctx, u.Email, u.Name, link)
+	if s.outbox == nil {
+		return s.mailer.SendPasswordReset(ctx, u.Email, u.Name, link)
+	}
+	payload := notify.PasswordReset{
+		UserID: u.ID, Email: u.Email.String(), Name: u.Name, ResetURL: link,
+	}
+	// The reset token is already stored: even if the outbox is down the
+	// user can retry, so fall back to a direct send rather than failing.
+	if err := s.outbox.Enqueue(ctx, primaryOrgID(ctx, s, u), notify.EventPasswordReset, payload); err != nil {
+		slog.Error("auth: outbox enqueue failed, falling back to direct reset mail", "err", err, "user_id", u.ID)
+		return s.mailer.SendPasswordReset(ctx, u.Email, u.Name, link)
+	}
+	return nil
+}
+
+// primaryOrgID resolves the org that owns a user's notifications (first
+// membership). Zero UUID when memberships cannot be listed — the relay
+// tolerates it and the worker still delivers.
+func primaryOrgID(ctx context.Context, s *Service, u *user.User) uuid.UUID {
+	if s.members == nil {
+		return uuid.Nil
+	}
+	memberships, err := s.members.ListForUser(ctx, u.ID)
+	if err != nil || len(memberships) == 0 {
+		return uuid.Nil
+	}
+	return memberships[0].OrgID
+}
+
+// ResendVerification issues a fresh verification token and queues the
+// mail. Always returns nil (even for unknown emails or already-verified
+// accounts) so callers cannot probe for registered users.
+func (s *Service) ResendVerification(ctx context.Context, rawEmail, baseURL string) error {
+	email, err := user.NewEmail(rawEmail)
+	if err != nil {
+		return nil // swallow invalid email; response is identical
+	}
+	u, err := s.users.GetByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, user.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+	if u.IsEmailVerified() {
+		return nil
+	}
+	raw, hash, err := NewToken(TokenEmailVerify)
+	if err != nil {
+		return err
+	}
+	now := s.now()
+	t := &AuthToken{
+		ID:        s.ids.New(),
+		UserID:    u.ID,
+		Kind:      string(TokenEmailVerify),
+		TokenHash: hash,
+		ExpiresAt: now.Add(TokenEmailVerify.TTL()),
+		CreatedAt: now,
+	}
+	if err := s.tokens.Create(ctx, t); err != nil {
+		return err
+	}
+	link := baseURL + "/verify?token=" + raw
+	if s.outbox == nil {
+		return s.mailer.SendVerifyEmail(ctx, u.Email, u.Name, link)
+	}
+	orgID := primaryOrgID(ctx, s, u)
+	payload := notify.UserRegistered{
+		UserID: u.ID, Email: u.Email.String(), Name: u.Name,
+		VerifyURL: link,
+	}
+	if err := s.outbox.Enqueue(ctx, orgID, notify.EventUserRegistered, payload); err != nil {
+		slog.Error("auth: outbox enqueue failed, falling back to direct verify mail", "err", err, "user_id", u.ID)
+		return s.mailer.SendVerifyEmail(ctx, u.Email, u.Name, link)
+	}
+	return nil
 }
 
 // ResetPassword consumes a reset token and updates the user's password.

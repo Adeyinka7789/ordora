@@ -219,7 +219,12 @@
     if (!btn || btn.disabled) return;
     var text = btn.getAttribute('data-copy-value') || '';
     if (!text && btn.getAttribute('data-copy-path')) {
-      text = window.location.origin + btn.getAttribute('data-copy-path');
+      text = btn.getAttribute('data-copy-path');
+      // Bare paths are same-origin; absolute links (e.g. emailed invite
+      // URLs) are copied verbatim instead of double-prefixing the origin.
+      if (text.charAt(0) === '/') {
+        text = window.location.origin + text;
+      }
     }
     if (!text || !navigator.clipboard) return;
     e.preventDefault();

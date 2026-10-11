@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/domain/measurement"
 	"github.com/Adeyinka7789/ordora/internal/domain/money"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/domain/product"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 )
@@ -87,6 +89,12 @@ type MeasurementStore interface {
 	SaveMeasurementTx(ctx context.Context, tx pgx.Tx, m measurement.Measurement) error
 }
 
+// OrgReader loads an organization for email enrichment (name + owner
+// recipient). Best-effort: lookup failures only drop the owner fields.
+type OrgReader interface {
+	GetByID(ctx context.Context, id uuid.UUID) (*org.Organization, error)
+}
+
 // OrderService orchestrates order-related workflows.
 type OrderService struct {
 	db           TxRunner
@@ -98,8 +106,13 @@ type OrderService struct {
 	audit        AuditWriter
 	outbox       OutboxWriter
 	measurements MeasurementStore
+	orgs         OrgReader
 	ids          IDGen
 	now          func() time.Time
+	// baseURL + portalSecret build absolute customer tracking links for
+	// emails. Empty disables the links (templates hide the buttons).
+	baseURL      string
+	portalSecret string
 }
 
 // OrderServiceDeps bundles the dependencies.
@@ -113,8 +126,13 @@ type OrderServiceDeps struct {
 	Audit        AuditWriter
 	Outbox       OutboxWriter
 	Measurements MeasurementStore // optional; nil disables measurement saving
+	Orgs         OrgReader         // optional; nil skips owner email enrichment
 	IDs          IDGen
 	Now          func() time.Time
+	// BaseURL is the public app origin (cfg.BaseURL). PortalSecret signs
+	// customer tracking links (cfg.PortalSecret).
+	BaseURL      string
+	PortalSecret string
 }
 
 func NewOrderService(d OrderServiceDeps) *OrderService {
@@ -131,8 +149,11 @@ func NewOrderService(d OrderServiceDeps) *OrderService {
 		audit:        d.Audit,
 		outbox:       d.Outbox,
 		measurements: d.Measurements,
+		orgs:         d.Orgs,
 		ids:          d.IDs,
 		now:          d.Now,
+		baseURL:      d.BaseURL,
+		portalSecret: d.PortalSecret,
 	}
 }
 
@@ -234,6 +255,9 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 	}
 
 	var created *order.Order
+	// Org enrichment for emails (owner recipient + brand name). Best-effort
+	// and read before the write tx — a failure only drops the owner fields.
+	mailOrg := s.orgForMail(ctx, scope.OrgID)
 	err := s.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
 		cust, err := s.customers.GetByID(ctx, scope, in.CustomerID)
 		if err != nil {
@@ -325,7 +349,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 		}
 
 		if s.outbox != nil && cust.Email != "" {
-			if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "order.created", map[string]any{
+			payload := map[string]any{
 				"OrderID":       o.ID.String(),
 				"OrderNumber":   o.Number,
 				"Title":         o.Title,
@@ -334,9 +358,14 @@ func (s *OrderService) CreateOrder(ctx context.Context, scope tenant.TenantScope
 				"CustomerID":    o.CustomerID.String(),
 				"CustomerName":  cust.Name,
 				"CustomerEmail": cust.Email,
-				"PortalURL":     "",
+				"PortalURL":     s.trackingLink(o.ID),
 				"ExpectedDate":  o.ExpectedCompletion,
-			}); err != nil {
+			}
+			if mailOrg != nil {
+				payload["OrgName"] = mailOrg.Name
+				payload["OrgEmail"] = mailOrg.Email
+			}
+			if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "order.created", payload); err != nil {
 				return err
 			}
 		}
@@ -503,11 +532,32 @@ func (s *OrderService) saveMeasurementTx(ctx context.Context, tx pgx.Tx, scope t
 // -----------------------------------------------------------------------------
 
 func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, to order.Status) (*order.Order, error) {
+	return s.changeStatus(ctx, scope, id, to, true)
+}
+
+// ChangeStatusSilent performs the same transition (state machine, audit)
+// without emailing the customer. Multi-step walks (booking/egg completion)
+// move quietly through the intermediate states and send exactly one mail
+// on the final transition, instead of spamming "ready", "out for
+// delivery" and "delivered" for a single appointment.
+func (s *OrderService) ChangeStatusSilent(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, to order.Status) (*order.Order, error) {
+	return s.changeStatus(ctx, scope, id, to, false)
+}
+
+func (s *OrderService) changeStatus(ctx context.Context, scope tenant.TenantScope, id uuid.UUID, to order.Status, notify bool) (*order.Order, error) {
 	if err := scope.RequireWrite(); err != nil {
 		return nil, err
 	}
 	if !to.IsValid() {
 		return nil, order.ErrInvalidTransition
+	}
+
+	// Org name for the status mail. Best-effort, read before the tx.
+	var mailOrgName string
+	if notify && s.orgs != nil {
+		if o := s.orgForMail(ctx, scope.OrgID); o != nil {
+			mailOrgName = o.Name
+		}
 	}
 
 	var updated *order.Order
@@ -525,18 +575,22 @@ func (s *OrderService) ChangeStatus(ctx context.Context, scope tenant.TenantScop
 		}
 
 		// Notify the customer of the status change.
-		if s.outbox != nil {
+		if notify && s.outbox != nil {
 			cust, err := s.customers.GetByID(ctx, scope, o.CustomerID)
 			if err == nil && cust.Email != "" {
-				if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "order.status_changed", map[string]any{
+				payload := map[string]any{
 					"OrderID":       o.ID.String(),
 					"OrderNumber":   o.Number,
 					"From":          string(from),
 					"To":            string(to),
 					"CustomerName":  cust.Name,
 					"CustomerEmail": cust.Email,
-					"PortalURL":     "",
-				}); err != nil {
+					"PortalURL":     s.trackingLink(o.ID),
+				}
+				if mailOrgName != "" {
+					payload["OrgName"] = mailOrgName
+				}
+				if err := s.outbox.EnqueueTx(ctx, tx, scope.OrgID, "order.status_changed", payload); err != nil {
 					return err
 				}
 			}
@@ -602,6 +656,28 @@ func (s *OrderService) RegeneratePublicToken(ctx context.Context, scope tenant.T
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
+
+// trackingLink returns the absolute customer tracking URL for an order, or
+// "" when links are unconfigured. "" is always safe: templates hide their
+// buttons on empty URLs.
+func (s *OrderService) trackingLink(orderID uuid.UUID) string {
+	return TrackingLink(s.baseURL, s.portalSecret, orderID)
+}
+
+// orgForMail loads the org for email enrichment. Best-effort: on failure
+// it logs and returns nil, and the caller sends customer mail without the
+// org/owner fields rather than failing the business operation.
+func (s *OrderService) orgForMail(ctx context.Context, orgID uuid.UUID) *org.Organization {
+	if s.orgs == nil {
+		return nil
+	}
+	o, err := s.orgs.GetByID(ctx, orgID)
+	if err != nil {
+		slog.Warn("orders: org lookup for email failed; sending without org fields", "org_id", orgID, "err", err)
+		return nil
+	}
+	return o
+}
 
 func (s *OrderService) validateCreateInput(in CreateOrderInput) error {
 	if strings.TrimSpace(in.Title) == "" {

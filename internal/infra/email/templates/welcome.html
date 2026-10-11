@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<body style="margin:0;padding:24px;background:#F7FAFD;font-family:Inter,Helvetica,Arial,sans-serif;color:#0B1C30;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,0.06);">
+    <tr>
+      <td style="padding:32px;">
+        <p style="margin:0 0 6px;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;color:#707A88;font-weight:600;">{{.OrgName}} · now on Ordora</p>
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:600;">Welcome, {{.Name}} — your business HQ is ready</h1>
+        <p style="margin:0 0 16px;font-size:14px;line-height:22px;color:#44566A;">
+          Your email is verified, so {{.OrgName}} is fully activated. Ordora runs your whole
+          operation in one place: take orders from a public link or in person, track every
+          payment, manage customers and products, and see exactly how the business is doing —
+          no spreadsheets, no lost receipts, no "who paid?" confusion.
+        </p>
+
+        <h2 style="margin:24px 0 8px;font-size:16px;font-weight:600;">Start here — your 5-minute tour</h2>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#E1EAF2;border-radius:8px;">
+          <tr><td style="padding:16px;font-size:14px;line-height:22px;color:#44566A;">
+            <p style="margin:0 0 10px;"><strong>1. Open your dashboard.</strong> Today's orders, payments and what needs attention, at a glance.<br>
+            <a href="{{.BaseURL}}/dashboard" style="color:#0077BE;">{{.BaseURL}}/dashboard</a></p>
+            <p style="margin:0 0 10px;"><strong>2. Create your first order.</strong> Pick a customer (or add one), add items, and share the tracking link — customers follow progress without calling you.<br>
+            <a href="{{.BaseURL}}/orders" style="color:#0077BE;">{{.BaseURL}}/orders</a></p>
+            <p style="margin:0 0 10px;"><strong>3. Add your customers and products.</strong> Reuse them on every order; prices stay consistent.<br>
+            <a href="{{.BaseURL}}/customers" style="color:#0077BE;">{{.BaseURL}}/customers</a> ·
+            <a href="{{.BaseURL}}/products" style="color:#0077BE;">{{.BaseURL}}/products</a></p>
+            <p style="margin:0 0 10px;"><strong>4. Record payments as money lands.</strong> Balances update themselves; receipts are one click.<br>
+            <a href="{{.BaseURL}}/reports" style="color:#0077BE;">{{.BaseURL}}/reports</a></p>
+            <p style="margin:0;"><strong>5. Invite your team.</strong> Owners add staff under Settings so everyone works from the same book.<br>
+            <a href="{{.BaseURL}}/settings" style="color:#0077BE;">{{.BaseURL}}/settings</a></p>
+          </td></tr>
+        </table>
+
+        <p style="margin:24px 0 0;font-size:14px;line-height:22px;color:#44566A;">
+          Taking bookings, selling eggs by crate, or running aso-ebi groups? Those modules
+          switch on automatically for the right business type — check your dashboard.
+        </p>
+        <a href="{{.BaseURL}}/dashboard" style="display:inline-block;margin-top:16px;padding:12px 20px;background:#0077BE;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;font-size:14px;">Open my dashboard</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#707A88;">Stuck anywhere? Just reply to this email or visit <a href="{{.BaseURL}}/support" style="color:#0077BE;">{{.BaseURL}}/support</a> — a human reads every message.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

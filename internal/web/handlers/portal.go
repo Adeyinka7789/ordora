@@ -31,6 +31,9 @@ type PortalHandler struct {
 	Blobs    storage.Storage
 	IDs      id.Generator
 	Renderer *render.Renderer
+	// BaseURL is the canonical app origin (cfg.BaseURL) for shareable
+	// links. Empty falls back to the request host.
+	BaseURL string
 }
 
 // --- Portal view ---
