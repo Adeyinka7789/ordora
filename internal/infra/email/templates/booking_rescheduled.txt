@@ -1,0 +1,7 @@
+Your appointment moved
+
+Hi {{.CustomerName}}, your booking {{.OrderNumber}} is now scheduled for {{.StartLabel}}.
+
+{{if .PortalURL}}See details:
+{{.PortalURL}}
+{{end}}

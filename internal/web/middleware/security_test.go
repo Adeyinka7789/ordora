@@ -254,6 +254,39 @@ func withPerishable(r *http.Request, perishable bool) *http.Request {
 	return r.WithContext(withSession(r.Context(), s))
 }
 
+func withBooking(r *http.Request, booking bool) *http.Request {
+	s := &auth.ResolvedSession{
+		Scope:     tenant.TenantScope{OrgID: uuid.New(), UserID: uuid.New(), Role: tenant.RoleStaff},
+		IsBooking: booking,
+	}
+	return r.WithContext(withSession(r.Context(), s))
+}
+
+func TestRequireBooking(t *testing.T) {
+	// Booking orgs pass regardless of role (role checks compose separately).
+	rec := httptest.NewRecorder()
+	RequireBooking(okHandler()).ServeHTTP(rec,
+		withBooking(httptest.NewRequest("GET", "/dashboard/bookings", nil), true))
+	if rec.Code != http.StatusOK {
+		t.Errorf("booking org: got %d, want 200", rec.Code)
+	}
+
+	// Other orgs 404 (existence hidden).
+	rec = httptest.NewRecorder()
+	RequireBooking(okHandler()).ServeHTTP(rec,
+		withBooking(httptest.NewRequest("GET", "/dashboard/bookings", nil), false))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("non-booking org: got %d, want 404", rec.Code)
+	}
+
+	// Anonymous 404s.
+	rec = httptest.NewRecorder()
+	RequireBooking(okHandler()).ServeHTTP(rec, httptest.NewRequest("GET", "/dashboard/bookings", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("anonymous: got %d, want 404", rec.Code)
+	}
+}
+
 func TestRequirePerishable(t *testing.T) {
 	// Perishable orgs pass (any role — role checks compose separately).
 	rec := httptest.NewRecorder()

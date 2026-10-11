@@ -38,6 +38,17 @@ func IsPerishableCategory(category string) bool {
 	return false
 }
 
+// BeautyCategory is the business_category for salons and stylists.
+const BeautyCategory = "Beauty & Salon"
+
+// IsBookingCategory reports whether a business category unlocks the
+// appointment-booking module. Beauty & Salon first; other trades later
+// by extending this switch — never by folding booking into the
+// perishable gate.
+func IsBookingCategory(category string) bool {
+	return strings.TrimSpace(category) == BeautyCategory
+}
+
 // MaxCustomProfileLength caps free-text "Other" entries.
 const MaxCustomProfileLength = 120
 

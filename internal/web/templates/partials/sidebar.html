@@ -82,6 +82,14 @@
           </div>
         </a>
       {{ end }}
+      {{ if and (flag "booking_module" .Shell.OrgID) .Shell.IsBooking }}
+        <a href="/dashboard/bookings" data-snav="bookings" title="Bookings" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">event</span>
+            <span class="sidebar-label">Bookings</span>
+          </div>
+        </a>
+      {{ end }}
     </nav>
 
     <!-- Channels & Tools -->

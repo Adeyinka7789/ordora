@@ -268,6 +268,104 @@
   </div>
   {{ end }}
 
+  {{ with .Booking }}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Booking</h2>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Appointment rules, weekly hours, and closed days for your public booking link.</p>
+    {{ if $.TeamIsOwner }}
+    <form method="post" action="/settings/booking" class="flex flex-col gap-space-md">
+      <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <label class="flex items-center gap-2">
+          <input type="checkbox" name="accepting_bookings" value="1" {{ if .Accepting }}checked{{ end }} class="w-5 h-5 accent-[#005A8C]">
+          <span class="font-label-md text-label-md text-on-surface">Accepting bookings</span>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Visit length (minutes) *</span>
+          <input type="number" name="duration_min" value="{{ .DurationMin }}" required min="15" max="480" step="1"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Buffer before (minutes)</span>
+          <input type="number" name="buf_before" value="{{ .BufBefore }}" min="0" max="120" step="1"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Buffer after (minutes)</span>
+          <input type="number" name="buf_after" value="{{ .BufAfter }}" min="0" max="120" step="1"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Minimum notice (hours)</span>
+          <input type="number" name="min_notice_hours" value="{{ .MinNoticeHours }}" min="0" max="720" step="1"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Bookable ahead (days)</span>
+          <input type="number" name="max_advance_days" value="{{ .MaxAdvanceDays }}" min="1" max="365" step="1"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+      </div>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Cancellation policy (shown to customers)</span>
+        <textarea name="cancel_policy" rows="2" maxlength="2000"
+                  class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .CancelPolicy }}</textarea>
+      </label>
+      <div class="flex items-center gap-space-sm">
+        <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save booking settings</button>
+      </div>
+    </form>
+
+    <form method="post" action="/settings/booking/hours" class="flex flex-col gap-space-sm pt-space-sm border-t border-outline-variant/30">
+      <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+      <h3 class="font-label-md text-label-md text-on-surface font-bold">Weekly hours</h3>
+      {{ range .Hours }}
+      <div class="grid grid-cols-[110px_1fr_1fr_auto] items-center gap-space-sm">
+        <span class="font-label-md text-label-md text-on-surface">{{ .DayName }}</span>
+        <input type="time" name="open_{{ .Dow }}" value="{{ .Open }}" aria-label="{{ .DayName }} opens"
+               class="h-9 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <input type="time" name="close_{{ .Dow }}" value="{{ .Close }}" aria-label="{{ .DayName }} closes"
+               class="h-9 px-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <label class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+          <input type="checkbox" name="closed_{{ .Dow }}" value="1" {{ if not .IsOpen }}checked{{ end }} class="w-4 h-4 accent-[#005A8C]"> Closed
+        </label>
+      </div>
+      {{ end }}
+      <div><button type="submit" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold">Save hours</button></div>
+    </form>
+
+    <div class="flex flex-col gap-space-sm pt-space-sm border-t border-outline-variant/30">
+      <h3 class="font-label-md text-label-md text-on-surface font-bold">Closed days</h3>
+      {{ range .Blackouts }}
+      <div class="flex items-center gap-space-sm">
+        <span class="font-body-md text-body-md text-on-surface flex-1">{{ .Day }}{{ if .Reason }} — {{ .Reason }}{{ end }}</span>
+        <form method="post" action="/settings/booking/blackouts/{{ .Day }}/remove" class="inline">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <button type="submit" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Reopen</button>
+        </form>
+      </div>
+      {{ else }}
+      <p class="font-body-sm text-body-sm text-on-surface-variant">No closed days.</p>
+      {{ end }}
+      <form method="post" action="/settings/booking/blackouts" class="flex flex-col sm:flex-row gap-space-sm">
+        <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+        <input type="date" name="day" required aria-label="Closed day"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <input type="text" name="reason" maxlength="200" placeholder="Reason (optional)" aria-label="Reason"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container flex-1">
+        <button type="submit" class="h-9 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold">Close day</button>
+      </form>
+    </div>
+    {{ else }}
+    <dl class="grid grid-cols-1 md:grid-cols-2 gap-space-sm font-body-md text-body-md">
+      <div><dt class="font-label-sm text-label-sm text-on-surface-variant">Accepting bookings</dt><dd class="text-on-surface font-semibold">{{ if .Accepting }}Yes{{ else }}No{{ end }}</dd></div>
+      <div><dt class="font-label-sm text-label-sm text-on-surface-variant">Visit length</dt><dd class="text-on-surface font-semibold">{{ .DurationMin }} min</dd></div>
+    </dl>
+    <p class="font-label-sm text-label-sm text-on-surface-variant">Only the business owner can change these.</p>
+    {{ end }}
+  </div>
+  {{ end }}
+
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
     <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Measurement templates</h2>
     <p class="font-body-sm text-body-sm text-on-surface-variant">Use the ready-made garments as-is, or clone one and adapt it to your shop's style. Past orders always keep their original measurements.</p>

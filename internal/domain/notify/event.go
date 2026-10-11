@@ -16,6 +16,8 @@ const (
 	EventOrderStatusChanged   = "order.status_changed"
 	EventOrderReady           = "order.ready"
 	EventPublicIntakeReceived = "public.intake_received"
+	EventBookingSubmitted     = "booking.submitted"
+	EventBookingRescheduled   = "booking.rescheduled"
 )
 
 // Kind identifies the specific email template to render. One event can map to
@@ -24,14 +26,15 @@ const (
 type Kind string
 
 const (
-	KindWelcomeVerify     Kind = "WELCOME_VERIFY"
-	KindPasswordReset     Kind = "PASSWORD_RESET"
-	KindOrderCreatedCust  Kind = "ORDER_CREATED_CUSTOMER"
-	KindOrderCreatedOwner Kind = "ORDER_CREATED_OWNER"
-	KindPaymentReceived   Kind = "PAYMENT_RECEIVED"
-	KindStatusChanged     Kind = "ORDER_STATUS_CHANGED"
-	KindOrderReady        Kind = "ORDER_READY"
-	KindIntakeReceived    Kind = "PUBLIC_INTAKE_RECEIVED"
+	KindWelcomeVerify      Kind = "WELCOME_VERIFY"
+	KindPasswordReset      Kind = "PASSWORD_RESET"
+	KindOrderCreatedCust   Kind = "ORDER_CREATED_CUSTOMER"
+	KindOrderCreatedOwner  Kind = "ORDER_CREATED_OWNER"
+	KindPaymentReceived    Kind = "PAYMENT_RECEIVED"
+	KindStatusChanged      Kind = "ORDER_STATUS_CHANGED"
+	KindOrderReady         Kind = "ORDER_READY"
+	KindIntakeReceived     Kind = "PUBLIC_INTAKE_RECEIVED"
+	KindBookingRescheduled Kind = "BOOKING_RESCHEDULED"
 )
 
 // -----------------------------------------------------------------------------
@@ -115,4 +118,32 @@ type PublicIntakeReceived struct {
 	OrgName       string
 	OrgEmail      string // owner recipient
 	AdminURL      string // link to admin order detail
+}
+
+// BookingSubmitted is emitted when a customer books a visit. Delivered to
+// the owner through the intake-received template (same shape on purpose:
+// the relay fills Description/AdminURL from the booking).
+type BookingSubmitted struct {
+	OrderID       uuid.UUID
+	OrderNumber   string
+	CustomerName  string
+	CustomerEmail string
+	CustomerPhone string
+	Description   string
+	OrgName       string
+	OrgEmail      string // owner recipient
+	AdminURL      string // link to the bookings day
+}
+
+// BookingRescheduled is emitted when staff move a visit. The customer
+// email uses a dedicated template (a status-changed mail would claim the
+// visit was "confirmed" again — wrong copy for a time change).
+type BookingRescheduled struct {
+	OrderID       uuid.UUID
+	OrderNumber   string
+	CustomerName  string
+	CustomerEmail string
+	OrgName       string
+	StartLabel    string // new slot, org-local, pre-formatted
+	PortalURL     string // tracking link
 }

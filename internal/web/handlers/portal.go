@@ -27,6 +27,7 @@ import (
 type PortalHandler struct {
 	Portal   *app.PortalService
 	Public   *app.PublicOrderService
+	Booking  *app.BookingService
 	Blobs    storage.Storage
 	IDs      id.Generator
 	Renderer *render.Renderer
@@ -41,6 +42,16 @@ type portalPageData struct {
 	View            *app.PortalView
 	Items           []portalItemView
 	OrderForStepper *order.Order
+	// Booking is the appointment behind this order, if any. Nil for
+	// ordinary orders — the block hides.
+	Booking *bookingTrackView
+}
+
+// bookingTrackView is the tracking-page projection of an appointment.
+type bookingTrackView struct {
+	When        string // "Mon 02 Jan, 15:04 – 16:00" in the org timezone
+	Status      string // raw status for statusLabel
+	ServiceName string
 }
 
 type portalItemView struct {
@@ -88,8 +99,28 @@ func (h *PortalHandler) Show(w http.ResponseWriter, r *http.Request) {
 		View:            v,
 		OrderForStepper: stepper,
 		Items:           buildItemViews(v),
+		Booking:         h.trackBooking(r, token),
 	}
 	h.Renderer.PagePublic(w, http.StatusOK, "layouts/public.html", "portal/show.html", data)
+}
+
+// trackBooking loads the appointment behind an order for the tracking
+// page. Best-effort and silent: ordinary orders simply show no block.
+func (h *PortalHandler) trackBooking(r *http.Request, token string) *bookingTrackView {
+	if h.Booking == nil {
+		return nil
+	}
+	b, err := h.Booking.BookingByToken(r.Context(), token)
+	if err != nil || b == nil {
+		return nil
+	}
+	loc := app.BookingTimezone(b.Timezone)
+	return &bookingTrackView{
+		When: b.StartAt.In(loc).Format("Mon 02 Jan, 15:04") +
+			" – " + b.EndAt.In(loc).Format("15:04"),
+		Status:      b.Status,
+		ServiceName: b.ServiceName,
+	}
 }
 
 func (h *PortalHandler) notFound(w http.ResponseWriter, r *http.Request) {

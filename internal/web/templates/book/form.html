@@ -1,0 +1,120 @@
+{{ define "book/form.html" }}
+<div class="w-full max-w-3xl mx-auto px-margin md:px-margin-desktop py-space-lg md:py-space-xl flex flex-col gap-space-lg">
+
+  {{ if .Preview }}
+  <div role="status" class="p-space-md rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">Preview — this is exactly what customers see on your booking link.</div>
+  {{ end }}
+
+  <div class="flex flex-col gap-space-sm">
+    <span class="font-label-md text-label-md uppercase tracking-wider text-primary font-semibold">Book an Appointment</span>
+    <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Book with {{ .OrgName }}</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant">Pick a service, choose a day, take a time. Your request is confirmed by the business.</p>
+  </div>
+
+  {{ if .Error }}<div role="alert" class="p-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
+
+  {{ if .Services }}
+  <form method="post" action="/book/{{ .Slug }}" class="flex flex-col gap-space-lg">
+    <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+        <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">content_cut</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Service &amp; Day</h2>
+      </div>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Service *</span>
+        <select name="service" required
+                class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <option value="">Choose…</option>
+          {{ range .Services }}<option value="{{ .ID }}" {{ if eq $.ServiceID .ID }}selected{{ end }}>{{ .Name }}{{ if gt .PriceMinor 0 }} — {{ currency .PriceMinor .Currency }}{{ end }}</option>{{ end }}
+        </select>
+      </label>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Day *</span>
+          <input type="date" name="date" value="{{ .Date }}" required min="{{ .MinDate }}" max="{{ .MaxDate }}"
+                 class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <div class="flex items-end">
+          <button type="submit" formaction="/book/{{ .Slug }}" formmethod="get" name="check" value="1"
+                  class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold">Check availability</button>
+        </div>
+      </div>
+      <input type="hidden" name="check" value="">
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+        <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">schedule</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Time</h2>
+      </div>
+
+      {{ if .DayClosed }}
+        <p class="font-body-md text-body-md text-on-surface-variant">Closed that day{{ if eq .DayClosedWhy "blackout" }} (holiday){{ end }} — pick another day.</p>
+      {{ else if .Slots }}
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-space-sm" role="radiogroup" aria-label="Available times">
+          {{ range .Slots }}
+          <label class="cursor-pointer">
+            <input type="radio" name="start" value="{{ .Value }}" {{ if eq $.StartTime .Value }}checked{{ end }} required class="peer sr-only">
+            <span class="block text-center h-10 leading-10 rounded bg-surface-container-low font-code-md text-code-md text-on-surface peer-checked:bg-primary-container peer-checked:text-on-primary peer-checked:font-bold">{{ .Label }}</span>
+          </label>
+          {{ end }}
+        </div>
+      {{ else }}
+        <p class="font-body-md text-body-md text-on-surface-variant">Pick a service and day, then press “Check availability” to see open times.</p>
+      {{ end }}
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
+      <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
+        <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">person</span>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Your Details</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Full name *</span>
+          <input type="text" name="name" value="{{ .Name }}" required maxlength="200"
+                 class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Phone / WhatsApp</span>
+          <input type="tel" name="phone" value="{{ .Phone }}" maxlength="40" placeholder="e.g. 0803 123 4567"
+                 class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+      </div>
+      <p class="font-label-sm text-label-sm text-on-surface-variant -mt-2">Email or phone — at least one, so the shop can reach you.</p>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Email</span>
+        <input type="email" name="email" value="{{ .Email }}" maxlength="254"
+               class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Notes for the stylist (optional)</span>
+        <textarea name="notes" rows="3" maxlength="2000" placeholder="Anything they should know before your visit."
+                  class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Notes }}</textarea>
+      </label>
+
+      {{ if .CancelPolicy }}<p class="font-label-sm text-label-sm text-on-surface-variant">Cancellation policy: {{ .CancelPolicy }}</p>{{ end }}
+    </div>
+
+    <div class="flex items-center justify-between gap-space-sm">
+      <a href="/" class="h-10 px-space-md rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center">Cancel</a>
+      <button type="submit" class="h-11 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 transition-colors">
+        <span>Request booking</span>
+        <span aria-hidden="true" class="material-symbols-outlined text-[18px]">arrow_forward</span>
+      </button>
+    </div>
+  </form>
+  {{ else }}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center">
+    <p class="font-body-md text-body-md text-on-surface-variant">Online booking isn't set up here yet — please call or WhatsApp {{ .OrgName }} directly.</p>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

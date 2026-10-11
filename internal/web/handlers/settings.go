@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,7 +20,8 @@ type SettingsHandler struct {
 	Service  *app.SettingsService
 	Teams    *app.TeamService // nil-safe: team lists stay empty when unwired (tests)
 	Egg      *app.EggService  // nil-safe: egg section hides when unwired
-	Flags    FlagChecker      // nil-safe: egg section hides without flags
+	Booking  *app.BookingService
+	Flags    FlagChecker // nil-safe: egg section hides without flags
 	Renderer *render.Renderer
 }
 
@@ -64,6 +66,10 @@ type settingsPage struct {
 	// Egg section (perishable module). Nil unless the org is perishable
 	// and the egg flag is on for it.
 	Egg *eggSettingsData
+
+	// Booking section (appointment module). Nil unless the org takes
+	// bookings and the booking flag is on for it.
+	Booking *bookingSettingsData
 }
 
 // eggSettingsData is the settings-page projection of poultry settings.
@@ -74,6 +80,52 @@ type eggSettingsData struct {
 	AccountNumber string
 	AccountName   string
 	Whatsapp      string
+}
+
+// bookingSettingsData is the settings-page projection of booking config.
+type bookingSettingsData struct {
+	Accepting      bool
+	DurationMin    int
+	BufBefore      int
+	BufAfter       int
+	MinNoticeHours int
+	MaxAdvanceDays int
+	CancelPolicy   string
+	Hours          []bookingHourRow
+	Blackouts      []bookingBlackoutRow
+}
+
+type bookingHourRow struct {
+	Dow     int
+	DayName string
+	Open    string // "HH:MM"
+	Close   string // "HH:MM"
+	IsOpen  bool
+}
+
+type bookingBlackoutRow struct {
+	Day    string // yyyy-mm-dd
+	Reason string
+}
+
+// bookingDayName names a weekday (dow 0 = Sunday).
+func bookingDayName(dow int) string {
+	names := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+	if dow < 0 || dow > 6 {
+		return ""
+	}
+	return names[dow]
+}
+
+// bookingMinutes formats minutes-since-midnight as HH:MM.
+func bookingMinutes(mins int) string {
+	if mins < 0 {
+		mins = 0
+	}
+	if mins > 1439 {
+		mins = 1439
+	}
+	return fmt.Sprintf("%02d:%02d", mins/60, mins%60)
 }
 
 // teamMemberRow is the settings-page projection of one active membership.
@@ -202,6 +254,32 @@ func (h *SettingsHandler) Settings(w http.ResponseWriter, r *http.Request) {
 				AccountNumber: st.AccountNumber,
 				AccountName:   st.AccountName,
 				Whatsapp:      st.Whatsapp,
+			}
+		}
+	}
+
+	// Booking section: booking category + flag on. Read-only for staff;
+	// the forms render for owners only (service + routes enforce).
+	if h.Booking != nil && s.IsBooking && h.Flags != nil && h.Flags.Enabled(s.Scope.OrgID, "booking_module") {
+		if pd, err := h.Booking.SettingsPage(r.Context(), s.Scope); err == nil {
+			rows := make([]bookingHourRow, 0, 7)
+			for dow := 0; dow <= 6; dow++ {
+				hh := app.HoursFor(pd.Hours, dow)
+				rows = append(rows, bookingHourRow{
+					Dow: dow, DayName: bookingDayName(dow),
+					Open: bookingMinutes(hh.OpenMin), Close: bookingMinutes(hh.CloseMin),
+					IsOpen: hh.IsOpen,
+				})
+			}
+			bl := make([]bookingBlackoutRow, 0, len(pd.Blackouts))
+			for _, b := range pd.Blackouts {
+				bl = append(bl, bookingBlackoutRow{Day: b.Day.Format("2006-01-02"), Reason: b.Reason})
+			}
+			data.Booking = &bookingSettingsData{
+				Accepting: pd.Settings.Accepting, DurationMin: pd.Settings.DurationMin,
+				BufBefore: pd.Settings.BufBefore, BufAfter: pd.Settings.BufAfter,
+				MinNoticeHours: pd.Settings.MinNoticeHours, MaxAdvanceDays: pd.Settings.MaxAdvanceDays,
+				CancelPolicy: pd.Settings.CancelPolicy, Hours: rows, Blackouts: bl,
 			}
 		}
 	}

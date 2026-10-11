@@ -1,0 +1,85 @@
+{{ define "bookings/index.html" }}
+<div class="p-space-lg lg:p-space-xl max-w-5xl mx-auto flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Bookings"))) }}
+
+  <div class="flex flex-wrap items-center justify-between gap-space-sm">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Bookings</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Confirm requests, run the day, record no-shows.</p>
+    </div>
+    <form method="get" action="/dashboard/bookings" class="flex items-center gap-space-xs">
+      <a href="/dashboard/bookings?date={{ .PrevDate }}" aria-label="Previous day"
+         class="w-9 h-9 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex items-center justify-center">‹</a>
+      <input type="date" name="date" value="{{ .Date }}"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <button type="submit" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Go</button>
+      <a href="/dashboard/bookings?date={{ .NextDate }}" aria-label="Next day"
+         class="w-9 h-9 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex items-center justify-center">›</a>
+      <a href="/dashboard/bookings?date={{ .TodayDate }}"
+         class="h-9 px-3 rounded font-label-sm text-label-sm font-semibold inline-flex items-center bg-surface-container hover:bg-surface-container-high text-on-surface">Today</a>
+    </form>
+  </div>
+
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+
+  <p class="font-body-md text-body-md text-on-surface-variant">{{ .Total }} visit{{ if ne .Total 1 }}s{{ end }} · {{ .Requested }} awaiting confirmation</p>
+
+  {{ if .Rows }}
+  <div class="flex flex-col gap-space-sm">
+    {{ range .Rows }}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col lg:flex-row lg:items-center gap-space-sm">
+      <div class="flex items-center gap-space-sm flex-1 min-w-0">
+        <div class="flex flex-col items-center shrink-0 w-14 rounded-lg bg-primary-fixed text-on-primary-fixed py-1">
+          <span class="font-label-md text-label-md font-bold leading-none">{{ .StartLabel }}</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-label-md text-label-md text-on-surface font-semibold truncate">{{ .CustomerName }}{{ if .ServiceName }} · {{ .ServiceName }}{{ end }}</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant">{{ .StartLabel }} – {{ .EndLabel }} ({{ .DurationMin }} min) · {{ .OrderNumber }}{{ if .CustomerPhone }} · {{ .CustomerPhone }}{{ end }}</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{ statusLabel .Status }}{{ if gt .PaidMinor 0 }} · paid {{ currency .PaidMinor .Currency }}{{ end }}{{ if gt .TotalMinor 0 }} · total {{ currency .TotalMinor .Currency }}{{ end }}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-space-xs shrink-0 flex-wrap">
+        {{ if .IsRequested }}
+        <form method="post" action="/dashboard/bookings/{{ .ID }}/confirm?date={{ $.Date }}" class="inline">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <button type="submit" class="h-9 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold">Confirm</button>
+        </form>
+        {{ end }}
+        {{ if .IsConfirmed }}
+        <form method="post" action="/dashboard/bookings/{{ .ID }}/complete?date={{ $.Date }}" class="inline">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <button type="submit" class="h-9 px-3 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">Complete</button>
+        </form>
+        <form method="post" action="/dashboard/bookings/{{ .ID }}/no-show?date={{ $.Date }}" class="inline" onsubmit="return confirm('Mark as no-show? The slot frees up.');">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <button type="submit" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">No-show</button>
+        </form>
+        {{ end }}
+        {{ if .IsLive }}
+        <form method="post" action="/dashboard/bookings/{{ .ID }}/cancel?date={{ $.Date }}" class="inline flex items-center gap-1" onsubmit="return confirm('Cancel this booking? The slot frees up.');">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <input type="text" name="reason" maxlength="500" placeholder="Reason (optional)" aria-label="Cancellation reason"
+                 class="h-9 w-36 px-2 rounded bg-surface-container-low text-on-surface font-label-sm text-label-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <button type="submit" class="h-9 px-3 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Cancel</button>
+        </form>
+        <form method="post" action="/dashboard/bookings/{{ .ID }}/reschedule?date={{ $.Date }}" class="inline flex items-center gap-1">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <input type="date" name="new_date" required aria-label="New date"
+                 class="h-9 px-2 rounded bg-surface-container-low text-on-surface font-label-sm text-label-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <input type="time" name="new_time" required aria-label="New time"
+                 class="h-9 px-2 rounded bg-surface-container-low text-on-surface font-label-sm text-label-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <button type="submit" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Move</button>
+        </form>
+        {{ end }}
+      </div>
+    </div>
+    {{ end }}
+  </div>
+  {{ else }}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center">
+    <p class="font-body-md text-body-md text-on-surface-variant">No visits this day. Share your booking link so customers can book.</p>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

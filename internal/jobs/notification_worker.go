@@ -97,20 +97,11 @@ type claimJob struct {
 func (w *NotificationWorker) claim(ctx context.Context) ([]claimJob, error) {
 	var jobs []claimJob
 	err := w.db.WithTx(ctx, func(tx pgx.Tx) error {
+		// Cross-tenant claim through a SECURITY DEFINER function (see
+		// 0061_worker_rls_functions.sql); the worker has no tenant scope.
 		const q = `
-			WITH c AS (
-				SELECT id FROM notification_jobs
-				WHERE status = 'PENDING'
-				  AND next_attempt_at <= now()
-				ORDER BY next_attempt_at ASC
-				LIMIT $1
-				FOR UPDATE SKIP LOCKED
-			)
-			UPDATE notification_jobs j
-			SET next_attempt_at = now() + interval '5 minutes'
-			FROM c
-			WHERE j.id = c.id
-			RETURNING j.id, j.organization_id, j.kind, j.channel, j.recipient, j.payload, j.attempts
+			SELECT id, org_id, kind, channel, recipient, payload, attempts
+			FROM claim_notification_jobs($1)
 		`
 		rows, err := tx.Query(ctx, q, w.batch)
 		if err != nil {
@@ -159,11 +150,7 @@ func (w *NotificationWorker) process(ctx context.Context, j claimJob) {
 	}
 
 	_ = w.db.WithTx(ctx, func(tx pgx.Tx) error {
-		const q = `
-			UPDATE notification_jobs
-			SET status = 'SENT', sent_at = now(), attempts = attempts + 1, last_error = NULL
-			WHERE id = $1
-		`
+		const q = `SELECT ack_notification_job($1, 'SENT', 0, '', '')`
 		_, err := tx.Exec(ctx, q, j.ID)
 		return err
 	})
@@ -178,13 +165,7 @@ func (w *NotificationWorker) retryOrDead(ctx context.Context, id uuid.UUID, atte
 	}
 	backoff := backoffFor(next)
 	_ = w.db.WithTx(ctx, func(tx pgx.Tx) error {
-		const q = `
-			UPDATE notification_jobs
-			SET attempts = $2,
-			    last_error = $3,
-			    next_attempt_at = now() + $4::interval
-			WHERE id = $1
-		`
+		const q = `SELECT ack_notification_job($1, 'PENDING', $2, $3, $4)`
 		_, err := tx.Exec(ctx, q, id, next, cause.Error(), fmt.Sprintf("%d seconds", int(backoff.Seconds())))
 		return err
 	})
@@ -194,11 +175,7 @@ func (w *NotificationWorker) retryOrDead(ctx context.Context, id uuid.UUID, atte
 
 func (w *NotificationWorker) deadLetter(ctx context.Context, id uuid.UUID, reason string) {
 	_ = w.db.WithTx(ctx, func(tx pgx.Tx) error {
-		const q = `
-			UPDATE notification_jobs
-			SET status = 'DEAD', last_error = $2, attempts = attempts + 1
-			WHERE id = $1
-		`
+		const q = `SELECT ack_notification_job($1, 'DEAD', 0, $2, '')`
 		_, err := tx.Exec(ctx, q, id, reason)
 		return err
 	})
@@ -240,6 +217,8 @@ func subjectFor(kind string) string {
 		return "Your order is ready"
 	case notify.KindIntakeReceived:
 		return "New order request"
+	case notify.KindBookingRescheduled:
+		return "Your appointment was moved"
 	}
 	return ""
 }
@@ -262,6 +241,8 @@ func templateFor(kind string) string {
 		return "order_ready"
 	case notify.KindIntakeReceived:
 		return "intake_received"
+	case notify.KindBookingRescheduled:
+		return "booking_rescheduled"
 	}
 	return ""
 }

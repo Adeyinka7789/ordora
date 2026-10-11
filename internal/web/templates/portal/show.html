@@ -44,6 +44,18 @@
     {{ template "partials/lifecycle_stepper.html" .OrderForStepper }}
   </div>
 
+  {{ with .Booking }}
+  <!-- Appointment (booking orders only) -->
+  <div class="w-full bg-primary-fixed rounded-xl p-space-lg shadow-sm flex flex-col gap-space-sm">
+    <div class="flex items-center gap-2">
+      <span aria-hidden="true" class="material-symbols-outlined text-on-primary-fixed text-[20px]">event</span>
+      <span class="font-headline-md text-headline-md text-on-primary-fixed font-bold">Your Appointment</span>
+    </div>
+    <p class="font-headline-md text-headline-md text-on-primary-fixed font-bold">{{ .When }}</p>
+    <p class="font-body-md text-body-md text-on-primary-fixed">{{ if .ServiceName }}{{ .ServiceName }} · {{ end }}{{ statusLabel .Status }}</p>
+  </div>
+  {{ end }}
+
   <!-- Two-column body -->
   <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
 

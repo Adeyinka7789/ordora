@@ -58,6 +58,8 @@ type Shell struct {
 	IsTailoring bool
 	// IsPerishable unlocks the perishable-goods module nav (egg orders).
 	IsPerishable bool
+	// IsBooking unlocks the appointment-booking nav.
+	IsBooking bool
 
 	// Impersonation
 	Impersonating        bool

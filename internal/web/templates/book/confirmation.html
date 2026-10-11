@@ -1,0 +1,38 @@
+{{ define "book/confirmation.html" }}
+<div class="w-full max-w-xl mx-auto px-margin md:px-margin-desktop py-space-xl flex flex-col gap-space-lg text-center">
+  <span aria-hidden="true" class="material-symbols-outlined text-tertiary text-[56px] mx-auto">event_available</span>
+  <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Booking received</h1>
+  <p class="font-body-md text-body-md text-on-surface-variant">Thanks {{ .CustomerName }} — {{ .OrgName }} will confirm your visit shortly.</p>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm text-left">
+    <div class="flex justify-between font-body-md text-body-md">
+      <span class="text-on-surface-variant">Reference</span>
+      <span class="font-code-md text-code-md font-bold text-on-surface">{{ .OrderNumber }}</span>
+    </div>
+    <div class="flex justify-between font-body-md text-body-md">
+      <span class="text-on-surface-variant">When</span>
+      <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .Start }} – {{ .End }}</span>
+    </div>
+    {{ if gt .TotalMinor 0 }}
+    <div class="flex justify-between font-body-md text-body-md">
+      <span class="text-on-surface-variant">Price</span>
+      <span class="font-code-md text-code-md font-bold text-on-surface">{{ currency .TotalMinor .Currency }}</span>
+    </div>
+    {{ end }}
+  </div>
+
+  <div class="bg-primary-fixed rounded-xl p-space-lg flex flex-col gap-space-sm">
+    <p class="font-label-md text-label-md text-on-primary-fixed font-semibold">Track your booking any time with this link (save it):</p>
+    <div class="flex items-center gap-2">
+      <code class="flex-1 font-code-md text-code-md bg-surface-container-lowest/20 px-3 py-2 rounded break-all text-on-primary-fixed">/o/{{ .Token }}</code>
+      <button type="button" data-copy-path="/o/{{ .Token }}"
+              class="h-9 px-3 rounded bg-surface-container-lowest/20 hover:bg-surface-container-lowest/30 font-label-sm text-label-sm font-semibold text-on-primary-fixed flex items-center gap-1 shrink-0">
+        <span aria-hidden="true" class="material-symbols-outlined text-[16px]">content_copy</span>
+        <span>Copy</span>
+      </button>
+    </div>
+  </div>
+
+  <a href="/" class="font-label-md text-label-md text-primary hover:underline font-semibold">Back to home</a>
+</div>
+{{ end }}

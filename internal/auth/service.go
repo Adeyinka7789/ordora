@@ -560,6 +560,8 @@ type ResolvedSession struct {
 	// IsPerishable is true for poultry/egg and food-vendor businesses
 	// (unlocks the daily-cap + transfer-receipt module).
 	IsPerishable bool
+	// IsBooking is true for appointment businesses (unlocks booking).
+	IsBooking bool
 }
 
 // ResolveSession loads a session by raw token and constructs a TenantScope.
@@ -621,6 +623,7 @@ func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*Resolve
 		OrgSuspended: orgSuspended,
 		IsTailoring:  org.IsTailoringCategory(orgCategory),
 		IsPerishable: org.IsPerishableCategory(orgCategory),
+		IsBooking:    org.IsBookingCategory(orgCategory),
 	}, nil
 }
 

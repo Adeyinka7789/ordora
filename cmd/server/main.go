@@ -339,10 +339,19 @@ func run() error {
 		Orders:   orderService,
 		IDs:      id.Generator{},
 	})
+	// ---- Booking module (appointments; order stays the record) ----
+	bookingService := app.NewBookingService(app.BookingServiceDeps{
+		DB:     db,
+		Store:  postgres.NewBookingRepo(db, id.Generator{}),
+		Orders: orderService,
+		Outbox: outboxRepo,
+		IDs:    id.Generator{},
+	})
 	settingsH := &handlers.SettingsHandler{
 		Service:  settingsService,
 		Teams:    teamService,
 		Egg:      eggService,
+		Booking:  bookingService,
 		Flags:    flagProvider,
 		Renderer: renderer,
 	}
@@ -561,6 +570,7 @@ func run() error {
 			OrgTimezone:  orgTimezone,
 			IsTailoring:  org.IsTailoringCategory(orgCategory),
 			IsPerishable: org.IsPerishableCategory(orgCategory),
+			IsBooking:    org.IsBookingCategory(orgCategory),
 		}, nil
 	}
 
@@ -579,8 +589,18 @@ func run() error {
 	portalH := &handlers.PortalHandler{
 		Portal:   portalService,
 		Public:   publicOrderService,
+		Booking:  bookingService,
 		Blobs:    blobs,
 		IDs:      id.Generator{},
+		Renderer: renderer,
+	}
+	bookH := &handlers.BookHandler{
+		Booking:  bookingService,
+		Catalog:  publicOrderService,
+		Renderer: renderer,
+	}
+	bookingsH := &handlers.BookingsHandler{
+		Booking:  bookingService,
 		Renderer: renderer,
 	}
 
@@ -624,6 +644,19 @@ func run() error {
 	}
 	perishOwner := func(h http.Handler) http.Handler {
 		return middleware.RequireTenant(middleware.RequireOwner(middleware.RequirePerishable(middleware.RequireFlag(flagProvider, "egg_module")(h))))
+	}
+
+	// booking wraps an appointment-module tenant route: category gate +
+	// booking_module flag, 404 fail-closed. bookingWrite admits writer
+	// roles (staff run the day); bookingOwner is owner-only (settings).
+	booking := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireBooking(middleware.RequireFlag(flagProvider, "booking_module")(h)))
+	}
+	bookingWrite := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireWrite(middleware.RequireBooking(middleware.RequireFlag(flagProvider, "booking_module")(h))))
+	}
+	bookingOwner := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireOwner(middleware.RequireBooking(middleware.RequireFlag(flagProvider, "booking_module")(h))))
 	}
 
 	// Per-IP limiter for credential-bearing POSTs (business + admin
@@ -755,6 +788,8 @@ func run() error {
 	portalMux.HandleFunc("GET /public/product-images/{id}", portalH.ProductImage)
 	portalMux.HandleFunc("GET /order/{slug}", portalH.IntakeForm)
 	portalMux.HandleFunc("POST /order/{slug}", portalH.IntakeSubmit)
+	portalMux.HandleFunc("GET /book/{slug}", bookH.BookForm)
+	portalMux.HandleFunc("POST /book/{slug}", bookH.BookSubmit)
 
 	mux.Handle("GET /search", middleware.RequireAuth(http.HandlerFunc(searchH.Handle)))
 
@@ -782,6 +817,14 @@ func run() error {
 		Message: "Too many requests. Please slow down.",
 	})(portalMux))
 	mux.Handle("POST /order/{slug}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 5, Window: time.Minute,
+		Message: "Too many submission attempts. Please wait a minute.",
+	})(portalMux))
+	mux.Handle("GET /book/{slug}", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 60, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
+	})(portalMux))
+	mux.Handle("POST /book/{slug}", middleware.RateLimit(middleware.RateLimitConfig{
 		Limit: 5, Window: time.Minute,
 		Message: "Too many submission attempts. Please wait a minute.",
 	})(portalMux))
@@ -883,6 +926,17 @@ func run() error {
 	mux.Handle("POST /dashboard/egg-orders/{id}/complete", perishWrite(http.HandlerFunc(eggH.Complete)))
 	mux.Handle("POST /dashboard/egg-orders/toggle", perishOwner(http.HandlerFunc(eggH.Toggle)))
 	mux.Handle("POST /settings/egg", perishOwner(http.HandlerFunc(eggH.UpdateSettings)))
+	// ---- Booking module (Beauty & Salon + booking_module flag) ----
+	mux.Handle("GET /dashboard/bookings", booking(http.HandlerFunc(bookingsH.Index)))
+	mux.Handle("POST /dashboard/bookings/{id}/confirm", bookingWrite(http.HandlerFunc(bookingsH.Confirm)))
+	mux.Handle("POST /dashboard/bookings/{id}/complete", bookingWrite(http.HandlerFunc(bookingsH.Complete)))
+	mux.Handle("POST /dashboard/bookings/{id}/cancel", bookingWrite(http.HandlerFunc(bookingsH.Cancel)))
+	mux.Handle("POST /dashboard/bookings/{id}/no-show", bookingWrite(http.HandlerFunc(bookingsH.NoShow)))
+	mux.Handle("POST /dashboard/bookings/{id}/reschedule", bookingWrite(http.HandlerFunc(bookingsH.Reschedule)))
+	mux.Handle("POST /settings/booking", bookingOwner(http.HandlerFunc(bookingsH.UpdateBookingSettings)))
+	mux.Handle("POST /settings/booking/hours", bookingOwner(http.HandlerFunc(bookingsH.UpdateHours)))
+	mux.Handle("POST /settings/booking/blackouts", bookingOwner(http.HandlerFunc(bookingsH.AddBlackout)))
+	mux.Handle("POST /settings/booking/blackouts/{date}/remove", bookingOwner(http.HandlerFunc(bookingsH.RemoveBlackout)))
 	mux.Handle("GET /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Index)))
 	mux.Handle("GET /settings/measurements/new", tenantWrite(http.HandlerFunc(measTmplH.New)))
 	mux.Handle("POST /settings/measurements", tenantWrite(http.HandlerFunc(measTmplH.Create)))

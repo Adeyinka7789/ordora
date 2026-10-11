@@ -138,3 +138,20 @@ func TestIsPerishableCategory(t *testing.T) {
 		t.Error("Poultry & Eggs must be offered at registration")
 	}
 }
+
+func TestIsBookingCategory(t *testing.T) {
+	if !IsBookingCategory("Beauty & Salon") {
+		t.Error("Beauty & Salon must unlock booking")
+	}
+	for _, cat := range []string{"", "Tailoring & Fashion", "Poultry & Eggs", "Food & Catering", "beauty & salon"} {
+		if IsBookingCategory(cat) {
+			t.Errorf("%q must not unlock booking", cat)
+		}
+	}
+	// Booking and perishable gates never overlap.
+	for _, cat := range BusinessCategories() {
+		if IsBookingCategory(cat) && IsPerishableCategory(cat) {
+			t.Errorf("%q must not unlock two modules", cat)
+		}
+	}
+}
