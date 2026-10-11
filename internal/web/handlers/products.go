@@ -88,19 +88,26 @@ func parseCatalogForm(r *http.Request) product.CatalogDetails {
 			days = n
 		}
 	}
+	duration := 0
+	if v := strings.TrimSpace(r.PostFormValue("booking_duration_min")); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			duration = n
+		}
+	}
 	return product.CatalogDetails{
-		Material:         formValue(r, "material"),
-		Color:            formValue(r, "color"),
-		ShortDescription: formValue(r, "short_description"),
-		InternalNotes:    formValue(r, "internal_notes"),
-		Specs:            formValue(r, "specs"),
-		ProductionDays:   days,
-		QuoteOnly:        r.PostFormValue("quote_only") == "on",
-		StartingFrom:     r.PostFormValue("starting_from") == "on",
-		Hidden:           r.PostFormValue("hidden") == "on",
-		Availability:     formValue(r, "availability"),
-		Category:         formValue(r, "category"),
-		Questions:        parseProductQuestionsForm(r),
+		Material:           formValue(r, "material"),
+		Color:              formValue(r, "color"),
+		ShortDescription:   formValue(r, "short_description"),
+		InternalNotes:      formValue(r, "internal_notes"),
+		Specs:              formValue(r, "specs"),
+		ProductionDays:     days,
+		BookingDurationMin: duration,
+		QuoteOnly:          r.PostFormValue("quote_only") == "on",
+		StartingFrom:       r.PostFormValue("starting_from") == "on",
+		Hidden:             r.PostFormValue("hidden") == "on",
+		Availability:       formValue(r, "availability"),
+		Category:           formValue(r, "category"),
+		Questions:          parseProductQuestionsForm(r),
 	}
 }
 
@@ -118,6 +125,11 @@ func echoCatalogForm(p *product.Product, r *http.Request) {
 	if v := formValue(r, "production_days"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			p.ProductionDays = n
+		}
+	}
+	if v := formValue(r, "booking_duration_min"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			p.BookingDurationMin = n
 		}
 	}
 	p.QuoteOnly = r.PostFormValue("quote_only") == "on"
@@ -552,6 +564,8 @@ func humanizeProductError(err error) string {
 		return "Specifications are too long (max 2000)."
 	case errors.Is(err, product.ErrProductionDays):
 		return "Production days cannot be negative."
+	case errors.Is(err, product.ErrBookingDurationMin):
+		return "Visit length must be blank (org default) or 15–480 minutes."
 	case errors.Is(err, product.ErrAvailabilityInvalid):
 		return "Please choose a valid availability."
 	case errors.Is(err, product.ErrCategoryTooLong):
@@ -579,6 +593,8 @@ func fieldForProductError(err error) string {
 		return "description"
 	case errors.Is(err, product.ErrSKUTooLong):
 		return "sku"
+	case errors.Is(err, product.ErrBookingDurationMin):
+		return "booking_duration_min"
 	default:
 		return ""
 	}

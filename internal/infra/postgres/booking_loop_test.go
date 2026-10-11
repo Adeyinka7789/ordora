@@ -232,6 +232,11 @@ func TestBookingFullLoop(t *testing.T) {
 	staffScope.Role = tenant.RoleStaff
 	t.Cleanup(func() {
 		_ = db.WithTenant(context.Background(), scope.OrgID, func(tx pgx.Tx) error {
+			if _, err := tx.Exec(context.Background(), `
+				DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`,
+				scope.OrgID, staffID); err != nil {
+				return err
+			}
 			_, err := tx.Exec(context.Background(), `DELETE FROM users WHERE id = $1`, staffID)
 			return err
 		})

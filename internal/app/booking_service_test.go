@@ -98,6 +98,10 @@ func (s *stubBookingStore) BookingByToken(_ context.Context, _ []byte) (*PublicB
 	return nil, nil
 }
 
+func (s *stubBookingStore) BookingStaff(_ context.Context, _ string) ([]BookingStaffMember, error) {
+	return nil, nil
+}
+
 func bookingTestScope(role tenant.Role) tenant.TenantScope {
 	return tenant.TenantScope{OrgID: uuid.New(), UserID: uuid.New(), Role: role}
 }

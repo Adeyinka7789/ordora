@@ -34,7 +34,7 @@
           <span class="font-label-md text-label-md font-bold leading-none">{{ .StartLabel }}</span>
         </div>
         <div class="flex flex-col min-w-0">
-          <span class="font-label-md text-label-md text-on-surface font-semibold truncate">{{ .CustomerName }}{{ if .ServiceName }} · {{ .ServiceName }}{{ end }}</span>
+          <span class="font-label-md text-label-md text-on-surface font-semibold truncate">{{ .CustomerName }}{{ if .ServiceName }} · {{ .ServiceName }}{{ end }}{{ if .StaffName }} · with {{ .StaffName }}{{ end }}</span>
           <span class="font-body-sm text-body-sm text-on-surface-variant">{{ .StartLabel }} – {{ .EndLabel }} ({{ .DurationMin }} min) · {{ .OrderNumber }}{{ if .CustomerPhone }} · {{ .CustomerPhone }}{{ end }}</span>
           <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{ statusLabel .Status }}{{ if gt .PaidMinor 0 }} · paid {{ currency .PaidMinor .Currency }}{{ end }}{{ if gt .TotalMinor 0 }} · total {{ currency .TotalMinor .Currency }}{{ end }}</span>
         </div>

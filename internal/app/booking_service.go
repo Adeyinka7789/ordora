@@ -114,6 +114,8 @@ type Booking struct {
 	TotalMinor    int64
 	PaidMinor     int64
 	Currency      string
+	// StaffName is the assignee's display name ("" = anyone).
+	StaffName string
 }
 
 // PublicBooking is the tracking-page projection of one appointment.
@@ -154,6 +156,14 @@ type BusyBlock struct {
 	End       time.Time
 	BufBefore int
 	BufAfter  int
+	// StaffUserID is the assignee, or nil for shared-pool demand.
+	StaffUserID *uuid.UUID
+}
+
+// BookingStaffMember is one bookable team member for the picker.
+type BookingStaffMember struct {
+	UserID uuid.UUID
+	Name   string
 }
 
 // Slot is one bookable start/end pair (UTC instants).
@@ -201,6 +211,7 @@ type BookingStore interface {
 	BookingBusy(ctx context.Context, slug string, fromUTC, toUTC time.Time) ([]BusyBlock, error)
 	CreateBooking(ctx context.Context, in CreateBookingInput) (*CreateBookingResult, error)
 	BookingByToken(ctx context.Context, hash []byte) (*PublicBooking, error)
+	BookingStaff(ctx context.Context, slug string) ([]BookingStaffMember, error)
 }
 
 // CreateBookingInput is the repo-level atomic creation payload. Times are
@@ -218,6 +229,7 @@ type CreateBookingInput struct {
 	Timezone      string
 	BufBefore     int
 	BufAfter      int
+	StaffUserID   *uuid.UUID
 }
 
 // CreateBookingResult carries the new rows plus the one-time raw token.
@@ -283,7 +295,11 @@ func LocalMidnight(d time.Time, loc *time.Location) time.Time {
 // fully tested: the creation transaction re-validates authoritatively,
 // so this list is advisory (a concurrent booking wins the race and the
 // submitter gets "just booked").
-func AvailableSlots(day time.Time, loc *time.Location, now time.Time, settings BookingSettings, hours []BookingHour, blackouts map[string]bool, busy []BusyBlock, durationMin int) []Slot {
+//
+// staff scopes the lane: a named pick ignores other stylists' visits
+// (unassigned demand still blocks — it could land on anyone); nil keeps
+// the conservative org-wide view.
+func AvailableSlots(day time.Time, loc *time.Location, now time.Time, settings BookingSettings, hours []BookingHour, blackouts map[string]bool, busy []BusyBlock, durationMin int, staff *uuid.UUID) []Slot {
 	if durationMin <= 0 {
 		durationMin = settings.DurationMin
 	}
@@ -318,12 +334,16 @@ func AvailableSlots(day time.Time, loc *time.Location, now time.Time, settings B
 		if s.Before(earliest) {
 			continue
 		}
-		// Candidate blocked when its buffered window touches any live
-		// booking's buffered window (buffers snapshot per booking).
+		// Candidate blocked when its buffered window touches a live
+		// booking's buffered window (buffers snapshot per booking) in
+		// the same lane: same stylist, or unassigned demand either way.
 		bs := s.Add(-time.Duration(settings.BufBefore) * time.Minute)
 		be := e.Add(time.Duration(settings.BufAfter) * time.Minute)
 		blocked := false
 		for _, b := range busy {
+			if staff != nil && b.StaffUserID != nil && *b.StaffUserID != *staff {
+				continue
+			}
 			if bs.Before(b.End.Add(time.Duration(b.BufAfter)*time.Minute)) &&
 				be.After(b.Start.Add(-time.Duration(b.BufBefore)*time.Minute)) {
 				blocked = true
@@ -527,6 +547,11 @@ type SubmitBookingInput struct {
 	ServiceName   string
 	Date          string // yyyy-mm-dd, org-local
 	StartTime     string // HH:MM, org-local, 24h
+	// DurationMin resolves server-side from the service catalog (0 = org
+	// default); the transaction enforces it against the service row.
+	DurationMin int
+	// StaffUserID is the picked stylist, or nil for anyone available.
+	StaffUserID *uuid.UUID
 }
 
 // SubmitBookingResult is the confirmation payload.
@@ -605,6 +630,12 @@ func (s *BookingService) PublicConfig(ctx context.Context, slug string) (*Bookin
 	return s.store.BookingConfig(ctx, slug)
 }
 
+// PublicStaff lists bookable team members for a slug. Empty when none
+// (solo shops just don't offer the picker).
+func (s *BookingService) PublicStaff(ctx context.Context, slug string) ([]BookingStaffMember, error) {
+	return s.store.BookingStaff(ctx, slug)
+}
+
 // DaySlots is the slot-picker payload for one date.
 type DaySlots struct {
 	Config    *BookingConfig
@@ -616,7 +647,7 @@ type DaySlots struct {
 }
 
 // SlotsForDate computes the advisory slot grid for a public date.
-func (s *BookingService) SlotsForDate(ctx context.Context, slug, dateStr string) (*DaySlots, error) {
+func (s *BookingService) SlotsForDate(ctx context.Context, slug, dateStr string, durationMin int, staff *uuid.UUID) (*DaySlots, error) {
 	cfg, err := s.store.BookingConfig(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -668,7 +699,14 @@ func (s *BookingService) SlotsForDate(ctx context.Context, slug, dateStr string)
 		DurationMin: cfg.DurationMin, BufBefore: cfg.BufBefore, BufAfter: cfg.BufAfter,
 		MinNoticeHours: cfg.MinNoticeHours, MaxAdvanceDays: cfg.MaxAdvanceDays,
 	}
-	out.Slots = AvailableSlots(day, loc, now, settings, hours, black, busy, cfg.DurationMin)
+	dur := durationMin
+	if dur <= 0 {
+		dur = cfg.DurationMin
+	}
+	if dur < 15 || dur > 480 {
+		return nil, ErrBookingBadSlot
+	}
+	out.Slots = AvailableSlots(day, loc, now, settings, hours, black, busy, dur, staff)
 	return out, nil
 }
 
@@ -702,10 +740,17 @@ func (s *BookingService) SubmitBooking(ctx context.Context, in SubmitBookingInpu
 	if err != nil {
 		return nil, err
 	}
-	end := start.Add(time.Duration(cfg.DurationMin) * time.Minute)
+	dur := in.DurationMin
+	if dur <= 0 {
+		dur = cfg.DurationMin
+	}
+	if dur < 15 || dur > 480 {
+		return nil, ErrBookingBadSlot
+	}
+	end := start.Add(time.Duration(dur) * time.Minute)
 
 	// Friendly pre-checks (advisory; the tx decides).
-	daySlots, err := s.SlotsForDate(ctx, in.Slug, in.Date)
+	daySlots, err := s.SlotsForDate(ctx, in.Slug, in.Date, dur, in.StaffUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -735,6 +780,7 @@ func (s *BookingService) SubmitBooking(ctx context.Context, in SubmitBookingInpu
 		CustomerPhone: phone, Notes: notes, ServiceName: strings.TrimSpace(in.ServiceName),
 		ProductID: &pid, Start: start, End: end, Timezone: cfg.Timezone,
 		BufBefore: cfg.BufBefore, BufAfter: cfg.BufAfter,
+		StaffUserID: in.StaffUserID,
 	})
 	if err != nil {
 		return nil, err

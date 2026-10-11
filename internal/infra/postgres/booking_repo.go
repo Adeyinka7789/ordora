@@ -204,6 +204,7 @@ func scanBookingRow(row pgx.Row) (*app.Booking, error) {
 		&b.CreatedAt, &b.UpdatedAt,
 		&b.OrderNumber, &b.OrderStatus, &b.CustomerName, &b.CustomerPhone,
 		&b.CustomerEmail, &b.ServiceName, &b.TotalMinor, &b.PaidMinor, &b.Currency,
+		&b.StaffName,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, app.ErrBookingNotFound
@@ -219,23 +220,27 @@ const bookingJoins = `
 	JOIN orders o ON o.id = b.order_id
 	JOIN customers c ON c.id = b.customer_id
 	LEFT JOIN products p ON p.id = b.product_id
+	LEFT JOIN users u ON u.id = b.staff_user_id
 	WHERE b.organization_id = $1
+`
+
+const bookingColumns = `
+	SELECT b.id, b.organization_id, b.order_id, b.customer_id, b.product_id,
+	       b.staff_user_id, b.start_at, b.end_at, b.timezone,
+	       b.buf_before_min, b.buf_after_min, b.status,
+	       b.customer_notes, b.cancel_reason, b.rescheduled_at, b.prev_start_at,
+	       b.created_at, b.updated_at,
+	       o.order_number, o.status::text, c.name, COALESCE(c.phone,''),
+	       COALESCE(c.email::text,''), COALESCE(p.name,''),
+	       o.total_minor, o.amount_paid_minor, o.currency::text,
+	       COALESCE(u.name,'')
 `
 
 // GetBooking loads one booking with order/customer context.
 func (r *BookingRepo) GetBooking(ctx context.Context, scope tenant.TenantScope, id uuid.UUID) (*app.Booking, error) {
 	var out *app.Booking
 	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
-		const q = `
-			SELECT b.id, b.organization_id, b.order_id, b.customer_id, b.product_id,
-			       b.staff_user_id, b.start_at, b.end_at, b.timezone,
-			       b.buf_before_min, b.buf_after_min, b.status,
-			       b.customer_notes, b.cancel_reason, b.rescheduled_at, b.prev_start_at,
-			       b.created_at, b.updated_at,
-			       o.order_number, o.status::text, c.name, COALESCE(c.phone,''),
-			       COALESCE(c.email::text,''), COALESCE(p.name,''),
-			       o.total_minor, o.amount_paid_minor, o.currency::text
-		` + bookingJoins + ` AND b.id = $2`
+		const q = bookingColumns + bookingJoins + ` AND b.id = $2`
 		b, err := scanBookingRow(tx.QueryRow(ctx, q, scope.OrgID, id))
 		if err != nil {
 			return err
@@ -250,16 +255,7 @@ func (r *BookingRepo) GetBooking(ctx context.Context, scope tenant.TenantScope, 
 func (r *BookingRepo) ListDayBookings(ctx context.Context, scope tenant.TenantScope, fromUTC, toUTC time.Time) ([]app.Booking, error) {
 	var out []app.Booking
 	err := r.db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
-		const q = `
-			SELECT b.id, b.organization_id, b.order_id, b.customer_id, b.product_id,
-			       b.staff_user_id, b.start_at, b.end_at, b.timezone,
-			       b.buf_before_min, b.buf_after_min, b.status,
-			       b.customer_notes, b.cancel_reason, b.rescheduled_at, b.prev_start_at,
-			       b.created_at, b.updated_at,
-			       o.order_number, o.status::text, c.name, COALESCE(c.phone,''),
-			       COALESCE(c.email::text,''), COALESCE(p.name,''),
-			       o.total_minor, o.amount_paid_minor, o.currency::text
-		` + bookingJoins + `
+		const q = bookingColumns + bookingJoins + `
 			AND tstzrange(b.start_at, b.end_at, '[)') && tstzrange($2, $3, '[)')
 			ORDER BY b.start_at ASC`
 		rows, err := tx.Query(ctx, q, scope.OrgID, fromUTC, toUTC)
@@ -383,19 +379,12 @@ func moveWindowDeadline(now time.Time, tz string, advanceDays int) time.Time {
 // RescheduleTx moves a booking after re-checking overlap (excluding self).
 // Runs inside the caller's lock; the row is re-read FOR UPDATE.
 func (r *BookingRepo) RescheduleTx(ctx context.Context, tx pgx.Tx, scope tenant.TenantScope, id uuid.UUID, newStart, newEnd time.Time, now time.Time) (*app.Booking, error) {
-	const get = `
-		SELECT b.id, b.organization_id, b.order_id, b.customer_id, b.product_id,
-		       b.staff_user_id, b.start_at, b.end_at, b.timezone,
-		       b.buf_before_min, b.buf_after_min, b.status,
-		       b.customer_notes, b.cancel_reason, b.rescheduled_at, b.prev_start_at,
-		       b.created_at, b.updated_at,
-		       o.order_number, o.status::text, c.name, COALESCE(c.phone,''),
-		       COALESCE(c.email::text,''), COALESCE(p.name,''),
-		       o.total_minor, o.amount_paid_minor, o.currency::text
+	const get = bookingColumns + `
 		FROM bookings b
 		JOIN orders o ON o.id = b.order_id
 		JOIN customers c ON c.id = b.customer_id
 		LEFT JOIN products p ON p.id = b.product_id
+		LEFT JOIN users u ON u.id = b.staff_user_id
 		WHERE b.organization_id = $1 AND b.id = $2
 		FOR UPDATE OF b
 	`
@@ -420,6 +409,7 @@ func (r *BookingRepo) RescheduleTx(ctx context.Context, tx pgx.Tx, scope tenant.
 		SELECT 1 FROM bookings o
 		WHERE o.organization_id = $1 AND o.id <> $2
 		  AND o.status IN ('REQUESTED','CONFIRMED')
+		  AND ($5::uuid IS NULL OR o.staff_user_id IS NULL OR o.staff_user_id = $5)
 		  AND o.start_at - (o.buf_before_min || ' minutes')::interval < $4
 		  AND o.end_at + (o.buf_after_min || ' minutes')::interval > $3
 		LIMIT 1
@@ -428,6 +418,7 @@ func (r *BookingRepo) RescheduleTx(ctx context.Context, tx pgx.Tx, scope tenant.
 	if err := tx.QueryRow(ctx, overlap, scope.OrgID, id,
 		newStart.Add(-time.Duration(b.BufBefore)*time.Minute),
 		newEnd.Add(time.Duration(b.BufAfter)*time.Minute),
+		b.StaffUserID,
 	).Scan(&one); err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("booking_repo: reschedule overlap: %w", Classify(err))
 	}
@@ -554,7 +545,7 @@ func (r *BookingRepo) BookingBusy(ctx context.Context, slug string, fromUTC, toU
 	var out []app.BusyBlock
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx,
-			`SELECT start_at, end_at, buf_before, buf_after FROM get_booking_busy($1, $2, $3)`,
+			`SELECT start_at, end_at, buf_before, buf_after, staff_id FROM get_booking_busy($1, $2, $3)`,
 			slug, fromUTC, toUTC)
 		if err != nil {
 			return fmt.Errorf("booking_repo: busy: %w", Classify(err))
@@ -562,10 +553,31 @@ func (r *BookingRepo) BookingBusy(ctx context.Context, slug string, fromUTC, toU
 		defer rows.Close()
 		for rows.Next() {
 			var b app.BusyBlock
-			if err := rows.Scan(&b.Start, &b.End, &b.BufBefore, &b.BufAfter); err != nil {
+			if err := rows.Scan(&b.Start, &b.End, &b.BufBefore, &b.BufAfter, &b.StaffUserID); err != nil {
 				return fmt.Errorf("booking_repo: scan busy: %w", err)
 			}
 			out = append(out, b)
+		}
+		return rows.Err()
+	})
+	return out, err
+}
+
+// BookingStaff lists bookable team members (active writers, owner first).
+func (r *BookingRepo) BookingStaff(ctx context.Context, slug string) ([]app.BookingStaffMember, error) {
+	var out []app.BookingStaffMember
+	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, `SELECT user_id, name FROM get_booking_staff($1)`, slug)
+		if err != nil {
+			return fmt.Errorf("booking_repo: staff: %w", Classify(err))
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var m app.BookingStaffMember
+			if err := rows.Scan(&m.UserID, &m.Name); err != nil {
+				return fmt.Errorf("booking_repo: scan staff: %w", err)
+			}
+			out = append(out, m)
 		}
 		return rows.Err()
 	})
@@ -586,7 +598,7 @@ func (r *BookingRepo) CreateBooking(ctx context.Context, in app.CreateBookingInp
 			SELECT o_error, o_order_id, o_order_num, o_total, o_currency, o_org_email, o_booking_id
 			FROM create_booking(
 				$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-				$11, $12, $13, $14, $15, $16, $17
+				$11, $12, $13, $14, $15, $16, $17, $18
 			)
 		`
 		var (
@@ -608,6 +620,7 @@ func (r *BookingRepo) CreateBooking(ctx context.Context, in app.CreateBookingInp
 			productID, in.Start, in.End, in.Timezone,
 			in.BufBefore, in.BufAfter, hash,
 			r.ids.New(), r.ids.New(), r.ids.New(), r.ids.New(),
+			in.StaffUserID,
 		).Scan(&code, &orderID, &num, &total, &curr, &orgMail, &bookingID); err != nil {
 			return fmt.Errorf("booking_repo: create: %w", Classify(err))
 		}

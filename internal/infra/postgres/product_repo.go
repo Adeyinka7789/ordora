@@ -40,9 +40,9 @@ func (r *ProductRepo) Create(ctx context.Context, scope tenant.TenantScope, p *p
 			INSERT INTO products
 				(id, organization_id, name, description, sku, unit_price_minor, currency, active, created_by, created_at, updated_at,
 				 material, color, short_description, internal_notes, specs, production_days,
-				 quote_only, starting_from, hidden, availability, category, questions)
+				 quote_only, starting_from, hidden, availability, category, questions, booking_duration_min)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
-			        $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23::jsonb)
+			        $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23::jsonb,$24)
 		`
 		_, err = tx.Exec(ctx, q,
 			p.ID, p.OrganizationID, p.Name,
@@ -53,7 +53,7 @@ func (r *ProductRepo) Create(ctx context.Context, scope tenant.TenantScope, p *p
 			nullIfEmpty(p.ShortDescription), nullIfEmpty(p.InternalNotes),
 			nullIfEmpty(p.Specs), nullIfInt(p.ProductionDays),
 			p.QuoteOnly, p.StartingFrom, p.Hidden, p.Availability,
-			nullIfEmpty(p.Category), questions,
+			nullIfEmpty(p.Category), questions, nullIfInt(p.BookingDurationMin),
 		)
 		if err != nil {
 			return fmt.Errorf("product_repo: create: %w", Classify(err))
@@ -78,7 +78,8 @@ func (r *ProductRepo) Update(ctx context.Context, scope tenant.TenantScope, p *p
 			       material = $8, color = $9, short_description = $10,
 			       internal_notes = $11, specs = $12, production_days = $13,
 			       quote_only = $14, starting_from = $15, hidden = $16,
-			       availability = $17, category = $18, questions = $19::jsonb
+			       availability = $17, category = $18, questions = $19::jsonb,
+			       booking_duration_min = $20
 			 WHERE id = $1
 		`
 		ct, err := tx.Exec(ctx, q,
@@ -88,7 +89,7 @@ func (r *ProductRepo) Update(ctx context.Context, scope tenant.TenantScope, p *p
 			nullIfEmpty(p.ShortDescription), nullIfEmpty(p.InternalNotes),
 			nullIfEmpty(p.Specs), nullIfInt(p.ProductionDays),
 			p.QuoteOnly, p.StartingFrom, p.Hidden, p.Availability,
-			nullIfEmpty(p.Category), questions,
+			nullIfEmpty(p.Category), questions, nullIfInt(p.BookingDurationMin),
 		)
 		if err != nil {
 			return fmt.Errorf("product_repo: update: %w", Classify(err))
@@ -138,7 +139,7 @@ func (r *ProductRepo) GetByID(ctx context.Context, scope tenant.TenantScope, id 
 			       COALESCE(internal_notes,''), COALESCE(specs,''), production_days,
 			       COALESCE(quote_only,false), COALESCE(starting_from,false),
 			       COALESCE(hidden,false), COALESCE(availability,'in_stock'),
-			       COALESCE(category,''), COALESCE(questions,'[]')
+			       COALESCE(category,''), COALESCE(questions,'[]'), COALESCE(booking_duration_min,0)
 			FROM products
 			WHERE id = $1
 		`
@@ -194,7 +195,7 @@ func (r *ProductRepo) List(ctx context.Context, scope tenant.TenantScope, opts P
 			       COALESCE(internal_notes,''), COALESCE(specs,''), production_days,
 			       COALESCE(quote_only,false), COALESCE(starting_from,false),
 			       COALESCE(hidden,false), COALESCE(availability,'in_stock'),
-			       COALESCE(category,''), COALESCE(questions,'[]')
+			       COALESCE(category,''), COALESCE(questions,'[]'), COALESCE(booking_duration_min,0)
 			FROM products
 			WHERE %s
 			ORDER BY active DESC, name ASC
@@ -281,10 +282,11 @@ func scanProduct(row scannable) (*product.Product, error) {
 		availability string
 		category     string
 		questionsRaw []byte
+		bookDuration int
 	)
 	if err := row.Scan(&id, &orgID, &name, &description, &sku, &priceMinor, &currency, &active, &createdBy, &createdAt, &updatedAt,
 		&material, &color, &shortDesc, &notes, &specs, &prodDays,
-		&quoteOnly, &startingFrom, &hidden, &availability, &category, &questionsRaw); err != nil {
+		&quoteOnly, &startingFrom, &hidden, &availability, &category, &questionsRaw, &bookDuration); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, product.ErrNotFound
 		}
@@ -314,17 +316,18 @@ func scanProduct(row scannable) (*product.Product, error) {
 		CreatedAt:      createdAt,
 		UpdatedAt:      updatedAt,
 
-		Material:         material,
-		Color:            color,
-		ShortDescription: shortDesc,
-		InternalNotes:    notes,
-		Specs:            specs,
-		QuoteOnly:        quoteOnly,
-		StartingFrom:     startingFrom,
-		Hidden:           hidden,
-		Availability:     availability,
-		Category:         category,
-		Questions:        questions,
+		Material:           material,
+		Color:              color,
+		ShortDescription:   shortDesc,
+		InternalNotes:      notes,
+		Specs:              specs,
+		QuoteOnly:          quoteOnly,
+		StartingFrom:       startingFrom,
+		Hidden:             hidden,
+		Availability:       availability,
+		Category:           category,
+		Questions:          questions,
+		BookingDurationMin: bookDuration,
 	}
 	if prodDays != nil {
 		p.ProductionDays = *prodDays

@@ -97,6 +97,9 @@ type PublicProduct struct {
 	Color            string
 	ProductionDays   int
 	ImageIDs         []uuid.UUID // gallery + cover ids, cover first
+	// BookingDurationMin overrides the org default visit length (minutes);
+	// 0 = use the org default.
+	BookingDurationMin int
 }
 
 // PublicOrderResult is what the handler returns to the template.

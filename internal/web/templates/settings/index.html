@@ -366,6 +366,28 @@
   </div>
   {{ end }}
 
+  {{ with .Booking }}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Share your booking link</h2>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Put this on your counter, bio, or status. Customers pick a time themselves.</p>
+    <div class="flex flex-col sm:flex-row gap-space-md items-start">
+      <img src="/book/{{ $.FormSlug }}/qr" alt="QR code for your booking link" loading="lazy"
+           class="w-32 h-32 rounded-lg border border-outline-variant/30 bg-white p-1 shrink-0">
+      <div class="flex flex-col gap-space-sm flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <code class="flex-1 font-code-md text-code-md bg-surface-container-low px-3 py-2 rounded break-all">/book/{{ $.FormSlug }}</code>
+          <button type="button" data-copy-path="/book/{{ $.FormSlug }}"
+                  class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
+            <span aria-hidden="true" class="material-symbols-outlined text-[16px]">content_copy</span>
+            <span>Copy</span>
+          </button>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant">Print the QR code for your counter, or add the link to your Instagram/WhatsApp bio.</p>
+      </div>
+    </div>
+  </div>
+  {{ end }}
+
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
     <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Measurement templates</h2>
     <p class="font-body-sm text-body-sm text-on-surface-variant">Use the ready-made garments as-is, or clone one and adapt it to your shop's style. Past orders always keep their original measurements.</p>

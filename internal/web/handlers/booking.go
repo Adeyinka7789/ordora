@@ -4,10 +4,12 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/skip2/go-qrcode"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
@@ -22,6 +24,7 @@ import (
 type BookHandler struct {
 	Booking  *app.BookingService
 	Catalog  *app.PublicOrderService
+	BaseURL  string
 	Renderer *render.Renderer
 }
 
@@ -30,6 +33,10 @@ type bookServiceView struct {
 	Name       string
 	PriceMinor int64
 	Currency   string
+	// DurationMin is the visit length (0 = org default); DurationLabel
+	// renders it ("45 min" or "1 hr").
+	DurationMin   int
+	DurationLabel string
 }
 
 type bookSlotView struct {
@@ -45,6 +52,8 @@ type bookFormData struct {
 	Error        string
 	Services     []bookServiceView
 	ServiceID    string // echo
+	Staff        []bookStaffView
+	StaffID      string // echo; "" = anyone available
 	Date         string // echo yyyy-mm-dd
 	MinDate      string
 	MaxDate      string
@@ -60,6 +69,11 @@ type bookFormData struct {
 	Preview      bool
 }
 
+type bookStaffView struct {
+	ID   string
+	Name string
+}
+
 // servicesForBook projects the public catalog as bookable services.
 func servicesForBook(r *http.Request, catalog *app.PublicOrderService, slug string) []bookServiceView {
 	list := catalog.ListProducts(r.Context(), slug)
@@ -69,9 +83,70 @@ func servicesForBook(r *http.Request, catalog *app.PublicOrderService, slug stri
 		out = append(out, bookServiceView{
 			ID: p.ID.String(), Name: p.Name,
 			PriceMinor: p.UnitPriceMinor, Currency: p.Currency,
+			DurationMin:   p.BookingDurationMin,
+			DurationLabel: formatVisitLength(p.BookingDurationMin),
 		})
 	}
 	return out
+}
+
+// formatVisitLength renders a duration override ("45 min", "2 hr").
+// Empty means the org default applies.
+func formatVisitLength(mins int) string {
+	if mins <= 0 {
+		return ""
+	}
+	if mins%60 == 0 {
+		return strconv.Itoa(mins/60) + " hr"
+	}
+	return strconv.Itoa(mins) + " min"
+}
+
+// staffForBook projects the bookable team for the stylist picker.
+func staffForBook(r *http.Request, booking *app.BookingService, slug string) []bookStaffView {
+	list, err := booking.PublicStaff(r.Context(), slug)
+	if err != nil {
+		return nil
+	}
+	out := make([]bookStaffView, 0, len(list))
+	for _, m := range list {
+		out = append(out, bookStaffView{ID: m.UserID.String(), Name: m.Name})
+	}
+	return out
+}
+
+// resolveService finds the picked service server-side (client names and
+// durations are untrusted).
+func resolveService(services []bookServiceView, raw string) (bookServiceView, uuid.UUID, bool) {
+	id, err := uuid.Parse(strings.TrimSpace(raw))
+	if err != nil || id == uuid.Nil {
+		return bookServiceView{}, uuid.Nil, false
+	}
+	for _, s := range services {
+		if s.ID == id.String() {
+			return s, id, true
+		}
+	}
+	return bookServiceView{}, uuid.Nil, false
+}
+
+// resolveStaff validates the picked stylist server-side ("" = anyone).
+func resolveStaff(staff []bookStaffView, raw string) (*uuid.UUID, bool) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, true
+	}
+	id, err := uuid.Parse(raw)
+	if err != nil || id == uuid.Nil {
+		return nil, false
+	}
+	for _, m := range staff {
+		if m.ID == id.String() {
+			out := id
+			return &out, true
+		}
+	}
+	return nil, false
 }
 
 // defaultBookDate returns today in the org timezone.
@@ -88,6 +163,7 @@ func (h *BookHandler) renderBookForm(w http.ResponseWriter, r *http.Request, slu
 		return
 	}
 	services := servicesForBook(r, h.Catalog, slug)
+	staff := staffForBook(r, h.Booking, slug)
 	date := echo.Get("date")
 	if date == "" {
 		date = defaultBookDate(cfg.Timezone, time.Now())
@@ -96,12 +172,21 @@ func (h *BookHandler) renderBookForm(w http.ResponseWriter, r *http.Request, slu
 	now := time.Now()
 	minDate := now.In(loc).Format("2006-01-02")
 	maxDate := now.In(loc).AddDate(0, 0, cfg.MaxAdvanceDays).Format("2006-01-02")
+	// Slots follow the picked service's length (else the org default)
+	// and the picked stylist's lane (else anyone).
+	duration := cfg.DurationMin
+	if svc, _, ok := resolveService(services, echo.Get("service")); ok && svc.DurationMin > 0 {
+		duration = svc.DurationMin
+	}
+	staffID, staffOK := resolveStaff(staff, echo.Get("staff"))
 	data := bookFormData{
 		Title: "Book an appointment", OrgName: cfg.OrgName, Slug: slug,
 		CSRFToken:    middleware.CSRFTokenFrom(r.Context()),
 		Error:        errMsg,
 		Services:     services,
 		ServiceID:    echo.Get("service"),
+		Staff:        staff,
+		StaffID:      echo.Get("staff"),
 		Date:         date,
 		MinDate:      minDate,
 		MaxDate:      maxDate,
@@ -117,8 +202,8 @@ func (h *BookHandler) renderBookForm(w http.ResponseWriter, r *http.Request, slu
 			data.Preview = true
 		}
 	}
-	if len(services) > 0 {
-		if slots, err := h.Booking.SlotsForDate(r.Context(), slug, date); err == nil && !slots.Closed {
+	if len(services) > 0 && staffOK {
+		if slots, err := h.Booking.SlotsForDate(r.Context(), slug, date, duration, staffID); err == nil && !slots.Closed {
 			for _, sl := range slots.Slots {
 				data.Slots = append(data.Slots, bookSlotView{
 					Value: sl.Start.In(loc).Format("15:04"),
@@ -155,36 +240,31 @@ func (h *BookHandler) BookSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	echo := url.Values{}
-	for _, k := range []string{"service", "date", "start", "name", "phone", "email", "notes"} {
+	for _, k := range []string{"service", "staff", "date", "start", "name", "phone", "email", "notes"} {
 		echo.Set(k, strings.TrimSpace(r.PostFormValue(k)))
 	}
 	fail := func(msg string) {
 		h.renderBookForm(w, r, slug, http.StatusBadRequest, msg, echo)
 	}
 
-	serviceID, err := uuid.Parse(echo.Get("service"))
-	if err != nil || serviceID == uuid.Nil {
+	svc, serviceID, ok := resolveService(servicesForBook(r, h.Catalog, slug), echo.Get("service"))
+	if !ok {
 		fail("Choose a service first.")
 		return
 	}
-	// Resolve the service name server-side (client names are untrusted).
-	serviceName := ""
-	for _, s := range servicesForBook(r, h.Catalog, slug) {
-		if s.ID == serviceID.String() {
-			serviceName = s.Name
-			break
-		}
-	}
-	if serviceName == "" {
-		fail("That service is not available. Pick another.")
+	staffID, ok := resolveStaff(staffForBook(r, h.Booking, slug), echo.Get("staff"))
+	if !ok {
+		fail("Choose a stylist (or anyone available).")
 		return
 	}
 
 	res, err := h.Booking.SubmitBooking(r.Context(), app.SubmitBookingInput{
 		Slug: slug, CustomerName: echo.Get("name"), CustomerEmail: echo.Get("email"),
 		CustomerPhone: echo.Get("phone"), Notes: echo.Get("notes"),
-		ProductID: serviceID, ServiceName: serviceName,
-		Date: echo.Get("date"), StartTime: echo.Get("start"),
+		ProductID: serviceID, ServiceName: svc.Name,
+		DurationMin: svc.DurationMin,
+		StaffUserID: staffID,
+		Date:        echo.Get("date"), StartTime: echo.Get("start"),
 	})
 	if err != nil {
 		fail(humanizeBookingError(err))
@@ -206,6 +286,36 @@ func (h *BookHandler) BookSubmit(w http.ResponseWriter, r *http.Request) {
 		Start: res.Start.Format("Mon 02 Jan, 15:04"), End: res.End.Format("15:04"),
 		Token: res.RawToken, TotalMinor: res.TotalMinor, Currency: res.Currency,
 	})
+}
+
+// QR handles GET /book/{slug}/qr: a printable QR code for the booking
+// link (counter cards, bios). The slug is public anyway; ineligible slugs
+// 404 like the form itself.
+func (h *BookHandler) QR(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+	if slug == "" {
+		http.NotFound(w, r)
+		return
+	}
+	cfg, err := h.Booking.PublicConfig(r.Context(), slug)
+	if err != nil || !cfg.BookingApplies() {
+		http.NotFound(w, r)
+		return
+	}
+	base := strings.TrimSuffix(h.BaseURL, "/")
+	if base == "" {
+		base = "http://localhost:8080"
+	}
+	png, err := qrcode.Encode(base+"/book/"+slug, qrcode.Medium, 256)
+	if err != nil {
+		http.Error(w, "could not make code", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Content-Length", strconv.Itoa(len(png)))
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(png)
 }
 
 func humanizeBookingError(err error) string {
@@ -247,6 +357,7 @@ type bookingRow struct {
 	CustomerName  string
 	CustomerPhone string
 	ServiceName   string
+	StaffName     string
 	StartLabel    string // "Mon 02 Jan, 15:04"
 	EndLabel      string // "16:00"
 	DurationMin   int
@@ -292,7 +403,7 @@ func (h *BookingsHandler) Index(w http.ResponseWriter, r *http.Request) {
 		rows = append(rows, bookingRow{
 			ID: b.ID.String(), OrderNumber: b.OrderNumber,
 			CustomerName: b.CustomerName, CustomerPhone: b.CustomerPhone,
-			ServiceName: b.ServiceName,
+			ServiceName: b.ServiceName, StaffName: b.StaffName,
 			StartLabel:  b.StartAt.In(loc).Format("Mon 02 Jan, 15:04"),
 			EndLabel:    b.EndAt.In(loc).Format("15:04"),
 			DurationMin: int(b.EndAt.Sub(b.StartAt).Minutes()),

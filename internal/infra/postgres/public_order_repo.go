@@ -60,7 +60,8 @@ func (r *PublicOrderRepo) ListProductsBySlug(ctx context.Context, slug string) (
 			SELECT product_id, product_name, product_description, product_short,
 			       product_material, product_category, unit_price_minor, currency,
 			       quote_only, starting_from, availability, cover_image_id, product_questions,
-			       product_specs, product_color, product_production_days, product_image_ids
+			       product_specs, product_color, product_production_days, product_image_ids,
+			       booking_duration_min
 			FROM get_public_products($1)
 		`
 		rows, err := tx.Query(ctx, q, slug)
@@ -77,7 +78,7 @@ func (r *PublicOrderRepo) ListProductsBySlug(ctx context.Context, slug string) (
 				&p.Material, &p.Category, &p.UnitPriceMinor, &p.Currency,
 				&p.QuoteOnly, &p.StartingFrom, &p.Availability,
 				&coverID, &questionsRaw, &p.Specs, &p.Color, &p.ProductionDays,
-				&imageIDs); err != nil {
+				&imageIDs, &p.BookingDurationMin); err != nil {
 				return fmt.Errorf("public_order_repo: scan product: %w", err)
 			}
 			if coverID != nil {

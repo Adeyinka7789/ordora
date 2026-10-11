@@ -597,6 +597,7 @@ func run() error {
 	bookH := &handlers.BookHandler{
 		Booking:  bookingService,
 		Catalog:  publicOrderService,
+		BaseURL:  cfg.BaseURL,
 		Renderer: renderer,
 	}
 	bookingsH := &handlers.BookingsHandler{
@@ -790,6 +791,7 @@ func run() error {
 	portalMux.HandleFunc("POST /order/{slug}", portalH.IntakeSubmit)
 	portalMux.HandleFunc("GET /book/{slug}", bookH.BookForm)
 	portalMux.HandleFunc("POST /book/{slug}", bookH.BookSubmit)
+	portalMux.HandleFunc("GET /book/{slug}/qr", bookH.QR)
 
 	mux.Handle("GET /search", middleware.RequireAuth(http.HandlerFunc(searchH.Handle)))
 
@@ -827,6 +829,10 @@ func run() error {
 	mux.Handle("POST /book/{slug}", middleware.RateLimit(middleware.RateLimitConfig{
 		Limit: 5, Window: time.Minute,
 		Message: "Too many submission attempts. Please wait a minute.",
+	})(portalMux))
+	mux.Handle("GET /book/{slug}/qr", middleware.RateLimit(middleware.RateLimitConfig{
+		Limit: 120, Window: time.Minute,
+		Message: "Too many requests. Please slow down.",
 	})(portalMux))
 
 	// Health

@@ -127,3 +127,22 @@ func TestNormalizeQuestions(t *testing.T) {
 		t.Error("duplicate keys must fail")
 	}
 }
+
+func TestApplyCatalog_BookingDuration(t *testing.T) {
+	p := testProduct(t)
+	now := time.Now()
+	if err := p.ApplyCatalog(CatalogDetails{BookingDurationMin: 90}, now); err != nil {
+		t.Fatalf("90min rejected: %v", err)
+	}
+	if p.BookingDurationMin != 90 {
+		t.Errorf("duration not stored: %+v", p)
+	}
+	if err := p.ApplyCatalog(CatalogDetails{BookingDurationMin: 0}, now); err != nil {
+		t.Fatalf("org default (0) rejected: %v", err)
+	}
+	for _, mins := range []int{-5, 10, 481} {
+		if err := p.ApplyCatalog(CatalogDetails{BookingDurationMin: mins}, now); err == nil {
+			t.Errorf("duration %d must fail", mins)
+		}
+	}
+}

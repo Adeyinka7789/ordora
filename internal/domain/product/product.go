@@ -41,6 +41,9 @@ type Product struct {
 	Availability     string // see availability constants
 	Category         string // groups products on the public picker
 	Questions        []ProductQuestion
+	// BookingDurationMin overrides the org's default visit length for
+	// appointment booking (minutes); 0 = use the org default.
+	BookingDurationMin int
 }
 
 // Availability states for the public catalog.
@@ -102,6 +105,9 @@ type CatalogDetails struct {
 	Availability     string
 	Category         string
 	Questions        []ProductQuestion
+	// BookingDurationMin overrides the org default visit length (minutes);
+	// 0 = use the org default.
+	BookingDurationMin int
 }
 
 // ApplyCatalog validates and applies merchandising fields.
@@ -129,6 +135,9 @@ func (p *Product) ApplyCatalog(d CatalogDetails, now time.Time) error {
 	if d.ProductionDays < 0 {
 		return ErrProductionDays
 	}
+	if d.BookingDurationMin < 0 || (d.BookingDurationMin > 0 && (d.BookingDurationMin < 15 || d.BookingDurationMin > 480)) {
+		return ErrBookingDurationMin
+	}
 	availability := strings.TrimSpace(d.Availability)
 	if availability == "" {
 		availability = AvailabilityInStock
@@ -151,6 +160,7 @@ func (p *Product) ApplyCatalog(d CatalogDetails, now time.Time) error {
 	p.InternalNotes = notes
 	p.Specs = specs
 	p.ProductionDays = d.ProductionDays
+	p.BookingDurationMin = d.BookingDurationMin
 	p.QuoteOnly = d.QuoteOnly
 	p.StartingFrom = d.StartingFrom && !d.QuoteOnly
 	p.Hidden = d.Hidden

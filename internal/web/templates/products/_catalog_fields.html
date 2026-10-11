@@ -1,7 +1,8 @@
 {{ define "products/_catalog_fields.html" }}
 {{/* Shared merchandising fields for product new/edit forms.
   Expects a dict: Material, Color, ShortDescription, InternalNotes, Specs,
-  ProductionDays (int, 0 = unset), QuoteOnly, StartingFrom, Hidden (bools),
+  ProductionDays (int, 0 = unset), BookingDurationMin (int, 0 = org default),
+  QuoteOnly, StartingFrom, Hidden (bools),
   Availability, Category, QuestionRows ([]productQuestionRow). */}}
 <div class="flex flex-col gap-space-md pt-space-xs border-t border-outline-variant">
   <h2 class="font-label-lg text-label-lg text-on-surface">Catalog details</h2>
@@ -57,6 +58,12 @@
       <span class="font-label-md text-label-md text-on-surface">Est. production time (days)</span>
       <input type="number" name="production_days" value="{{ if gt .ProductionDays 0 }}{{ .ProductionDays }}{{ end }}" min="0" max="365" inputmode="numeric"
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="font-label-md text-label-md text-on-surface">Booking visit length (minutes)</span>
+      <input type="number" name="booking_duration_min" value="{{ if gt .BookingDurationMin 0 }}{{ .BookingDurationMin }}{{ end }}" min="0" max="480" step="1" inputmode="numeric" placeholder="Org default"
+             class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Leave blank to use the booking default. 15–480 when set.</span>
     </label>
   </div>
 

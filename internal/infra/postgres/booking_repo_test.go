@@ -80,6 +80,53 @@ func bookingOwnerMember(t *testing.T, db *postgres.DB, scope tenant.TenantScope)
 	}
 }
 
+// bookingStaffMember adds one STAFF member and returns the user id. The org
+// cascade removes the membership; the user row is cleaned by the caller.
+func bookingStaffMember(t *testing.T, db *postgres.DB, scope tenant.TenantScope, name string) uuid.UUID {
+	t.Helper()
+	staffID := uuid.New()
+	if err := db.WithTenant(context.Background(), scope.OrgID, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(context.Background(), `
+			INSERT INTO users (id, email, password_hash, name)
+			VALUES ($1, $2, 'x', $3)`, staffID, name+"-"+staffID.String()[:8]+"@example.local", name); err != nil {
+			return err
+		}
+		_, err := tx.Exec(context.Background(), `
+			INSERT INTO organization_members (organization_id, user_id, role, status, created_at)
+			VALUES ($1, $2, 'STAFF', 'ACTIVE', now())`, scope.OrgID, staffID)
+		return err
+	}); err != nil {
+		t.Fatalf("staff member: %v", err)
+	}
+	t.Cleanup(func() {
+		// Membership first (FK to users), then the user. The org cascade
+		// (setupDB cleanup, runs after) would remove the membership
+		// anyway; this keeps no orphan user row behind.
+		_ = db.WithTenant(context.Background(), scope.OrgID, func(tx pgx.Tx) error {
+			if _, err := tx.Exec(context.Background(), `
+				DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2`,
+				scope.OrgID, staffID); err != nil {
+				return err
+			}
+			_, err := tx.Exec(context.Background(), `DELETE FROM users WHERE id = $1`, staffID)
+			return err
+		})
+	})
+	return staffID
+}
+
+// bookingMonday returns next Monday 10:00 local (inside default hours).
+func bookingMonday(tz string) time.Time {
+	loc, _ := time.LoadLocation(tz)
+	now := time.Now().In(loc)
+	days := (8 - int(now.Weekday())) % 7
+	if days == 0 {
+		days = 7
+	}
+	day := now.AddDate(0, 0, days)
+	return time.Date(day.Year(), day.Month(), day.Day(), 10, 0, 0, 0, loc)
+}
+
 func TestBookingRepo_SettingsHoursBlackouts(t *testing.T) {
 	db, scope, _ := bookingTestOrg(t)
 	ctx := context.Background()
@@ -302,5 +349,127 @@ func TestBookingRepo_SameSlotRace(t *testing.T) {
 	}
 	if res.BookingID == uuid.Nil {
 		t.Fatal("rebook must return a booking id")
+	}
+}
+
+// TestBookingRepo_StaffLanes proves per-stylist independence: two stylists
+// take the same slot concurrently and both win; the same stylist twice
+// yields one winner; anyone else (or a bogus id) loses.
+func TestBookingRepo_StaffLanes(t *testing.T) {
+	db, scope, slug := bookingTestOrg(t)
+	ctx := context.Background()
+	const tz = "Africa/Lagos"
+	bookingOwnerMember(t, db, scope)
+	ada := bookingStaffMember(t, db, scope, "Ada")
+	bola := bookingStaffMember(t, db, scope, "Bola")
+	productID := bookingTestProduct(t, db, scope)
+	repo := postgres.NewBookingRepo(db, id.Generator{})
+
+	// Staff picker lists writers, owner first (owner has no membership row
+	// here beyond OWNER... owner IS a writer; staff follow by name).
+	staff, err := repo.BookingStaff(ctx, slug)
+	if err != nil {
+		t.Fatalf("staff list: %v", err)
+	}
+	if len(staff) != 3 { // OWNER + Ada + Bola
+		t.Fatalf("want 3 bookable staff, got %+v", staff)
+	}
+	if staff[0].UserID != scope.UserID {
+		t.Errorf("owner must list first: %+v", staff)
+	}
+
+	start := bookingMonday(tz)
+	end := start.Add(time.Hour)
+	book := func(name, phone string, staffID *uuid.UUID) (*app.CreateBookingResult, error) {
+		return repo.CreateBooking(ctx, app.CreateBookingInput{
+			Slug: slug, CustomerName: name, CustomerPhone: phone,
+			ServiceName: "Box Braids", ProductID: &productID,
+			Start: start, End: end, Timezone: tz, StaffUserID: staffID,
+		})
+	}
+
+	// Same slot, different stylists, concurrently: both win.
+	var wg sync.WaitGroup
+	type outcome struct {
+		res *app.CreateBookingResult
+		err error
+	}
+	outs := make([]outcome, 2)
+	lanes := []*uuid.UUID{&ada, &bola}
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			outs[i].res, outs[i].err = book(fmt.Sprintf("Lane %d", i), fmt.Sprintf("081%d", i), lanes[i])
+		}(i)
+	}
+	wg.Wait()
+	for i, o := range outs {
+		if o.err != nil {
+			t.Fatalf("lane %d must win its own stylist: %v", i, o.err)
+		}
+		if o.res.BookingID == uuid.Nil {
+			t.Fatalf("lane %d: missing booking id", i)
+		}
+	}
+
+	// Same stylist again: taken.
+	if _, err := book("Ada again", "0820", &ada); !errors.Is(err, app.ErrBookingSlotTaken) {
+		t.Fatalf("same stylist double-book: got %v, want ErrBookingSlotTaken", err)
+	}
+	// Anyone: taken (conservative — a named visit occupies the pool).
+	if _, err := book("Anyone", "0821", nil); !errors.Is(err, app.ErrBookingSlotTaken) {
+		t.Fatalf("anyone over named visits: got %v, want ErrBookingSlotTaken", err)
+	}
+	// Bogus stylist id: rejected, not booked.
+	bogus := uuid.New()
+	if _, err := book("Ghost", "0822", &bogus); !errors.Is(err, app.ErrBookingBadSlot) {
+		t.Fatalf("bogus stylist: got %v, want ErrBookingBadSlot", err)
+	}
+}
+
+// TestBookingRepo_ServiceDuration proves the visit length comes from the
+// service row (org default fallback) and that a spoofed length fails in
+// the transaction even when the caller computed something else.
+func TestBookingRepo_ServiceDuration(t *testing.T) {
+	db, scope, slug := bookingTestOrg(t)
+	ctx := context.Background()
+	const tz = "Africa/Lagos"
+	bookingOwnerMember(t, db, scope)
+	productID := bookingTestProduct(t, db, scope)
+	repo := postgres.NewBookingRepo(db, id.Generator{})
+
+	// Braids take 90 minutes for this shop.
+	if err := db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx,
+			`UPDATE products SET booking_duration_min = 90 WHERE id = $1`, productID)
+		return err
+	}); err != nil {
+		t.Fatalf("duration: %v", err)
+	}
+
+	monday := bookingMonday(tz)
+	book := func(start, end time.Time) (*app.CreateBookingResult, error) {
+		return repo.CreateBooking(ctx, app.CreateBookingInput{
+			Slug: slug, CustomerName: "Dur", CustomerPhone: "0830",
+			ServiceName: "Box Braids", ProductID: &productID,
+			Start: start, End: end, Timezone: tz,
+		})
+	}
+	// 60 minutes against a 90-minute service: rejected.
+	if _, err := book(monday, monday.Add(time.Hour)); !errors.Is(err, app.ErrBookingBadSlot) {
+		t.Fatalf("wrong length: got %v, want ErrBookingBadSlot", err)
+	}
+	// 90 minutes: books, and the row keeps it.
+	res, err := book(monday, monday.Add(90*time.Minute))
+	if err != nil {
+		t.Fatalf("90min visit: %v", err)
+	}
+	got, err := repo.GetBooking(ctx, scope, res.BookingID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.EndAt.Sub(got.StartAt) != 90*time.Minute {
+		t.Fatalf("stored visit must be 90min: %v", got.EndAt.Sub(got.StartAt))
 	}
 }

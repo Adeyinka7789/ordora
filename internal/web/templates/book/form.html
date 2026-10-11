@@ -28,9 +28,20 @@
         <select name="service" required
                 class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
           <option value="">Choose…</option>
-          {{ range .Services }}<option value="{{ .ID }}" {{ if eq $.ServiceID .ID }}selected{{ end }}>{{ .Name }}{{ if gt .PriceMinor 0 }} — {{ currency .PriceMinor .Currency }}{{ end }}</option>{{ end }}
+          {{ range .Services }}<option value="{{ .ID }}" {{ if eq $.ServiceID .ID }}selected{{ end }}>{{ .Name }}{{ if .DurationLabel }} ({{ .DurationLabel }}){{ end }}{{ if gt .PriceMinor 0 }} — {{ currency .PriceMinor .Currency }}{{ end }}</option>{{ end }}
         </select>
       </label>
+
+      {{ if .Staff }}
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Stylist</span>
+        <select name="staff"
+                class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <option value="">Anyone available</option>
+          {{ range .Staff }}<option value="{{ .ID }}" {{ if eq $.StaffID .ID }}selected{{ end }}>{{ .Name }}</option>{{ end }}
+        </select>
+      </label>
+      {{ end }}
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
         <label class="flex flex-col gap-1">

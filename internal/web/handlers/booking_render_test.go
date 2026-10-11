@@ -1,12 +1,20 @@
 package handlers
 
 import (
+	"bytes"
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/Adeyinka7789/ordora/internal/app"
+	"github.com/Adeyinka7789/ordora/internal/domain/booking"
 	"github.com/Adeyinka7789/ordora/internal/domain/org"
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
@@ -20,8 +28,12 @@ func TestBookFormRenders(t *testing.T) {
 	out, err := r.Raw("book/form.html", bookFormData{
 		Title: "Book an appointment", OrgName: "Glam Salon", Slug: "glam",
 		Services: []bookServiceView{
-			{ID: uuid.NewString(), Name: "Braids", PriceMinor: 15000, Currency: "NGN"},
+			{ID: uuid.NewString(), Name: "Braids", PriceMinor: 15000, Currency: "NGN", DurationMin: 120, DurationLabel: "2 hr"},
 			{ID: uuid.NewString(), Name: "Consult", PriceMinor: 0, Currency: "NGN"},
+		},
+		Staff: []bookStaffView{
+			{ID: uuid.NewString(), Name: "Ada"},
+			{ID: uuid.NewString(), Name: "Bola"},
 		},
 		Date: "2026-10-13", MinDate: "2026-10-12", MaxDate: "2026-11-11",
 		Slots: []bookSlotView{
@@ -34,8 +46,9 @@ func TestBookFormRenders(t *testing.T) {
 		t.Fatalf("book/form.html: %v", err)
 	}
 	for _, want := range []string{
-		"Book with Glam Salon", "Braids", "Consult",
-		`name="service"`, `name="date"`, `name="start"`,
+		"Book with Glam Salon", "Braids", "Consult", "(2 hr)",
+		`name="service"`, `name="staff"`, "Anyone available", "Ada", "Bola",
+		`name="date"`, `name="start"`,
 		`value="09:00"`, "09:00 – 10:00",
 		`name="name"`, `name="phone"`, `name="email"`, `name="notes"`,
 		"24h notice", "Request booking",
@@ -106,7 +119,7 @@ func TestBookingsPanelRenders(t *testing.T) {
 		PrevDate: "2026-10-11", NextDate: "2026-10-13", TodayDate: "2026-10-12",
 		Rows: []bookingRow{
 			{ID: uuid.NewString(), OrderNumber: "ORD-1", CustomerName: "Ada",
-				CustomerPhone: "0803", ServiceName: "Braids",
+				CustomerPhone: "0803", ServiceName: "Braids", StaffName: "Bola",
 				StartLabel: "Mon 12 Jan, 09:00", EndLabel: "10:00", DurationMin: 60,
 				Status: "REQUESTED", TotalMinor: 15000, Currency: "NGN",
 				IsRequested: true, IsLive: true},
@@ -120,7 +133,7 @@ func TestBookingsPanelRenders(t *testing.T) {
 		t.Fatalf("bookings/index.html: %v", err)
 	}
 	for _, want := range []string{
-		"Ada", "ORD-1", "Braids", "Mon 12 Jan, 09:00",
+		"Ada", "ORD-1", "Braids", "with Bola", "Mon 12 Jan, 09:00",
 		"Confirm", "Complete", "No-show", "Cancel", "Move",
 		"new_date", "new_time", "reason",
 		"2 visits", "1 awaiting confirmation",
@@ -175,5 +188,104 @@ func TestBookingSettingsSection(t *testing.T) {
 		if !strings.Contains(out, want) {
 			t.Errorf("settings booking section missing %q", want)
 		}
+	}
+}
+
+// fakeBookingStore serves the QR tests: only PublicConfig matters.
+type fakeBookingStore struct {
+	cfg *app.BookingConfig
+}
+
+func (f *fakeBookingStore) GetSettings(context.Context, tenant.TenantScope) (*app.BookingSettings, error) {
+	return &app.BookingSettings{}, nil
+}
+func (f *fakeBookingStore) UpsertSettings(context.Context, tenant.TenantScope, *app.BookingSettings) error {
+	return nil
+}
+func (f *fakeBookingStore) SetHours(context.Context, tenant.TenantScope, []app.BookingHour) error {
+	return nil
+}
+func (f *fakeBookingStore) ListHours(context.Context, tenant.TenantScope) ([]app.BookingHour, error) {
+	return nil, nil
+}
+func (f *fakeBookingStore) AddBlackout(context.Context, tenant.TenantScope, time.Time, string, uuid.UUID, time.Time) error {
+	return nil
+}
+func (f *fakeBookingStore) RemoveBlackout(context.Context, tenant.TenantScope, time.Time) error {
+	return nil
+}
+func (f *fakeBookingStore) ListBlackouts(context.Context, tenant.TenantScope, time.Time, time.Time) ([]app.BookingBlackout, error) {
+	return nil, nil
+}
+func (f *fakeBookingStore) GetBooking(context.Context, tenant.TenantScope, uuid.UUID) (*app.Booking, error) {
+	return nil, app.ErrBookingNotFound
+}
+func (f *fakeBookingStore) ListDayBookings(context.Context, tenant.TenantScope, time.Time, time.Time) ([]app.Booking, error) {
+	return nil, nil
+}
+func (f *fakeBookingStore) UpdateBookingStatus(context.Context, tenant.TenantScope, uuid.UUID, booking.Status, booking.Status, string, time.Time) error {
+	return nil
+}
+func (f *fakeBookingStore) Reschedule(context.Context, tenant.TenantScope, uuid.UUID, time.Time, time.Time, time.Time) (*app.Booking, error) {
+	return nil, app.ErrBookingNotFound
+}
+func (f *fakeBookingStore) BookingConfig(context.Context, string) (*app.BookingConfig, error) {
+	if f.cfg != nil {
+		return f.cfg, nil
+	}
+	return &app.BookingConfig{}, nil
+}
+func (f *fakeBookingStore) BookingHours(context.Context, string) ([]app.BookingHour, error) {
+	return nil, nil
+}
+func (f *fakeBookingStore) BookingBlackouts(context.Context, string, time.Time, time.Time) ([]app.BookingBlackout, error) {
+	return nil, nil
+}
+func (f *fakeBookingStore) BookingBusy(context.Context, string, time.Time, time.Time) ([]app.BusyBlock, error) {
+	return nil, nil
+}
+func (f *fakeBookingStore) CreateBooking(context.Context, app.CreateBookingInput) (*app.CreateBookingResult, error) {
+	return nil, app.ErrBookingBadSlot
+}
+func (f *fakeBookingStore) BookingByToken(context.Context, []byte) (*app.PublicBooking, error) {
+	return nil, nil
+}
+
+func (f *fakeBookingStore) BookingStaff(context.Context, string) ([]app.BookingStaffMember, error) {
+	return nil, nil
+}
+
+// TestBookQR serves the share-code endpoint: eligible slugs get a PNG,
+// anything else 404s like the form itself.
+func TestBookQR(t *testing.T) {
+	newHandler := func(cfg *app.BookingConfig) *BookHandler {
+		svc := app.NewBookingService(app.BookingServiceDeps{Store: &fakeBookingStore{cfg: cfg}})
+		return &BookHandler{Booking: svc, BaseURL: "https://example.com"}
+	}
+
+	// Unknown/ineligible slug: 404.
+	h := newHandler(&app.BookingConfig{})
+	req := httptest.NewRequest("GET", "/book/glam/qr", nil)
+	req.SetPathValue("slug", "glam")
+	rec := httptest.NewRecorder()
+	h.QR(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("ineligible QR: got %d, want 404", rec.Code)
+	}
+
+	// Eligible: PNG bytes with the PNG magic header.
+	h = newHandler(&app.BookingConfig{Eligible: true, FlagOn: true})
+	req = httptest.NewRequest("GET", "/book/glam/qr", nil)
+	req.SetPathValue("slug", "glam")
+	rec = httptest.NewRecorder()
+	h.QR(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("eligible QR: got %d", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "image/png" {
+		t.Errorf("content type: got %q", ct)
+	}
+	if body := rec.Body.Bytes(); !bytes.HasPrefix(body, []byte("\x89PNG\r\n\x1a\n")) {
+		t.Error("QR body must be a PNG")
 	}
 }

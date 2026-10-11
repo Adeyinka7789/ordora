@@ -18,6 +18,7 @@ var (
 	ErrNotesTooLong        = errors.New("product: internal notes are too long (max 5000)")
 	ErrSpecsTooLong        = errors.New("product: specifications are too long (max 2000)")
 	ErrProductionDays      = errors.New("product: estimated production days cannot be negative")
+	ErrBookingDurationMin  = errors.New("product: booking duration must be 0 (org default) or 15–480 minutes")
 	ErrAvailabilityInvalid = errors.New("product: invalid availability")
 	ErrCategoryTooLong     = errors.New("product: category is too long (max 80)")
 	ErrQuestionLabel       = errors.New("product: each question needs a label (max 120)")
