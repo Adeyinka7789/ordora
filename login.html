@@ -1,0 +1,141 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — Ordora</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <meta name="csrf-token" content="RnKKjfWPy6XrDLFzNB76HLdh7xwsB5eKCWFpse92pdQ">
+  <link rel="stylesheet" href="/static/css/app.css">
+
+  <link rel="stylesheet" href="/static/css/fonts.css">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-highest": "#C9DCEA",
+            "secondary": "#56606B",
+            "surface-container": "#E1EAF2",
+            "on-error-container": "#93000a",
+            "on-primary-fixed-variant": "#0077BE",
+            "surface-container-high": "#D8E4EF",
+            "error": "#ba1a1a",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#EDF3F8",
+            "background": "#F7FAFD",
+            "on-surface": "#0B1C30",
+            "on-surface-variant": "#44566A",
+            "primary": "#005A8C",
+            "on-primary": "#ffffff",
+            "primary-container": "#0077BE",
+            "tertiary": "#005338",
+            "tertiary-fixed": "#6ffbbe",
+            "on-tertiary-fixed": "#002113",
+            "error-container": "#ffdad6",
+            "outline": "#707A88",
+            "outline-variant": "#C3D2DE",
+            "surface": "#F7FAFD",
+            "surface-bright": "#F7FAFD"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1.25rem",
+            "space-xl": "2rem"
+          },
+          fontFamily: {
+            "body-md": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+            "headline-md": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+            "headline-lg": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+            "label-md": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+            "label-sm": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+            "display-lg": ["Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"]
+          },
+          fontSize: {
+            "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.02em", fontWeight: "600" }],
+            "headline-md": ["18px", { lineHeight: "24px", letterSpacing: "-0.015em", fontWeight: "600" }],
+            "body-md": ["14px", { lineHeight: "20px", letterSpacing: "-0.005em", fontWeight: "400" }],
+            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            "label-md": ["12px", { lineHeight: "16px", fontWeight: "600" }],
+            "label-sm": ["11px", { lineHeight: "14px", fontWeight: "500" }],
+            "display-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.025em", fontWeight: "700" }]
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+
+  <div class="min-h-screen flex items-center justify-center p-space-md">
+    <div class="w-full max-w-md">
+      <div class="flex flex-col items-center mb-space-lg">
+        <a href="/" class="flex items-center gap-space-sm">
+          <img alt="Ordora" src="/static/logo.svg" class="h-10 w-10">
+          <span class="font-headline-lg text-headline-lg font-bold tracking-tight text-on-surface">Ordora</span>
+        </a>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl">
+        
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight mb-space-lg">Sign in</h1>
+
+
+
+
+<form method="post" action="/login" class="flex flex-col gap-space-md">
+  <input type="hidden" name="_csrf" value="RnKKjfWPy6XrDLFzNB76HLdh7xwsB5eKCWFpse92pdQ">
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Email</span>
+    <input type="email" name="email" value="" required autofocus
+           
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    
+
+
+
+  </label>
+
+  <label class="flex flex-col gap-1">
+    <span class="font-label-md text-label-md text-on-surface">Password</span>
+    <input type="password" name="password" required
+           
+           class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+    
+
+
+
+  </label>
+
+  <button type="submit" class="h-10 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold transition-colors">Sign in</button>
+</form>
+
+<p class="text-center font-label-md text-label-md text-on-surface-variant mt-space-lg">
+  <a href="/password/forgot" class="text-primary hover:underline">Forgot password?</a>
+  <span class="mx-1">·</span>
+  <a href="/register" class="text-primary hover:underline">Create an account</a>
+</p>
+
+      </div>
+
+      <p class="text-center font-label-sm text-label-sm text-on-surface-variant mt-space-md">
+        &copy; 2026 Ordora · Order Management &amp; Customer Operations
+      </p>
+    </div>
+  </div>
+
+  <script src="/static/js/forms.js" defer></script>
+</body>
+</html>

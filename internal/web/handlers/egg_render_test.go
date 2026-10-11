@@ -116,7 +116,7 @@ func TestEggIntakeRenders(t *testing.T) {
 		"Pay first, then order", "GTBank", "0123456789",
 		"33 today", "100 tomorrow",
 		`name="delivery_day"`, `name="amount_claim"`, `name="receipt"`,
-		`enctype="multipart/form-data"`,
+		`enctype="multipart/form-data"`, "nothing is charged here",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("egg intake missing %q", want)

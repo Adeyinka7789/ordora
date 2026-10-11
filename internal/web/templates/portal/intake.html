@@ -202,10 +202,10 @@
 
       {{ if .Egg }}
       <label class="flex flex-col gap-1">
-        <span class="font-label-md text-label-md text-on-surface">Amount you paid (optional)</span>
+        <span class="font-label-md text-label-md text-on-surface">Amount on your receipt (optional)</span>
         <input type="text" name="amount_claim" value="{{ .Form.AmountClaim }}" placeholder="e.g. 55000" inputmode="numeric"
                class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">The exact amount on your receipt. The seller confirms it before your order counts.</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Just your declaration — nothing is charged here. The seller verifies this against your receipt photo before confirming your order and recording payment.</span>
       </label>
 
       <label class="flex flex-col gap-1">
