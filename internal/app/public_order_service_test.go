@@ -31,6 +31,10 @@ func (f *fakePublicDB) ListProductsBySlug(_ context.Context, _ string) ([]Public
 	return f.products, nil
 }
 
+func (f *fakePublicDB) IntakeConfig(_ context.Context, _ string) (*PerishableConfig, error) {
+	return &PerishableConfig{}, nil
+}
+
 func testPublicSvc(f *fakePublicDB) *PublicOrderService {
 	return NewPublicOrderService(PublicOrderServiceDeps{DB: f})
 }

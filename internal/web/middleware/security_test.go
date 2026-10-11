@@ -246,6 +246,39 @@ func TestRequireOwner(t *testing.T) {
 	}
 }
 
+func withPerishable(r *http.Request, perishable bool) *http.Request {
+	s := &auth.ResolvedSession{
+		Scope:        tenant.TenantScope{OrgID: uuid.New(), UserID: uuid.New(), Role: tenant.RoleOwner},
+		IsPerishable: perishable,
+	}
+	return r.WithContext(withSession(r.Context(), s))
+}
+
+func TestRequirePerishable(t *testing.T) {
+	// Perishable orgs pass (any role — role checks compose separately).
+	rec := httptest.NewRecorder()
+	RequirePerishable(okHandler()).ServeHTTP(rec,
+		withPerishable(httptest.NewRequest("GET", "/dashboard/egg-orders", nil), true))
+	if rec.Code != http.StatusOK {
+		t.Errorf("perishable: got %d, want 200", rec.Code)
+	}
+
+	// Other orgs 404 (existence hidden, like tailoring/flags).
+	rec = httptest.NewRecorder()
+	RequirePerishable(okHandler()).ServeHTTP(rec,
+		withPerishable(httptest.NewRequest("GET", "/dashboard/egg-orders", nil), false))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("non-perishable: got %d, want 404", rec.Code)
+	}
+
+	// Anonymous 404s (no existence signal either).
+	rec = httptest.NewRecorder()
+	RequirePerishable(okHandler()).ServeHTTP(rec, httptest.NewRequest("GET", "/dashboard/egg-orders", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("anonymous: got %d, want 404", rec.Code)
+	}
+}
+
 func TestClientIP_IgnoresSpoofedHeaders(t *testing.T) {
 	// Direct connection with forged XFF: header must be ignored.
 	req := httptest.NewRequest("GET", "/", nil)

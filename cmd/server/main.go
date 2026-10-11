@@ -323,8 +323,7 @@ func run() error {
 		Audit:    auditRepo,
 	})
 	// ---- Team invites (dead-simple: owner + up to 2 staff, max 3/org) ----
-	teamService := app.NewTeamService(app.TeamServiceDeps{
-		DB:       db,
+	teamService := app.NewTeamService(app.TeamServiceDeps{DB: db,
 		Invites:  postgres.NewTeamInviteRepo(db),
 		Members:  postgres.NewTeamMemberRepo(db),
 		Users:    postgres.NewUserRepo(db),
@@ -332,9 +331,23 @@ func run() error {
 		Audit:    auditRepo,
 		IDs:      id.Generator{},
 	})
+	// ---- Perishable module (egg ordering: daily cap + receipts) ----
+	eggService := app.NewEggService(app.EggServiceDeps{
+		DB:       db,
+		Store:    postgres.NewEggRepo(db),
+		Payments: paymentService,
+		Orders:   orderService,
+		IDs:      id.Generator{},
+	})
 	settingsH := &handlers.SettingsHandler{
 		Service:  settingsService,
 		Teams:    teamService,
+		Egg:      eggService,
+		Flags:    flagProvider,
+		Renderer: renderer,
+	}
+	eggH := &handlers.EggHandler{
+		Egg:      eggService,
 		Renderer: renderer,
 	}
 	measTmplH := &handlers.MeasurementTemplateHandler{
@@ -542,11 +555,12 @@ func run() error {
 				UserID: ownerID,
 				Role:   tenant.RoleOwner,
 			},
-			OrgName:     orgName,
-			OrgSlug:     orgSlug,
-			OrgCurrency: orgCurrency,
-			OrgTimezone: orgTimezone,
-			IsTailoring: org.IsTailoringCategory(orgCategory),
+			OrgName:      orgName,
+			OrgSlug:      orgSlug,
+			OrgCurrency:  orgCurrency,
+			OrgTimezone:  orgTimezone,
+			IsTailoring:  org.IsTailoringCategory(orgCategory),
+			IsPerishable: org.IsPerishableCategory(orgCategory),
 		}, nil
 	}
 
@@ -565,6 +579,8 @@ func run() error {
 	portalH := &handlers.PortalHandler{
 		Portal:   portalService,
 		Public:   publicOrderService,
+		Blobs:    blobs,
+		IDs:      id.Generator{},
 		Renderer: renderer,
 	}
 
@@ -594,6 +610,20 @@ func run() error {
 	// invites). STAFF shares the org's orders but must never touch these.
 	ownerWrite := func(h http.Handler) http.Handler {
 		return middleware.RequireTenant(middleware.RequireOwner(h))
+	}
+
+	// perishable wraps a perishable-module tenant route: category gate +
+	// egg_module flag, 404 fail-closed like tailoring. perishWrite adds
+	// the writer-role rule (owner or staff may confirm orders);
+	// perishOwner restricts to the owner (settings, open/close toggle).
+	perish := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequirePerishable(middleware.RequireFlag(flagProvider, "egg_module")(h)))
+	}
+	perishWrite := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireWrite(middleware.RequirePerishable(middleware.RequireFlag(flagProvider, "egg_module")(h))))
+	}
+	perishOwner := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireOwner(middleware.RequirePerishable(middleware.RequireFlag(flagProvider, "egg_module")(h))))
 	}
 
 	// Per-IP limiter for credential-bearing POSTs (business + admin
@@ -846,6 +876,13 @@ func run() error {
 	// ---- Public invite accept (no login; rate-limited like other public POSTs) ----
 	mux.HandleFunc("GET /join/{token}", teamH.JoinPage)
 	mux.Handle("POST /join/{token}", authLimit(http.HandlerFunc(teamH.JoinSubmit)))
+	// ---- Egg module (perishable category + egg_module flag) ----
+	mux.Handle("GET /dashboard/egg-orders", perish(http.HandlerFunc(eggH.Index)))
+	mux.Handle("POST /dashboard/egg-orders/{id}/confirm", perishWrite(http.HandlerFunc(eggH.Confirm)))
+	mux.Handle("POST /dashboard/egg-orders/{id}/reject", perishWrite(http.HandlerFunc(eggH.Reject)))
+	mux.Handle("POST /dashboard/egg-orders/{id}/complete", perishWrite(http.HandlerFunc(eggH.Complete)))
+	mux.Handle("POST /dashboard/egg-orders/toggle", perishOwner(http.HandlerFunc(eggH.Toggle)))
+	mux.Handle("POST /settings/egg", perishOwner(http.HandlerFunc(eggH.UpdateSettings)))
 	mux.Handle("GET /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Index)))
 	mux.Handle("GET /settings/measurements/new", tenantWrite(http.HandlerFunc(measTmplH.New)))
 	mux.Handle("POST /settings/measurements", tenantWrite(http.HandlerFunc(measTmplH.Create)))

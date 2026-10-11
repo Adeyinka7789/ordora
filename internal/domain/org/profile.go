@@ -13,10 +13,29 @@ const Other = "Other"
 // features: measurements on orders and aso-ebi groups.
 const TailoringCategory = "Tailoring & Fashion"
 
+// PoultryCategory is the business_category for egg/poultry sellers.
+const PoultryCategory = "Poultry & Eggs"
+
+// FoodCateringCategory is the business_category for food vendors. Together
+// with PoultryCategory it unlocks the perishable-goods module (daily
+// capacity cap + transfer-receipt orders).
+const FoodCateringCategory = "Food & Catering"
+
 // IsTailoringCategory reports whether a business category unlocks
 // tailoring features.
 func IsTailoringCategory(category string) bool {
 	return strings.TrimSpace(category) == TailoringCategory
+}
+
+// IsPerishableCategory reports whether a business category unlocks the
+// perishable-goods module (egg/poultry today, food vendors next). Exact
+// match, same posture as IsTailoringCategory.
+func IsPerishableCategory(category string) bool {
+	switch strings.TrimSpace(category) {
+	case PoultryCategory, FoodCateringCategory:
+		return true
+	}
+	return false
 }
 
 // MaxCustomProfileLength caps free-text "Other" entries.
@@ -32,6 +51,7 @@ func BusinessCategories() []string {
 		"Repair & Maintenance",
 		"Beauty & Salon",
 		"Food & Catering",
+		"Poultry & Eggs",
 		"Photography & Media",
 		Other,
 	}

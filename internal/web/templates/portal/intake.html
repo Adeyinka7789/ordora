@@ -13,7 +13,32 @@
 
   {{ if .Error }}<div role="alert" class="p-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
 
-  <form method="post" action="/order/{{ .Slug }}" class="flex flex-col gap-space-lg">
+  {{ if and .Egg (not .Egg.Accepting) }}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl flex flex-col gap-space-sm items-center text-center">
+    <span aria-hidden="true" class="material-symbols-outlined text-primary text-[40px]">storefront</span>
+    <h2 class="font-headline-lg text-headline-lg text-on-surface font-bold">Orders closed for today</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant">This seller has paused new orders. Please check back tomorrow.</p>
+    {{ if .Egg.Whatsapp }}<p class="font-body-md text-body-md text-on-surface-variant">Need it urgently? Call/WhatsApp <a href="tel:{{ .Egg.Whatsapp }}" class="text-primary hover:underline font-semibold">{{ .Egg.Whatsapp }}</a></p>{{ end }}
+  </div>
+  {{ else }}
+
+  {{ if .Egg }}
+  <div class="bg-primary-fixed rounded-xl p-space-lg flex flex-col gap-space-sm">
+    <div class="flex items-center gap-2">
+      <span aria-hidden="true" class="material-symbols-outlined text-on-primary-fixed text-[20px]">payments</span>
+      <h2 class="font-headline-md text-headline-md text-on-primary-fixed font-bold">Pay first, then order</h2>
+    </div>
+    {{ if .Egg.HasBank }}
+    <p class="font-body-md text-body-md text-on-primary-fixed">Pay into <strong>{{ .Egg.BankName }} · {{ .Egg.AccountNumber }}{{ if .Egg.AccountName }} ({{ .Egg.AccountName }}){{ end }}</strong>, then attach your receipt below.</p>
+    {{ else }}
+    <p class="font-body-md text-body-md text-on-primary-fixed">Pay the seller, then attach your receipt below.</p>
+    {{ end }}
+    <p class="font-body-md text-body-md text-on-primary-fixed">Crates left: <strong>{{ .Egg.LeftToday }} today</strong> · <strong>{{ .Egg.LeftTomorrow }} tomorrow</strong> (max {{ .Egg.Cap }} per day)</p>
+    {{ if .Egg.Whatsapp }}<p class="font-body-sm text-body-sm text-on-primary-fixed">Questions? Call/WhatsApp <a href="tel:{{ .Egg.Whatsapp }}" class="underline font-semibold">{{ .Egg.Whatsapp }}</a></p>{{ end }}
+  </div>
+  {{ end }}
+
+  <form method="post" action="/order/{{ .Slug }}" {{ if .Egg }}enctype="multipart/form-data"{{ end }} class="flex flex-col gap-space-lg">
     <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
 
     <!-- Your details -->
@@ -153,18 +178,50 @@
                   class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Form.Description }}</textarea>
       </label>
 
+      {{ if .Egg }}
+      <div class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Delivery day *</span>
+        <div class="flex gap-space-sm">
+          <label class="flex-1 flex items-center gap-2 h-10 px-3 rounded bg-surface-container-low font-label-md text-label-md text-on-surface cursor-pointer">
+            <input type="radio" name="delivery_day" value="today" {{ if ne .Form.DeliveryDay "tomorrow" }}checked{{ end }} class="accent-[#005A8C]">
+            <span>Today <span class="text-on-surface-variant font-normal">({{ .Egg.LeftToday }} left)</span></span>
+          </label>
+          <label class="flex-1 flex items-center gap-2 h-10 px-3 rounded bg-surface-container-low font-label-md text-label-md text-on-surface cursor-pointer">
+            <input type="radio" name="delivery_day" value="tomorrow" {{ if eq .Form.DeliveryDay "tomorrow" }}checked{{ end }} class="accent-[#005A8C]">
+            <span>Tomorrow <span class="text-on-surface-variant font-normal">({{ .Egg.LeftTomorrow }} left)</span></span>
+          </label>
+        </div>
+      </div>
+      {{ else }}
       <label class="flex flex-col gap-1">
         <span class="font-label-md text-label-md text-on-surface">Preferred completion date</span>
         <input type="date" name="expected_completion" value="{{ .Form.ExpectedCompletion }}"
                class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
       </label>
+      {{ end }}
 
+      {{ if .Egg }}
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Amount you paid (optional)</span>
+        <input type="text" name="amount_claim" value="{{ .Form.AmountClaim }}" placeholder="e.g. 55000" inputmode="numeric"
+               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">The exact amount on your receipt. The seller confirms it before your order counts.</span>
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-md text-label-md text-on-surface">Payment receipt *</span>
+        <input type="file" name="receipt" required accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
+               class="p-2 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Photo or PDF of your transfer receipt (max 10 MB). Orders without a receipt are not processed.</span>
+      </label>
+      {{ else }}
       <label class="flex flex-col gap-1">
         <span class="font-label-md text-label-md text-on-surface">Budget / estimate (optional)</span>
         <input type="text" name="budget" value="{{ .Form.Budget }}" placeholder="e.g. 50000"
                class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
         <span class="font-label-sm text-label-sm text-on-surface-variant">If you have a rough budget in mind, tell us. The business will send a final quote.</span>
       </label>
+      {{ end }}
     </div>
 
     <div id="request-summary" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm lg:sticky lg:top-24" aria-live="polite" aria-atomic="true" aria-label="Request summary">
@@ -197,6 +254,7 @@
       </button>
     </div>
   </form>
+  {{ end }}
 </div>
 <script src="/static/js/intake.js" defer></script>
 {{ end }}

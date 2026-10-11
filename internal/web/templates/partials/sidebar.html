@@ -74,6 +74,14 @@
           </div>
         </a>
       {{ end }}
+      {{ if and (flag "egg_module" .Shell.OrgID) .Shell.IsPerishable }}
+        <a href="/dashboard/egg-orders" data-snav="egg-orders" title="Egg orders" class="sidebar-link flex items-center justify-between px-space-sm py-2 rounded transition-colors text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface font-body-md text-body-md">
+          <div class="flex items-center gap-space-sm">
+            <span aria-hidden="true" class="material-symbols-outlined text-[18px]">egg</span>
+            <span class="sidebar-label">Egg Orders</span>
+          </div>
+        </a>
+      {{ end }}
     </nav>
 
     <!-- Channels & Tools -->

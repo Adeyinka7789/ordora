@@ -127,6 +127,7 @@ func shellFromRequest(r *http.Request) render.Shell {
 		sh.OrgCurrency = s.OrgCurrency
 		sh.OrgTimezone = s.OrgTimezone
 		sh.IsTailoring = s.IsTailoring
+		sh.IsPerishable = s.IsPerishable
 	}
 	if middleware.IsImpersonating(r.Context()) {
 		sh.Impersonating = true

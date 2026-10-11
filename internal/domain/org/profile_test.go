@@ -113,3 +113,28 @@ func TestUpdateBusinessProfile(t *testing.T) {
 		}
 	}
 }
+
+func TestIsPerishableCategory(t *testing.T) {
+	for _, cat := range []string{"Poultry & Eggs", "Food & Catering", "  Poultry & Eggs  "} {
+		if !IsPerishableCategory(cat) {
+			t.Errorf("%q must unlock the perishable module", cat)
+		}
+	}
+	for _, cat := range []string{"", "Tailoring & Fashion", "Bakery & Confectionery", "Poultry", "food & catering"} {
+		if IsPerishableCategory(cat) {
+			t.Errorf("%q must not unlock the perishable module", cat)
+		}
+	}
+	if IsTailoringCategory(PoultryCategory) {
+		t.Error("poultry must not unlock tailoring")
+	}
+	found := false
+	for _, c := range BusinessCategories() {
+		if c == PoultryCategory {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Poultry & Eggs must be offered at registration")
+	}
+}

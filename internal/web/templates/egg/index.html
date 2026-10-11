@@ -1,0 +1,95 @@
+{{ define "egg/index.html" }}
+<div class="p-space-lg lg:p-space-xl max-w-5xl mx-auto flex flex-col gap-space-lg">
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Egg orders"))) }}
+
+  <div class="flex flex-wrap items-center justify-between gap-space-sm">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Egg orders — {{ .DayLabel }}</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Confirm transfer receipts, reject what's not available, complete deliveries.</p>
+    </div>
+    {{ if .IsOwner }}
+    <form method="post" action="/dashboard/egg-orders/toggle?day={{ .Day }}" class="inline">
+      <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+      {{ if .Accepting }}
+        <input type="hidden" name="accepting" value="0">
+        <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md font-semibold">Close orders for today</button>
+      {{ else }}
+        <input type="hidden" name="accepting" value="1">
+        <button type="submit" class="h-9 px-space-md rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md font-semibold">Open orders</button>
+      {{ end }}
+    </form>
+    {{ end }}
+  </div>
+
+  {{ if .FlashNotice }}<div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">{{ .FlashNotice }}</div>{{ end }}
+  {{ if .FlashError }}<div role="alert" class="p-space-sm rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .FlashError }}</div>{{ end }}
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <div class="flex items-center justify-between">
+      <span class="font-headline-md text-headline-md text-on-surface font-bold">Sold {{ .DayLabel }}: {{ .Sold }} / {{ .Cap }} crates</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">{{ .Left }} left</span>
+    </div>
+    <div class="h-2 rounded-full bg-surface-container overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="{{ .Cap }}" aria-valuenow="{{ .Sold }}">
+      <div class="h-full bg-primary-container rounded-full" style="width: {{ .SoldPct }}%"></div>
+    </div>
+    <div class="flex gap-space-sm pt-space-xs">
+      <a href="/dashboard/egg-orders?day=today{{ if .PendingOnly }}&pending=1{{ end }}"
+         class="h-8 px-3 rounded font-label-md text-label-md font-semibold inline-flex items-center {{ if eq .Day "today" }}bg-primary-container text-on-primary{{ else }}bg-surface-container text-on-surface{{ end }}">Today</a>
+      <a href="/dashboard/egg-orders?day=tomorrow{{ if .PendingOnly }}&pending=1{{ end }}"
+         class="h-8 px-3 rounded font-label-md text-label-md font-semibold inline-flex items-center {{ if eq .Day "tomorrow" }}bg-primary-container text-on-primary{{ else }}bg-surface-container text-on-surface{{ end }}">Tomorrow</a>
+      <a href="/dashboard/egg-orders?day={{ .Day }}{{ if not .PendingOnly }}&pending=1{{ end }}"
+         class="h-8 px-3 rounded font-label-md text-label-md font-semibold inline-flex items-center {{ if .PendingOnly }}bg-primary-container text-on-primary{{ else }}bg-surface-container text-on-surface{{ end }}">Pending{{ if gt .Pending 0 }} ({{ .Pending }}){{ end }}</a>
+    </div>
+  </div>
+
+  {{ if .Orders }}
+  <div class="flex flex-col gap-space-sm">
+    {{ range .Orders }}
+    <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col md:flex-row md:items-center gap-space-sm">
+      <div class="flex items-center gap-space-sm flex-1 min-w-0">
+        <span aria-hidden="true" class="w-10 h-10 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center shrink-0">{{ initials .CustomerName }}</span>
+        <div class="flex flex-col min-w-0">
+          <span class="font-label-md text-label-md text-on-surface font-semibold truncate">{{ .CustomerName }} · {{ .Number }}</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant">{{ .QtyCrates }} crates · {{ currency .TotalMinor .Currency }}{{ if .CustomerPhone }} · {{ .CustomerPhone }}{{ end }}</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{{ statusLabel .Status }}{{ if gt .PaidMinor 0 }} · paid {{ currency .PaidMinor .Currency }}{{ end }}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-space-xs shrink-0 flex-wrap">
+        {{ if .ReceiptID }}
+        <a href="/attachments/{{ .ReceiptID }}" target="_blank" rel="noopener"
+           class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold inline-flex items-center gap-1">
+          <span aria-hidden="true" class="material-symbols-outlined text-[16px]">receipt_long</span>
+          <span>Receipt</span>
+        </a>
+        {{ end }}
+        {{ if .IsNew }}
+        <form method="post" action="/dashboard/egg-orders/{{ .ID }}/confirm?day={{ $.Day }}" class="inline">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <button type="submit" class="h-9 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold">Confirm payment</button>
+        </form>
+        {{ end }}
+        {{ if .IsConfirmed }}
+        <form method="post" action="/dashboard/egg-orders/{{ .ID }}/complete?day={{ $.Day }}" class="inline">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <button type="submit" class="h-9 px-3 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">Complete</button>
+        </form>
+        {{ end }}
+        {{ if or .IsNew .IsConfirmed }}
+        <form method="post" action="/dashboard/egg-orders/{{ .ID }}/reject?day={{ $.Day }}" class="inline flex items-center gap-1" onsubmit="return confirm('Reject this order? Its crates go back to the daily cap.');">
+          <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+          <input type="text" name="refund_ref" maxlength="120" placeholder="Refund ref (optional)" aria-label="Refund reference"
+                 class="h-9 w-36 px-2 rounded bg-surface-container-low text-on-surface font-label-sm text-label-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
+          <button type="submit" class="h-9 px-3 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">No egg / Reject</button>
+        </form>
+        {{ end }}
+      </div>
+    </div>
+    {{ end }}
+  </div>
+  {{ else }}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-xl text-center">
+    <p class="font-body-md text-body-md text-on-surface-variant">No egg orders for {{ .Day }} yet. Share your order link so customers can order.</p>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

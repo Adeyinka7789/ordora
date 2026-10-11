@@ -214,6 +214,60 @@
     {{ end }}
   </div>
 
+    {{ with .Egg }}
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Egg ordering</h2>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Daily crate cap, bank details for transfers, and the open/close toggle. Shown on your public order link.</p>
+    {{ if $.TeamIsOwner }}
+    <form method="post" action="/settings/egg" class="flex flex-col gap-space-md">
+      <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Max crates per day *</span>
+          <input type="number" name="max_crates_per_day" value="{{ .MaxCrates }}" required min="1" max="100000" step="1"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex items-center gap-2 pt-5">
+          <input type="checkbox" name="accepting_orders" value="1" {{ if .Accepting }}checked{{ end }} class="w-5 h-5 accent-[#005A8C]">
+          <span class="font-label-md text-label-md text-on-surface">Accepting orders</span>
+        </label>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Bank name</span>
+          <input type="text" name="bank_name" value="{{ .BankName }}" maxlength="120" placeholder="e.g. GTBank"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Account number</span>
+          <input type="text" name="account_number" value="{{ .AccountNumber }}" maxlength="40" inputmode="numeric"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">Account name</span>
+          <input type="text" name="account_name" value="{{ .AccountName }}" maxlength="120"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-md text-label-md text-on-surface">WhatsApp number</span>
+          <input type="tel" name="whatsapp_number" value="{{ .Whatsapp }}" maxlength="40" placeholder="+234…"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+      </div>
+      <div class="flex items-center gap-space-sm pt-space-xs">
+        <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save egg settings</button>
+      </div>
+    </form>
+    {{ else }}
+    <dl class="grid grid-cols-1 md:grid-cols-2 gap-space-sm font-body-md text-body-md">
+      <div><dt class="font-label-sm text-label-sm text-on-surface-variant">Max crates per day</dt><dd class="text-on-surface font-semibold">{{ .MaxCrates }}</dd></div>
+      <div><dt class="font-label-sm text-label-sm text-on-surface-variant">Accepting orders</dt><dd class="text-on-surface font-semibold">{{ if .Accepting }}Yes{{ else }}No (closed){{ end }}</dd></div>
+    </dl>
+    <p class="font-label-sm text-label-sm text-on-surface-variant">Only the business owner can change these.</p>
+    {{ end }}
+  </div>
+  {{ end }}
+
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
     <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Measurement templates</h2>
     <p class="font-body-sm text-body-sm text-on-surface-variant">Use the ready-made garments as-is, or clone one and adapt it to your shop's style. Past orders always keep their original measurements.</p>

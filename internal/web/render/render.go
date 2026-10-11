@@ -56,6 +56,8 @@ type Shell struct {
 	CSRFToken    string
 	// IsTailoring unlocks tailoring-only nav (aso-ebi groups).
 	IsTailoring bool
+	// IsPerishable unlocks the perishable-goods module nav (egg orders).
+	IsPerishable bool
 
 	// Impersonation
 	Impersonating        bool

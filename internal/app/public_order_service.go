@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -24,6 +25,35 @@ type PublicOrderInput struct {
 	// Answers holds product-specific question answers:
 	// [{Product, Q, A}] free-form, capped server-side.
 	Answers []PublicAnswer
+	// Egg carries the perishable-module extras. Nil for normal intakes:
+	// the order then skips the cap, the closed check and the receipt.
+	Egg *EggIntakeInput
+}
+
+// EggIntakeInput is the egg-module payload on a public submission.
+type EggIntakeInput struct {
+	// DeliveryDate is the yyyy-mm-dd delivery day (today/tomorrow in the
+	// org's timezone, resolved by the handler).
+	DeliveryDate time.Time
+	// Receipt describes the already-buffered transfer proof. The handler
+	// writes the bytes to blob storage before Submit; the repo inserts
+	// the metadata row in the same transaction as the order.
+	ReceiptKey      string
+	ReceiptFilename string
+	ReceiptMime     string
+	ReceiptSize     int64
+	// AmountClaimMinor is the customer-declared amount paid (informational:
+	// staff verify against the receipt before recording payment).
+	AmountClaimMinor *int64
+}
+
+// CrateQty returns the total ordered crates from catalog lines.
+func (in *PublicOrderInput) CrateQty() float64 {
+	var total int64
+	for _, it := range in.Items {
+		total += it.QuantityScaled
+	}
+	return float64(total) / 1000.0
 }
 
 // PublicAnswer is one answered product question on a public submission.
@@ -94,6 +124,7 @@ type PublicOrderDB interface {
 	CreatePublicOrder(ctx context.Context, in PublicOrderInput) (*PublicOrderResult, error)
 	LookupOrgBySlug(ctx context.Context, slug string) (*PublicOrg, error)
 	ListProductsBySlug(ctx context.Context, slug string) ([]PublicProduct, error)
+	IntakeConfig(ctx context.Context, slug string) (*PerishableConfig, error)
 }
 
 // MaxPublicItems caps product lines per public submission (abuse guard;
@@ -102,6 +133,13 @@ const MaxPublicItems = 25
 
 // MaxPublicAnswers caps product-question answers per submission.
 const MaxPublicAnswers = 50
+
+// formatClaimMinor renders minor units for the claimed-amount note
+// appended to egg order descriptions (staff verify the real amount
+// against the receipt before recording payment).
+func formatClaimMinor(minor int64) string {
+	return fmt.Sprintf("%.2f", float64(minor)/100.0)
+}
 
 // normalizePublicAnswers trims answers and drops blank ones.
 func normalizePublicAnswers(in []PublicAnswer) []PublicAnswer {
@@ -164,6 +202,21 @@ func NewPublicOrderService(d PublicOrderServiceDeps) *PublicOrderService {
 	return &PublicOrderService{db: d.DB, outbox: d.Outbox, ids: d.IDs, now: d.Now}
 }
 
+// EggConfig returns the perishable-module intake configuration for a slug.
+// Best-effort: any failure reads as "not an egg org" so the plain form
+// keeps working.
+func (s *PublicOrderService) EggConfig(ctx context.Context, slug string) *PerishableConfig {
+	slug = strings.TrimSpace(strings.ToLower(slug))
+	if slug == "" {
+		return &PerishableConfig{}
+	}
+	cfg, err := s.db.IntakeConfig(ctx, slug)
+	if err != nil || cfg == nil {
+		return &PerishableConfig{}
+	}
+	return cfg
+}
+
 // LookupOrg returns the public-facing business info for a slug.
 func (s *PublicOrderService) LookupOrg(ctx context.Context, slug string) (*PublicOrg, error) {
 	slug = strings.TrimSpace(strings.ToLower(slug))
@@ -215,6 +268,20 @@ func (s *PublicOrderService) Submit(ctx context.Context, in PublicOrderInput) (*
 	in.Answers = normalizePublicAnswers(in.Answers)
 	if in.Description == "" && len(in.Items) == 0 {
 		return nil, ErrPublicOrderEmpty
+	}
+	if in.Egg != nil {
+		// Egg orders are crate lines only: a free-text description would
+		// bypass the daily cap, so it cannot stand alone.
+		if len(in.Items) == 0 {
+			return nil, ErrEggNoItems
+		}
+		if in.Egg.ReceiptKey == "" || in.Egg.ReceiptSize <= 0 {
+			return nil, ErrEggReceiptRequired
+		}
+		if in.Egg.AmountClaimMinor != nil {
+			in.Description = strings.TrimSpace(in.Description +
+				"\n— Amount paid (claimed): " + formatClaimMinor(*in.Egg.AmountClaimMinor))
+		}
 	}
 
 	result, err := s.db.CreatePublicOrder(ctx, in)

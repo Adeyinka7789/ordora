@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
@@ -16,7 +18,14 @@ import (
 type SettingsHandler struct {
 	Service  *app.SettingsService
 	Teams    *app.TeamService // nil-safe: team lists stay empty when unwired (tests)
+	Egg      *app.EggService  // nil-safe: egg section hides when unwired
+	Flags    FlagChecker      // nil-safe: egg section hides without flags
 	Renderer *render.Renderer
+}
+
+// FlagChecker evaluates feature flags (implemented by *flags.Provider).
+type FlagChecker interface {
+	Enabled(orgID uuid.UUID, key string) bool
 }
 
 type settingsPage struct {
@@ -51,6 +60,20 @@ type settingsPage struct {
 	TeamIsOwner    bool
 	TeamSelfID     string
 	TeamInviteLink string
+
+	// Egg section (perishable module). Nil unless the org is perishable
+	// and the egg flag is on for it.
+	Egg *eggSettingsData
+}
+
+// eggSettingsData is the settings-page projection of poultry settings.
+type eggSettingsData struct {
+	MaxCrates     int
+	Accepting     bool
+	BankName      string
+	AccountNumber string
+	AccountName   string
+	Whatsapp      string
 }
 
 // teamMemberRow is the settings-page projection of one active membership.
@@ -164,6 +187,22 @@ func (h *SettingsHandler) Settings(w http.ResponseWriter, r *http.Request) {
 			data.TeamSlots = ov.SlotsLeft
 			data.TeamIsOwner = ov.IsOwner
 			data.TeamSelfID = selfID
+		}
+	}
+
+	// Egg section: perishable category + flag on (fail-closed without a
+	// flag checker). Anyone on the team may see it; only the OWNER gets
+	// the save button (service enforces).
+	if h.Egg != nil && s.IsPerishable && h.Flags != nil && h.Flags.Enabled(s.Scope.OrgID, "egg_module") {
+		if st, err := h.Egg.GetSettings(r.Context(), s.Scope); err == nil {
+			data.Egg = &eggSettingsData{
+				MaxCrates:     st.MaxCratesPerDay,
+				Accepting:     st.AcceptingOrders,
+				BankName:      st.BankName,
+				AccountNumber: st.AccountNumber,
+				AccountName:   st.AccountName,
+				Whatsapp:      st.Whatsapp,
+			}
 		}
 	}
 
