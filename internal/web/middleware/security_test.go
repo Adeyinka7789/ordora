@@ -217,6 +217,35 @@ func TestRequireWrite(t *testing.T) {
 	}
 }
 
+func TestRequireOwner(t *testing.T) {
+	// Only OWNER passes; every other writer role (incl. ADMIN) gets 403.
+	rec := httptest.NewRecorder()
+	RequireOwner(okHandler()).ServeHTTP(rec,
+		withRole(httptest.NewRequest("POST", "/settings", nil), tenant.RoleOwner))
+	if rec.Code != http.StatusOK {
+		t.Errorf("owner: got %d, want 200", rec.Code)
+	}
+
+	for _, role := range []tenant.Role{
+		tenant.RoleAdmin, tenant.RoleManager, tenant.RoleStaff,
+		tenant.RoleAccountant, tenant.RoleViewer,
+	} {
+		rec := httptest.NewRecorder()
+		RequireOwner(okHandler()).ServeHTTP(rec,
+			withRole(httptest.NewRequest("POST", "/settings", nil), role))
+		if rec.Code != http.StatusForbidden {
+			t.Errorf("%s: got %d, want 403", role, rec.Code)
+		}
+	}
+
+	// Anonymous redirects to login.
+	rec = httptest.NewRecorder()
+	RequireOwner(okHandler()).ServeHTTP(rec, httptest.NewRequest("POST", "/settings", nil))
+	if rec.Code != http.StatusSeeOther {
+		t.Errorf("anonymous: got %d, want 303", rec.Code)
+	}
+}
+
 func TestClientIP_IgnoresSpoofedHeaders(t *testing.T) {
 	// Direct connection with forged XFF: header must be ignored.
 	req := httptest.NewRequest("GET", "/", nil)

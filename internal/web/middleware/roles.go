@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"net/http"
+
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 )
 
 // RequireWrite rejects read-only tenant roles (e.g. VIEWER) with 403.
@@ -21,6 +23,29 @@ func RequireWrite(next http.Handler) http.Handler {
 		}
 		if err := s.Scope.RequireWrite(); err != nil {
 			http.Error(w, "You do not have permission to modify data.", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RequireOwner restricts a route to the business OWNER (team invites,
+// business settings). STAFF shares the same org data for orders but must
+// never change settings or the team. Compose outside RequireTenant, e.g.:
+//
+//	mux.Handle("POST /settings/team/invite", RequireTenant(RequireOwner(http.HandlerFunc(h.Invite))))
+//
+// Impersonated sessions resolve to OWNER in SessionMiddleware, so platform
+// admins acting via impersonation are unaffected.
+func RequireOwner(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := SessionFromContext(r.Context())
+		if s == nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		if s.Scope.Role != tenant.RoleOwner {
+			http.Error(w, "Only the business owner can perform this action.", http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)

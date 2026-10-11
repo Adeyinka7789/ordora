@@ -322,14 +322,30 @@ func run() error {
 		Sessions: postgres.NewSessionRepo(db),
 		Audit:    auditRepo,
 	})
+	// ---- Team invites (dead-simple: owner + up to 2 staff, max 3/org) ----
+	teamService := app.NewTeamService(app.TeamServiceDeps{
+		DB:       db,
+		Invites:  postgres.NewTeamInviteRepo(db),
+		Members:  postgres.NewTeamMemberRepo(db),
+		Users:    postgres.NewUserRepo(db),
+		Sessions: postgres.NewSessionRepo(db),
+		Audit:    auditRepo,
+		IDs:      id.Generator{},
+	})
 	settingsH := &handlers.SettingsHandler{
 		Service:  settingsService,
+		Teams:    teamService,
 		Renderer: renderer,
 	}
 	measTmplH := &handlers.MeasurementTemplateHandler{
 		Repo:     measurementRepo,
 		Orgs:     postgres.NewOrgRepo(db),
 		Renderer: renderer,
+	}
+	teamH := &handlers.TeamHandler{
+		Teams:    teamService,
+		Renderer: renderer,
+		Cfg:      cfg,
 	}
 
 	storefrontH := &handlers.StorefrontHandler{
@@ -574,6 +590,12 @@ func run() error {
 		return middleware.RequireTenant(middleware.RequireWrite(h))
 	}
 
+	// ownerWrite wraps an OWNER-only tenant route (business settings, team
+	// invites). STAFF shares the org's orders but must never touch these.
+	ownerWrite := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireOwner(h))
+	}
+
 	// Per-IP limiter for credential-bearing POSTs (business + admin
 	// login, registration, password reset). Brute-force protection;
 	// account lockout additionally applies to business login.
@@ -816,7 +838,14 @@ func run() error {
 
 	// ---- Settings + profile ----
 	mux.Handle("GET /settings", middleware.RequireTenant(http.HandlerFunc(settingsH.Settings)))
-	mux.Handle("POST /settings", tenantWrite(http.HandlerFunc(settingsH.UpdateSettings)))
+	mux.Handle("POST /settings", ownerWrite(http.HandlerFunc(settingsH.UpdateSettings)))
+	// ---- Team invites (OWNER-only; max 3 people per org) ----
+	mux.Handle("POST /settings/team/invite", ownerWrite(http.HandlerFunc(teamH.Invite)))
+	mux.Handle("POST /settings/team/invites/{id}/revoke", ownerWrite(http.HandlerFunc(teamH.RevokeInvite)))
+	mux.Handle("POST /settings/team/members/{id}/remove", ownerWrite(http.HandlerFunc(teamH.RemoveMember)))
+	// ---- Public invite accept (no login; rate-limited like other public POSTs) ----
+	mux.HandleFunc("GET /join/{token}", teamH.JoinPage)
+	mux.Handle("POST /join/{token}", authLimit(http.HandlerFunc(teamH.JoinSubmit)))
 	mux.Handle("GET /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Index)))
 	mux.Handle("GET /settings/measurements/new", tenantWrite(http.HandlerFunc(measTmplH.New)))
 	mux.Handle("POST /settings/measurements", tenantWrite(http.HandlerFunc(measTmplH.Create)))

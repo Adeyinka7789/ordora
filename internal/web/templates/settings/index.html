@@ -133,6 +133,88 @@
   </form>
 
   <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
+    <div class="flex items-center justify-between">
+      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Team ({{ .TeamTotal }}/3)</h2>
+      {{ if .TeamIsOwner }}
+        {{ if gt .TeamSlots 0 }}
+          <span class="font-label-sm text-label-sm text-on-surface-variant">{{ .TeamSlots }} slot{{ if gt .TeamSlots 1 }}s{{ end }} left</span>
+        {{ else }}
+          <span class="font-label-sm text-label-sm text-error font-semibold">Team full</span>
+        {{ end }}
+      {{ end }}
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Owner + up to 2 staff share this business's orders. Staff can confirm orders and payments, but cannot change settings or manage the team.</p>
+
+    {{ if .TeamInviteLink }}
+    <div role="status" class="p-space-sm rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md flex flex-col gap-2">
+      <span class="font-semibold">Invite ready — copy this link and send it to your staff (expires in 7 days):</span>
+      <div class="flex items-center gap-2">
+        <code class="flex-1 font-code-md text-code-md bg-surface-container-lowest/20 px-3 py-2 rounded break-all">{{ .TeamInviteLink }}</code>
+        <button type="button" data-copy-path="{{ .TeamInviteLink }}"
+                class="h-9 px-3 rounded bg-surface-container-lowest/20 hover:bg-surface-container-lowest/30 font-label-sm text-label-sm font-semibold flex items-center gap-1 shrink-0">
+          <span aria-hidden="true" class="material-symbols-outlined text-[16px]">content_copy</span>
+          <span>Copy</span>
+        </button>
+      </div>
+    </div>
+    {{ end }}
+
+    {{ range .TeamMembers }}
+    <div class="flex items-center gap-space-sm p-space-sm rounded bg-surface-container-low">
+      <span aria-hidden="true" class="w-9 h-9 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center shrink-0">{{ initials .Name }}</span>
+      <div class="flex flex-col min-w-0 flex-1">
+        <span class="font-label-md text-label-md text-on-surface font-semibold truncate">{{ .Name }}{{ if .IsSelf }} (you){{ end }}</span>
+        <span class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ .Email }}</span>
+      </div>
+      <span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider px-2 py-0.5 rounded {{ if .IsOwner }}bg-primary-fixed text-on-primary-fixed{{ else }}bg-surface-container-high text-on-surface-variant{{ end }}">{{ .Role }}</span>
+      {{ if and $.TeamIsOwner (not .IsOwner) (not .IsSelf) }}
+      <form method="post" action="/settings/team/members/{{ .ID }}/remove" class="inline shrink-0" onsubmit="return confirm('Remove this person from the team?');">
+        <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+        <button type="submit" class="h-8 px-3 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Remove</button>
+      </form>
+      {{ end }}
+    </div>
+    {{ end }}
+
+    {{ range .TeamInvites }}
+    <div class="flex items-center gap-space-sm p-space-sm rounded border border-dashed border-outline-variant">
+      <span aria-hidden="true" class="material-symbols-outlined text-[20px] text-on-surface-variant shrink-0">mail</span>
+      <div class="flex flex-col min-w-0 flex-1">
+        <span class="font-label-md text-label-md text-on-surface truncate">{{ .Email }}</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Invite pending · expires {{ formatDate .ExpiresAt }}</span>
+      </div>
+      {{ if $.TeamIsOwner }}
+      <form method="post" action="/settings/team/invites/{{ .ID }}/revoke" class="inline shrink-0">
+        <input type="hidden" name="_csrf" value="{{ $.CSRFToken }}">
+        <button type="submit" class="h-8 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">Revoke</button>
+      </form>
+      {{ end }}
+    </div>
+    {{ end }}
+
+    {{ if .TeamIsOwner }}
+      {{ if gt .TeamSlots 0 }}
+      <form method="post" action="/settings/team/invite" class="flex flex-col sm:flex-row gap-space-sm pt-space-xs">
+        <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
+        <label class="flex flex-col gap-1 flex-1">
+          <span class="font-label-md text-label-md text-on-surface">Staff email</span>
+          <input type="email" name="email" required maxlength="254" placeholder="staff@example.com"
+                 class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        </label>
+        <div class="flex items-end">
+          <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Invite</button>
+        </div>
+      </form>
+      <p class="font-label-sm text-label-sm text-on-surface-variant">No email is sent — you'll get a link to share. The link expires in 7 days.</p>
+      {{ else }}
+      <p class="font-label-md text-label-md text-on-surface-variant">Team is full (3/3). Remove someone or revoke a pending invite to add another.</p>
+      {{ end }}
+    {{ else }}
+      <p class="font-label-sm text-label-sm text-on-surface-variant">Only the business owner can invite or remove people.</p>
+    {{ end }}
+  </div>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm">
     <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Measurement templates</h2>
     <p class="font-body-sm text-body-sm text-on-surface-variant">Use the ready-made garments as-is, or clone one and adapt it to your shop's style. Past orders always keep their original measurements.</p>
     <div>

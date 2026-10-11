@@ -3,9 +3,11 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/org"
+	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
@@ -13,6 +15,7 @@ import (
 // SettingsHandler serves /settings and /profile.
 type SettingsHandler struct {
 	Service  *app.SettingsService
+	Teams    *app.TeamService // nil-safe: team lists stay empty when unwired (tests)
 	Renderer *render.Renderer
 }
 
@@ -38,6 +41,34 @@ type settingsPage struct {
 	TeamSizes      []string
 	Referrals      []string
 	CurrencyLocked bool // true if the org already has orders
+
+	// Team section (dead-simple invites, max 3 per org). Empty when the
+	// team service is unwired; IsOwner gates the invite/remove buttons.
+	TeamMembers    []teamMemberRow
+	TeamInvites    []teamInviteRow
+	TeamTotal      int
+	TeamSlots      int
+	TeamIsOwner    bool
+	TeamSelfID     string
+	TeamInviteLink string
+}
+
+// teamMemberRow is the settings-page projection of one active membership.
+// IDs are pre-stringified: templates compare strings, not uuid values.
+type teamMemberRow struct {
+	ID      string
+	Name    string
+	Email   string
+	Role    string
+	IsSelf  bool
+	IsOwner bool
+}
+
+// teamInviteRow is the settings-page projection of one pending invite.
+type teamInviteRow struct {
+	ID        string
+	Email     string
+	ExpiresAt time.Time
 }
 
 type profilePage struct {
@@ -101,6 +132,40 @@ func (h *SettingsHandler) Settings(w http.ResponseWriter, r *http.Request) {
 	if v := queryValue(r, "error"); v != "" {
 		data.FlashError = v
 	}
+	if v := queryValue(r, "invite_link"); v != "" {
+		data.TeamInviteLink = v
+	}
+
+	// Team section: members + pending invites share this org's data via RLS.
+	// STAFF sees the list; only the OWNER gets invite/remove buttons.
+	if h.Teams != nil {
+		if ov, err := h.Teams.Overview(r.Context(), s.Scope); err == nil {
+			selfID := s.User.ID.String()
+			rows := make([]teamMemberRow, 0, len(ov.Members))
+			for _, m := range ov.Members {
+				rows = append(rows, teamMemberRow{
+					ID:      m.UserID.String(),
+					Name:    m.Name,
+					Email:   m.Email,
+					Role:    string(m.Role),
+					IsSelf:  m.UserID.String() == selfID,
+					IsOwner: m.Role == tenant.RoleOwner,
+				})
+			}
+			invites := make([]teamInviteRow, 0, len(ov.Invites))
+			for _, in := range ov.Invites {
+				invites = append(invites, teamInviteRow{
+					ID: in.ID.String(), Email: in.Email, ExpiresAt: in.ExpiresAt,
+				})
+			}
+			data.TeamMembers = rows
+			data.TeamInvites = invites
+			data.TeamTotal = ov.Total
+			data.TeamSlots = ov.SlotsLeft
+			data.TeamIsOwner = ov.IsOwner
+			data.TeamSelfID = selfID
+		}
+	}
 
 	page(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "settings/index.html", data)
 }
@@ -113,6 +178,12 @@ func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 	}
 	if err := s.Scope.RequireWrite(); err != nil {
 		http.Error(w, "You do not have permission to modify data.", http.StatusForbidden)
+		return
+	}
+	// Business settings are OWNER-only. STAFF shares the org's orders but
+	// must never change the business profile, currency, or bank details.
+	if s.Scope.Role != tenant.RoleOwner {
+		http.Error(w, "Only the business owner can change settings.", http.StatusForbidden)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
