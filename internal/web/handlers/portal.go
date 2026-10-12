@@ -178,6 +178,10 @@ type intakePageData struct {
 	// Vocab is the customer-facing storefront wording derived from the
 	// org's business category. Staff-facing language is untouched.
 	Vocab org.StorefrontVocab
+	// Bookable is true when the org's booking calendar applies and is
+	// accepting: package cards may offer "Book a date". False hides the
+	// button instead of linking to a page that 404s.
+	Bookable bool
 	// Egg is the perishable-module block. Nil for normal businesses.
 	Egg *eggIntakeData
 }
@@ -278,6 +282,20 @@ type intakeForm struct {
 	AmountClaim string // claimed amount paid, raw input
 }
 
+// intakeBookable reports whether the org's booking calendar applies and
+// is accepting right now. Best-effort and nil-safe: any failure hides
+// the "Book a date" button instead of breaking the page.
+func (h *PortalHandler) intakeBookable(r *http.Request, slug string) bool {
+	if h.Booking == nil {
+		return false
+	}
+	cfg, err := h.Booking.PublicConfig(r.Context(), slug)
+	if err != nil || cfg == nil {
+		return false
+	}
+	return cfg.BookingApplies() && cfg.Accepting
+}
+
 // IntakeForm handles GET /order/{slug}.
 func (h *PortalHandler) IntakeForm(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
@@ -305,6 +323,7 @@ func (h *PortalHandler) IntakeForm(w http.ResponseWriter, r *http.Request) {
 		Quantities: map[string]string{},
 		Egg:        buildEggData(h.Public.EggConfig(r.Context(), slug)),
 		Vocab:      org.Vocab(),
+		Bookable:   h.intakeBookable(r, slug),
 	}
 	data.Categories = productCategories(data.Products)
 	// Preview mode: staff opening ?preview=1 see exactly what customers
@@ -716,6 +735,7 @@ func (h *PortalHandler) intakeError(w http.ResponseWriter, r *http.Request, org 
 		Answers:    answersEcho,
 		Egg:        buildEggData(h.Public.EggConfig(r.Context(), form.Slug)),
 		Vocab:      org.Vocab(),
+		Bookable:   h.intakeBookable(r, form.Slug),
 		Form: intakeForm{
 			CustomerName:  form.CustomerName,
 			CustomerEmail: form.CustomerEmail,

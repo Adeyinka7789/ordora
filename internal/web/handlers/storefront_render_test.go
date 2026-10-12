@@ -38,7 +38,8 @@ func TestPhotographyIntakeRenders(t *testing.T) {
 		Title: "Place an order", OrgName: "Ada Shots", Slug: "ada-shots",
 		Products: products, Categories: []string{"Portraits", "Weddings"},
 		Quantities: map[string]string{}, Answers: map[string]string{},
-		Vocab: org.VocabForCategory(org.PhotographyCategory),
+		Vocab:    org.VocabForCategory(org.PhotographyCategory),
+		Bookable: true,
 	})
 	if err != nil {
 		t.Fatalf("portal/intake.html (photography): %v", err)
@@ -72,6 +73,25 @@ func TestPhotographyIntakeRenders(t *testing.T) {
 		if strings.Contains(out, notWant) {
 			t.Errorf("photography intake must not say %q", notWant)
 		}
+	}
+
+	// Booking not enabled: the date button hides instead of linking to
+	// a page that would 404.
+	closed, err := r.Raw("portal/intake.html", intakePageData{
+		Title: "Place an order", OrgName: "Ada Shots", Slug: "ada-shots",
+		Products: products, Categories: []string{"Portraits", "Weddings"},
+		Quantities: map[string]string{}, Answers: map[string]string{},
+		Vocab:    org.VocabForCategory(org.PhotographyCategory),
+		Bookable: false,
+	})
+	if err != nil {
+		t.Fatalf("portal/intake.html (not bookable): %v", err)
+	}
+	if strings.Contains(closed, "Book a date") {
+		t.Error("book-a-date must hide when the calendar is not bookable")
+	}
+	if !strings.Contains(closed, "Choose package") {
+		t.Error("packages must stay choosable without booking")
 	}
 }
 

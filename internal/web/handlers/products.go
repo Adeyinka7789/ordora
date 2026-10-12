@@ -56,6 +56,11 @@ type productsIndexPage struct {
 	// Vocab drives trade-specific catalog wording (packages for
 	// photographers). Records stay products underneath.
 	Vocab org.StorefrontVocab
+	// Currency is the org currency for preset price display.
+	Currency string
+	// Presets are starter packages offered on an empty catalog
+	// (photography only). Picking one prefills the new form.
+	Presets []product.Preset
 }
 
 type productFormPage struct {
@@ -212,6 +217,7 @@ func (h *ProductHandler) Index(w http.ResponseWriter, r *http.Request) {
 			Title:      "Products",
 			FlashError: "Could not load products.",
 			Vocab:      h.productVocab(r, scope),
+			Currency:   currencyFromRequest(r),
 		})
 		return
 	}
@@ -224,6 +230,12 @@ func (h *ProductHandler) Index(w http.ResponseWriter, r *http.Request) {
 		Covers:      h.productCovers(r.Context(), scope, res.Products),
 		Pagination:  newPagination(res.Total, res.Limit, res.Offset),
 		Vocab:       h.productVocab(r, scope),
+		Currency:    currencyFromRequest(r),
+	}
+	// Starter templates surface once: photography orgs with an empty
+	// catalog get one-click package presets instead of a blank form.
+	if len(page.Products) == 0 && query == "" && page.Vocab.GalleryFirst {
+		page.Presets = product.PhotographyPresets()
 	}
 	if v := queryValue(r, "notice"); v != "" {
 		page.FlashNotice = v
@@ -264,7 +276,69 @@ func (h *ProductHandler) New(w http.ResponseWriter, r *http.Request) {
 		QuestionRows: questionRows(nil),
 		Vocab:        vocab,
 	}
+	// Clone & edit (fashion-template Model C, applied to the catalog):
+	// ?clone=<id> prefills from an existing product, ?preset=<key>
+	// from a starter template. Photos are never copied — the copy
+	// starts imageless. Unknown ids/keys render the blank form.
+	if cloneID := queryValue(r, "clone"); cloneID != "" {
+		if id, err := uuid.Parse(strings.TrimSpace(cloneID)); err == nil {
+			if src, err := h.Service.Get(r.Context(), scope, id); err == nil {
+				applyProductClone(&page, src)
+			}
+		}
+	} else if key := strings.TrimSpace(queryValue(r, "preset")); key != "" {
+		if preset, ok := product.PhotographyPreset(key); ok {
+			applyProductPreset(&page, preset)
+		}
+	}
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/new.html", page)
+}
+
+// applyProductPreset prefills a new-product form from a starter preset.
+func applyProductPreset(page *productFormPage, p product.Preset) {
+	page.Title = "New package from template"
+	page.FormName = p.Name
+	page.FormPrice = formatMoneyMinor(p.UnitPriceMinor)
+	page.Catalog = product.CatalogDetails{
+		ShortDescription:   p.ShortDescription,
+		Specs:              p.Specs,
+		ProductionDays:     p.ProductionDays,
+		BookingDurationMin: p.BookingDurationMin,
+		QuoteOnly:          p.QuoteOnly,
+		StartingFrom:       p.StartingFrom,
+		Availability:       product.AvailabilityInStock,
+		Category:           p.Category,
+		Questions:          p.Questions,
+	}
+	page.QuestionRows = questionRows(p.Questions)
+}
+
+// applyProductClone prefills a new-product form from an existing product
+// ("Copy of …", fashion-clone convention). Photos are deliberately not
+// copied: the clone starts imageless and fresh samples are uploaded
+// after creation (shared storage keys would corrupt deletes).
+func applyProductClone(page *productFormPage, src *product.Product) {
+	page.Title = "Clone — " + src.Name
+	page.FormName = "Copy of " + src.Name
+	page.FormDesc = src.Description
+	page.FormSKU = src.SKU
+	page.FormPrice = formatMoneyMinor(src.UnitPrice.Amount())
+	page.Catalog = product.CatalogDetails{
+		Material:           src.Material,
+		Color:              src.Color,
+		ShortDescription:   src.ShortDescription,
+		InternalNotes:      src.InternalNotes,
+		Specs:              src.Specs,
+		ProductionDays:     src.ProductionDays,
+		BookingDurationMin: src.BookingDurationMin,
+		QuoteOnly:          src.QuoteOnly,
+		StartingFrom:       src.StartingFrom,
+		Hidden:             src.Hidden,
+		Availability:       src.Availability,
+		Category:           src.Category,
+		Questions:          src.Questions,
+	}
+	page.QuestionRows = questionRows(src.Questions)
 }
 
 func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {

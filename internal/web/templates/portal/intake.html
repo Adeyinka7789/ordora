@@ -159,10 +159,12 @@
                   </div>
                 </div>
               </div>
+              {{ if $.Bookable }}
               <a href="/book/{{ $.Slug }}?service={{ .ID }}" class="h-10 px-3 rounded border border-outline-variant/40 text-on-surface font-label-md text-label-md font-semibold flex items-center justify-center gap-1 hover:bg-surface-container-low transition-colors">
                 <span aria-hidden="true" class="material-symbols-outlined text-[18px]">calendar_month</span>
                 <span>Book a date</span>
               </a>
+              {{ end }}
             </div>
             {{ else }}
             <div class="catalog-card ecommerce-product-card flex flex-col gap-space-sm p-space-sm rounded-xl bg-surface-container-low" role="listitem"

@@ -8,6 +8,24 @@
       {{ else }}
         <p class="font-body-md text-body-md text-on-surface-variant">No {{ lower $v.Items }} yet.</p>
         <a href="/products/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Add your first {{ lower $v.Item }}</a>
+        {{ if .Presets }}
+        <p class="font-body-md text-body-md text-on-surface-variant mt-space-lg">Or start from a ready-made template — pick one, adjust the price and details, save:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm mt-space-sm text-left">
+          {{ range .Presets }}
+          <div class="flex flex-col gap-1 p-space-md rounded-xl bg-surface-container-low">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-label-md text-label-md text-on-surface font-bold">{{ .Name }}</span>
+              {{ if .Category }}<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold shrink-0">{{ .Category }}</span>{{ end }}
+            </div>
+            {{ if .Specs }}<span class="font-body-sm text-body-sm text-on-surface-variant">{{ .Specs }}</span>{{ end }}
+            <div class="flex items-center justify-between gap-2 mt-1">
+              <span class="font-code-md text-code-md text-primary font-bold">{{ if .QuoteOnly }}Request quote{{ else }}{{ if .StartingFrom }}Starting from {{ end }}{{ currency .UnitPriceMinor $.Currency }}{{ end }}</span>
+              <a href="/products/new?preset={{ .Key }}" class="h-8 px-3 rounded bg-primary-container hover:bg-primary text-on-primary font-label-sm text-label-sm font-semibold inline-flex items-center shrink-0">Use this template</a>
+            </div>
+          </div>
+          {{ end }}
+        </div>
+        {{ end }}
       {{ end }}
     </div>
   {{ else }}

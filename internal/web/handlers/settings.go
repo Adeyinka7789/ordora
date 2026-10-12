@@ -70,6 +70,10 @@ type settingsPage struct {
 	// Booking section (appointment module). Nil unless the org takes
 	// bookings and the booking flag is on for it.
 	Booking *bookingSettingsData
+
+	// IsTailoring gates the measurement-templates card: only fashion
+	// businesses see it, mirroring the route gate in main.go.
+	IsTailoring bool
 }
 
 // eggSettingsData is the settings-page projection of poultry settings.
@@ -194,6 +198,7 @@ func (h *SettingsHandler) Settings(w http.ResponseWriter, r *http.Request) {
 		FormAddress:  o.Address,
 		FormBizType:  o.BusinessType,
 		FormBizCat:   o.BusinessCategory,
+		IsTailoring:  org.IsTailoringCategory(o.BusinessCategory),
 		FormTeamSize: o.TeamSize,
 		FormReferral: o.ReferralSource,
 		Categories:   org.BusinessCategories(),

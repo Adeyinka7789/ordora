@@ -197,6 +197,9 @@ type skeletonEmptyTablePage struct {
 	// Vocab is only read by products/_table.html; the zero value renders
 	// the generic nouns via OrGeneric.
 	Vocab org.StorefrontVocab
+	// Presets is only read by products/_table.html (nil here: the empty
+	// state never offers templates in skeleton tests).
+	Presets []any
 }
 
 type skeletonPagination struct {

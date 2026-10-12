@@ -639,12 +639,6 @@ func run() error {
 		return middleware.RequireTenant(middleware.RequireWrite(middleware.RequireFlag(flagProvider, flag)(h)))
 	}
 
-	// tenantWrite wraps a tenant route that has no feature flag but mutates
-	// data (settings, measurement templates). Same 403-for-VIEWER rule.
-	tenantWrite := func(h http.Handler) http.Handler {
-		return middleware.RequireTenant(middleware.RequireWrite(h))
-	}
-
 	// ownerWrite wraps an OWNER-only tenant route (business settings, team
 	// invites). STAFF shares the org's orders but must never touch these.
 	ownerWrite := func(h http.Handler) http.Handler {
@@ -962,12 +956,20 @@ func run() error {
 	mux.Handle("POST /settings/booking/hours", bookingOwner(http.HandlerFunc(bookingsH.UpdateHours)))
 	mux.Handle("POST /settings/booking/blackouts", bookingOwner(http.HandlerFunc(bookingsH.AddBlackout)))
 	mux.Handle("POST /settings/booking/blackouts/{date}/remove", bookingOwner(http.HandlerFunc(bookingsH.RemoveBlackout)))
-	mux.Handle("GET /settings/measurements", middleware.RequireTenant(http.HandlerFunc(measTmplH.Index)))
-	mux.Handle("GET /settings/measurements/new", tenantWrite(http.HandlerFunc(measTmplH.New)))
-	mux.Handle("POST /settings/measurements", tenantWrite(http.HandlerFunc(measTmplH.Create)))
-	mux.Handle("GET /settings/measurements/{id}/edit", tenantWrite(http.HandlerFunc(measTmplH.Edit)))
-	mux.Handle("POST /settings/measurements/{id}", tenantWrite(http.HandlerFunc(measTmplH.Update)))
-	mux.Handle("POST /settings/measurements/{id}/delete", tenantWrite(http.HandlerFunc(measTmplH.Delete)))
+	// ---- Measurement templates (tailoring trade only; other trades 404
+	// like the groups routes below, so the feature doesn't leak) ----
+	tailorSettings := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireTailoring(h))
+	}
+	tailorSettingsWrite := func(h http.Handler) http.Handler {
+		return middleware.RequireTenant(middleware.RequireWrite(middleware.RequireTailoring(h)))
+	}
+	mux.Handle("GET /settings/measurements", tailorSettings(http.HandlerFunc(measTmplH.Index)))
+	mux.Handle("GET /settings/measurements/new", tailorSettingsWrite(http.HandlerFunc(measTmplH.New)))
+	mux.Handle("POST /settings/measurements", tailorSettingsWrite(http.HandlerFunc(measTmplH.Create)))
+	mux.Handle("GET /settings/measurements/{id}/edit", tailorSettingsWrite(http.HandlerFunc(measTmplH.Edit)))
+	mux.Handle("POST /settings/measurements/{id}", tailorSettingsWrite(http.HandlerFunc(measTmplH.Update)))
+	mux.Handle("POST /settings/measurements/{id}/delete", tailorSettingsWrite(http.HandlerFunc(measTmplH.Delete)))
 	mux.Handle("GET /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.Profile)))
 	mux.Handle("POST /profile", middleware.RequireAuth(http.HandlerFunc(settingsH.UpdateProfile)))
 	mux.Handle("POST /profile/password", middleware.RequireAuth(http.HandlerFunc(settingsH.ChangePassword)))

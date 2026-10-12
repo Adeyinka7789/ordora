@@ -21,11 +21,19 @@
       <span class="font-label-md text-label-md text-on-surface">Availability</span>
       <select name="availability"
               class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
+        {{ if $v.GalleryFirst }}
+        <option value="in_stock" {{ if or (eq .Availability "in_stock") (eq .Availability "") }}selected{{ end }}>Available for booking</option>
+        <option value="low_stock" {{ if eq .Availability "low_stock" }}selected{{ end }}>Few dates left</option>
+        <option value="made_to_order" {{ if eq .Availability "made_to_order" }}selected{{ end }}>By arrangement</option>
+        <option value="out_of_stock" {{ if eq .Availability "out_of_stock" }}selected{{ end }}>Paused (hidden publicly)</option>
+        {{ else }}
         <option value="in_stock" {{ if or (eq .Availability "in_stock") (eq .Availability "") }}selected{{ end }}>In stock</option>
         <option value="low_stock" {{ if eq .Availability "low_stock" }}selected{{ end }}>Low stock</option>
         <option value="made_to_order" {{ if eq .Availability "made_to_order" }}selected{{ end }}>Made to order</option>
         <option value="out_of_stock" {{ if eq .Availability "out_of_stock" }}selected{{ end }}>Out of stock (hidden publicly)</option>
+        {{ end }}
       </select>
+      {{ if $v.GalleryFirst }}<span class="font-label-sm text-label-sm text-on-surface-variant">Day-to-day availability comes from your booking calendar (Settings → Booking), not here.</span>{{ end }}
     </label>
   </div>
 
