@@ -1,17 +1,19 @@
 {{ define "products/_catalog_fields.html" }}
+{{ $v := .Vocab.OrGeneric }}
 {{/* Shared merchandising fields for product new/edit forms.
   Expects a dict: Material, Color, ShortDescription, InternalNotes, Specs,
   ProductionDays (int, 0 = unset), BookingDurationMin (int, 0 = org default),
   QuoteOnly, StartingFrom, Hidden (bools),
-  Availability, Category, QuestionRows ([]productQuestionRow). */}}
+  Availability, Category, QuestionRows ([]productQuestionRow),
+  Vocab (storefront vocab; zero value reads as generic). */}}
 <div class="flex flex-col gap-space-md pt-space-xs border-t border-outline-variant">
   <h2 class="font-label-lg text-label-lg text-on-surface">Catalog details</h2>
-  <p class="font-body-sm text-body-sm text-on-surface-variant -mt-2">Shown to customers on your public order link. Upload photos after creating the product.</p>
+  <p class="font-body-sm text-body-sm text-on-surface-variant -mt-2">{{ if $v.GalleryFirst }}Shown to customers on your booking link as a package card with its gallery. Upload up to 5 sample photos after creating the package.{{ else }}Shown to customers on your public order link. Upload photos after creating the product.{{ end }}</p>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
     <label class="flex flex-col gap-1">
-      <span class="font-label-md text-label-md text-on-surface">Category</span>
-      <input type="text" name="category" value="{{ .Category }}" maxlength="80" placeholder="e.g. Senator, Kaftan, Aso-ebi"
+      <span class="font-label-md text-label-md text-on-surface">{{ $v.Group }}</span>
+      <input type="text" name="category" value="{{ .Category }}" maxlength="80" placeholder="{{ if $v.GalleryFirst }}e.g. Weddings, Portraits, Corporate{{ else }}e.g. Senator, Kaftan, Aso-ebi{{ end }}"
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
     </label>
 
@@ -29,10 +31,11 @@
 
   <label class="flex flex-col gap-1">
     <span class="font-label-md text-label-md text-on-surface">Short description <span class="text-on-surface-variant">(customer one-liner)</span></span>
-    <input type="text" name="short_description" value="{{ .ShortDescription }}" maxlength="500" placeholder="e.g. Premium senator set, tailored fit"
+    <input type="text" name="short_description" value="{{ .ShortDescription }}" maxlength="500" placeholder="{{ if $v.GalleryFirst }}e.g. Full-day wedding coverage, 200 edited photos{{ else }}e.g. Premium senator set, tailored fit{{ end }}"
            class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
   </label>
 
+  {{ if not $v.GalleryFirst }}
   <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
     <label class="flex flex-col gap-1">
       <span class="font-label-md text-label-md text-on-surface">Material / fabric</span>
@@ -46,24 +49,25 @@
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
     </label>
   </div>
+  {{ end }}
 
   <label class="flex flex-col gap-1">
-    <span class="font-label-md text-label-md text-on-surface">Specifications <span class="text-on-surface-variant">(dimensions, sizes, details)</span></span>
-    <textarea name="specs" rows="2" maxlength="2000"
+    <span class="font-label-md text-label-md text-on-surface">{{ if $v.GalleryFirst }}Deliverables <span class="text-on-surface-variant">(coverage, edited photos, delivery)</span>{{ else }}Specifications <span class="text-on-surface-variant">(dimensions, sizes, details)</span>{{ end }}</span>
+    <textarea name="specs" rows="2" maxlength="2000" placeholder="{{ if $v.GalleryFirst }}e.g. 8 hrs coverage · 200 edited photos · online gallery{{ end }}"
               class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Specs }}</textarea>
   </label>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
     <label class="flex flex-col gap-1">
-      <span class="font-label-md text-label-md text-on-surface">Est. production time (days)</span>
+      <span class="font-label-md text-label-md text-on-surface">{{ if $v.GalleryFirst }}Delivery time (days){{ else }}Est. production time (days){{ end }}</span>
       <input type="number" name="production_days" value="{{ if gt .ProductionDays 0 }}{{ .ProductionDays }}{{ end }}" min="0" max="365" inputmode="numeric"
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
     </label>
     <label class="flex flex-col gap-1">
-      <span class="font-label-md text-label-md text-on-surface">Booking visit length (minutes)</span>
+      <span class="font-label-md text-label-md text-on-surface">{{ if $v.GalleryFirst }}Coverage length (minutes){{ else }}Booking visit length (minutes){{ end }}</span>
       <input type="number" name="booking_duration_min" value="{{ if gt .BookingDurationMin 0 }}{{ .BookingDurationMin }}{{ end }}" min="0" max="480" step="1" inputmode="numeric" placeholder="Org default"
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
-      <span class="font-label-sm text-label-sm text-on-surface-variant">Leave blank to use the booking default. 15–480 when set.</span>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">{{ if $v.GalleryFirst }}How long the shoot lasts. Blank uses the booking default. 15–480 when set.{{ else }}Leave blank to use the booking default. 15–480 when set.{{ end }}</span>
     </label>
   </div>
 
@@ -89,12 +93,12 @@
   </label>
 
   <div class="flex flex-col gap-2">
-    <span class="font-label-md text-label-md text-on-surface">Product questions <span class="text-on-surface-variant">(asked on the public form when this product is picked)</span></span>
+    <span class="font-label-md text-label-md text-on-surface">{{ $v.Item }} questions <span class="text-on-surface-variant">(asked on the public form when this {{ lower $v.Item }} is picked)</span></span>
     {{ range .QuestionRows }}
     <div class="grid grid-cols-[1fr_2fr_auto] gap-2 items-center">
       <input type="text" name="qkey{{ .Index }}" value="{{ .Key }}" maxlength="64" placeholder="key (auto)"
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
-      <input type="text" name="qlabel{{ .Index }}" value="{{ .Label }}" maxlength="120" placeholder="e.g. Lace color?"
+      <input type="text" name="qlabel{{ .Index }}" value="{{ .Label }}" maxlength="120" placeholder="{{ if $v.GalleryFirst }}e.g. Event date?{{ else }}e.g. Lace color?{{ end }}"
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
       <label class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface whitespace-nowrap">
         <input type="checkbox" name="qreq{{ .Index }}" {{ if .Required }}checked{{ end }} class="h-4 w-4"> Required

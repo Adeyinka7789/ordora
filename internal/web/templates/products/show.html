@@ -1,6 +1,7 @@
 {{ define "products/show.html" }}
+{{ $v := .Vocab.OrGeneric }}
 <div class="p-space-lg lg:p-space-xl max-w-3xl mx-auto flex flex-col gap-space-lg">
-  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Products" "Href" "/products") (dict "Label" .Product.Name))) }}
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" $v.Items "Href" "/products") (dict "Label" .Product.Name))) }}
 
   <div class="flex items-center justify-between">
     <div class="flex flex-col">
@@ -21,7 +22,7 @@
       </a>
       {{ if .Product.Active }}
         <form method="post" action="/products/{{ .Product.ID }}/archive" class="inline"
-              data-confirm="Archive this product? It won't be selectable in new orders. You can undo this afterwards." data-confirm-title="Archive product" data-confirm-label="Archive">
+              data-confirm="Archive this {{ lower $v.Item }}? It won't be selectable in new orders. You can undo this afterwards." data-confirm-title="Archive {{ lower $v.Item }}" data-confirm-label="Archive">
           <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">
           <button type="submit" class="h-9 px-space-md rounded bg-error-container text-on-error-container hover:bg-error hover:text-on-error font-label-md text-label-md font-semibold flex items-center gap-1">
             <span aria-hidden="true" class="material-symbols-outlined text-[16px]">archive</span>
@@ -48,7 +49,7 @@
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Visibility</dt>
       <dd class="font-body-md text-body-md text-on-surface">{{ .Product.Visibility }}{{ if .Product.Availability }} · {{ .Product.Availability }}{{ end }}</dd>
 
-      {{ if .Product.Category }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Category</dt>
+      {{ if .Product.Category }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">{{ $v.Group }}</dt>
       <dd class="font-body-md text-body-md text-on-surface">{{ .Product.Category }}</dd>{{ end }}
 
       {{ if .Product.ShortDescription }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Short blurb</dt>
@@ -60,10 +61,10 @@
       {{ if .Product.Color }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Color</dt>
       <dd class="font-body-md text-body-md text-on-surface">{{ .Product.Color }}</dd>{{ end }}
 
-      {{ if .Product.Specs }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Specs</dt>
+      {{ if .Product.Specs }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">{{ if $v.GalleryFirst }}Deliverables{{ else }}Specs{{ end }}</dt>
       <dd class="font-body-md text-body-md text-on-surface whitespace-pre-wrap">{{ .Product.Specs }}</dd>{{ end }}
 
-      {{ if gt .Product.ProductionDays 0 }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Production time</dt>
+      {{ if gt .Product.ProductionDays 0 }}<dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">{{ if $v.GalleryFirst }}Delivery time{{ else }}Production time{{ end }}</dt>
       <dd class="font-body-md text-body-md text-on-surface">~{{ .Product.ProductionDays }} days</dd>{{ end }}
 
       <dt class="font-label-sm text-label-sm text-outline uppercase tracking-wider self-start pt-0.5">Description</dt>
@@ -108,7 +109,7 @@
       {{ end }}
     </div>
     {{ else }}
-    <p class="font-body-md text-body-md text-on-surface-variant">No photos yet — upload the first one below.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">No photos yet — upload the first one below{{ if $v.GalleryFirst }} (up to 5 sample photos per package){{ end }}.</p>
     {{ end }}
     <form method="post" action="/products/{{ .Product.ID }}/images" enctype="multipart/form-data" class="mt-space-md flex flex-wrap items-center gap-space-sm">
       <input type="hidden" name="_csrf" value="{{ .CSRFToken }}">

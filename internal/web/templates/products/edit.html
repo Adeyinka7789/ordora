@@ -1,6 +1,7 @@
 {{ define "products/edit.html" }}
+{{ $v := .Vocab.OrGeneric }}
 <div class="p-space-lg lg:p-space-xl max-w-2xl mx-auto flex flex-col gap-space-lg">
-  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" "Products" "Href" "/products") (dict "Label" .Product.Name "Href" (printf "/products/%s" .Product.ID)) (dict "Label" "Edit"))) }}
+  {{ template "partials/breadcrumbs.html" (dict "Breadcrumbs" (list (dict "Label" $v.Items "Href" "/products") (dict "Label" .Product.Name "Href" (printf "/products/%s" .Product.ID)) (dict "Label" "Edit"))) }}
 
   <div class="flex items-center justify-between">
     <div class="flex flex-col">
@@ -35,7 +36,7 @@
     </label>
 
     <label class="flex flex-col gap-1">
-      <span class="font-label-md text-label-md text-on-surface">Unit price *</span>
+      <span class="font-label-md text-label-md text-on-surface">{{ if $v.GalleryFirst }}Package price{{ else }}Unit price{{ end }} *</span>
       <input type="text" name="unit_price" value="{{ .FormPrice }}" required inputmode="decimal"
              {{ if index .FieldErrors "unit_price" }}aria-invalid="true" aria-describedby="err-unit_price"{{ end }}
              class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-code-md text-code-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
@@ -51,7 +52,7 @@
       {{ template "partials/field_error.html" (dict "Errors" .FieldErrors "Field" "description") }}
     </label>
 
-    {{ template "products/_catalog_fields.html" (dict "Material" .Product.Material "Color" .Product.Color "ShortDescription" .Product.ShortDescription "InternalNotes" .Product.InternalNotes "Specs" .Product.Specs "ProductionDays" .Product.ProductionDays "BookingDurationMin" .Product.BookingDurationMin "QuoteOnly" .Product.QuoteOnly "StartingFrom" .Product.StartingFrom "Hidden" .Product.Hidden "Availability" .Product.Availability "Category" .Product.Category "QuestionRows" .QuestionRows) }}
+    {{ template "products/_catalog_fields.html" (dict "Material" .Product.Material "Color" .Product.Color "ShortDescription" .Product.ShortDescription "InternalNotes" .Product.InternalNotes "Specs" .Product.Specs "ProductionDays" .Product.ProductionDays "BookingDurationMin" .Product.BookingDurationMin "QuoteOnly" .Product.QuoteOnly "StartingFrom" .Product.StartingFrom "Hidden" .Product.Hidden "Availability" .Product.Availability "Category" .Product.Category "QuestionRows" .QuestionRows "Vocab" .Vocab) }}
 
     <div class="flex items-center gap-space-sm pt-space-xs">
       <button type="submit" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold">Save Changes</button>

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 )
 
 // Skeleton + HTMX rigidity tests.
@@ -192,6 +194,9 @@ type skeletonEmptyTablePage struct {
 	Customers    []any
 	Products     []any
 	Pagination   skeletonPagination
+	// Vocab is only read by products/_table.html; the zero value renders
+	// the generic nouns via OrGeneric.
+	Vocab org.StorefrontVocab
 }
 
 type skeletonPagination struct {

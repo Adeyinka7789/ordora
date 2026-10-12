@@ -281,6 +281,7 @@ func run() error {
 		Repo:        productRepo,
 		Attachments: attachService,
 		Renderer:    renderer,
+		Orgs:        postgres.NewOrgRepo(db),
 	}
 	// Product image uploads validate the product through the catalog service.
 	attachH.ProductLookup = productService

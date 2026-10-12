@@ -1,12 +1,13 @@
 {{ define "products/_table.html" }}
+{{ $v := .Vocab.OrGeneric }}
 <div id="products-table" class="bg-surface-container-lowest rounded shadow-sm overflow-hidden">
   {{ if not .Products }}
     <div class="p-space-xl text-center">
       {{ if .Query }}
-        <p class="font-body-md text-body-md text-on-surface-variant">No products match <strong class="text-on-surface">{{ .Query }}</strong>.</p>
+        <p class="font-body-md text-body-md text-on-surface-variant">No {{ lower $v.Items }} match <strong class="text-on-surface">{{ .Query }}</strong>.</p>
       {{ else }}
-        <p class="font-body-md text-body-md text-on-surface-variant">No products yet.</p>
-        <a href="/products/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Add your first product</a>
+        <p class="font-body-md text-body-md text-on-surface-variant">No {{ lower $v.Items }} yet.</p>
+        <a href="/products/new" class="inline-block mt-space-md px-space-md py-2 rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Add your first {{ lower $v.Item }}</a>
       {{ end }}
     </div>
   {{ else }}
@@ -27,7 +28,7 @@
               <td class="py-3 px-space-md" data-th="Name">
                 <a href="/products/{{ .ID }}" class="product-list-link flex items-center gap-2.5 font-label-md text-label-md font-semibold text-on-surface hover:text-primary">
                   {{ $cover := index $.Covers (.ID.String) }}
-                  {{ if $cover }}<img src="/public/product-images/{{ $cover }}" alt="" loading="lazy" class="product-list-thumb w-10 h-10 rounded object-cover shrink-0">{{ else }}<span class="product-list-thumb product-list-placeholder w-10 h-10 rounded flex items-center justify-center bg-primary-fixed text-primary font-bold">{{ slice .Name 0 1 }}</span>{{ end }}
+                  {{ if $cover }}<img src="/public/product-images/{{ $cover }}?size=sm" alt="" loading="lazy" class="product-list-thumb w-10 h-10 rounded object-cover shrink-0">{{ else }}<span class="product-list-thumb product-list-placeholder w-10 h-10 rounded flex items-center justify-center bg-primary-fixed text-primary font-bold">{{ slice .Name 0 1 }}</span>{{ end }}
                   <span class="truncate">{{ .Name }}</span>
                 </a>
               </td>

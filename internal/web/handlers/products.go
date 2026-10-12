@@ -11,6 +11,7 @@ import (
 
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/domain/product"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/infra/postgres"
@@ -23,6 +24,19 @@ type ProductHandler struct {
 	Repo        *postgres.ProductRepo
 	Attachments *app.AttachmentService
 	Renderer    *render.Renderer
+	// Orgs resolves the org row for trade-specific catalog wording.
+	// Nil-safe: unknown orgs read as the generic storefront.
+	Orgs *postgres.OrgRepo
+}
+
+// productVocab returns the catalog wording for the current org's trade.
+func (h *ProductHandler) productVocab(r *http.Request, scope tenant.TenantScope) org.StorefrontVocab {
+	if h.Orgs != nil {
+		if o, err := h.Orgs.GetByID(r.Context(), scope.OrgID); err == nil && o != nil {
+			return org.VocabForCategory(o.BusinessCategory)
+		}
+	}
+	return org.VocabForCategory("")
 }
 
 // Page data.
@@ -39,6 +53,9 @@ type productsIndexPage struct {
 	FlashError  string
 	// UndoID carries an archived product id so the notice can offer Undo.
 	UndoID string
+	// Vocab drives trade-specific catalog wording (packages for
+	// photographers). Records stay products underneath.
+	Vocab org.StorefrontVocab
 }
 
 type productFormPage struct {
@@ -56,6 +73,9 @@ type productFormPage struct {
 	// QuestionRows precomputes the question editor rows: existing
 	// questions followed by blank rows (indices match qkeyN inputs).
 	QuestionRows []productQuestionRow
+	// Vocab drives trade-specific form wording (packages for
+	// photographers). Validation and storage are unchanged.
+	Vocab org.StorefrontVocab
 }
 
 type productQuestionRow struct {
@@ -166,6 +186,8 @@ type productShowPage struct {
 	CSRFToken string
 	Product   *product.Product
 	Images    []*attachment.Attachment
+	// Vocab drives trade-specific wording. Records stay products.
+	Vocab org.StorefrontVocab
 }
 
 // Index.
@@ -189,6 +211,7 @@ func (h *ProductHandler) Index(w http.ResponseWriter, r *http.Request) {
 		h.renderIndex(w, r, productsIndexPage{
 			Title:      "Products",
 			FlashError: "Could not load products.",
+			Vocab:      h.productVocab(r, scope),
 		})
 		return
 	}
@@ -200,6 +223,7 @@ func (h *ProductHandler) Index(w http.ResponseWriter, r *http.Request) {
 		Products:    res.Products,
 		Covers:      h.productCovers(r.Context(), scope, res.Products),
 		Pagination:  newPagination(res.Total, res.Limit, res.Offset),
+		Vocab:       h.productVocab(r, scope),
 	}
 	if v := queryValue(r, "notice"); v != "" {
 		page.FlashNotice = v
@@ -229,13 +253,16 @@ func (h *ProductHandler) renderIndex(w http.ResponseWriter, r *http.Request, pag
 // New.
 
 func (h *ProductHandler) New(w http.ResponseWriter, r *http.Request) {
-	if _, ok := requireWriteScope(w, r); !ok {
+	scope, ok := requireWriteScope(w, r)
+	if !ok {
 		return
 	}
+	vocab := h.productVocab(r, scope)
 	page := productFormPage{
-		Title:        "New product",
+		Title:        "New " + strings.ToLower(vocab.OrGeneric().Item),
 		CSRFToken:    csrfFromCtx(r),
 		QuestionRows: questionRows(nil),
+		Vocab:        vocab,
 	}
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/new.html", page)
 }
@@ -264,6 +291,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
 			Catalog:     cat,
+			Vocab:       h.productVocab(r, scope),
 		}
 		page.QuestionRows = questionRows(cat.Questions)
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
@@ -295,6 +323,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
 			Catalog:     parseCatalogForm(r),
+			Vocab:       h.productVocab(r, scope),
 		}
 		page.QuestionRows = questionRows(page.Catalog.Questions)
 		renderPage(w, r, h.Renderer, http.StatusBadRequest, "layouts/app.html", "products/new.html", page)
@@ -330,6 +359,7 @@ func (h *ProductHandler) Show(w http.ResponseWriter, r *http.Request) {
 		Title:     p.Name,
 		CSRFToken: csrfFromCtx(r),
 		Product:   p,
+		Vocab:     h.productVocab(r, scope),
 	}
 	if h.Attachments != nil {
 		if images, err := h.Attachments.List(r.Context(), scope, attachment.EntityProduct, id); err == nil {
@@ -366,6 +396,7 @@ func (h *ProductHandler) Edit(w http.ResponseWriter, r *http.Request) {
 		FormDesc:  p.Description,
 		FormSKU:   p.SKU,
 		FormPrice: formatMoneyMinor(p.UnitPrice.Amount()),
+		Vocab:     h.productVocab(r, scope),
 	}
 	page.QuestionRows = questionRows(p.Questions)
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "products/edit.html", page)
@@ -401,6 +432,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 			FormDesc:    formValue(r, "description"),
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
+			Vocab:       h.productVocab(r, scope),
 		}
 		if p != nil {
 			page.QuestionRows = questionRows(p.Questions)
@@ -441,6 +473,7 @@ func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
 			FormDesc:    formValue(r, "description"),
 			FormSKU:     formValue(r, "sku"),
 			FormPrice:   formValue(r, "unit_price"),
+			Vocab:       h.productVocab(r, scope),
 		}
 		if p != nil {
 			page.QuestionRows = questionRows(p.Questions)
