@@ -198,7 +198,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	s := middleware.SessionFromContext(r.Context())
 	if s != nil {
-		_ = h.Auth.Logout(r.Context(), s.Session.ID)
+		// Impersonated contexts hold no business session: nothing to
+		// revoke server-side, just clear the cookie below.
+		if currentID, ok := s.CurrentSessionID(); ok {
+			_ = h.Auth.Logout(r.Context(), currentID)
+		}
 	}
 	h.clearSessionCookie(w)
 	http.Redirect(w, r, "/login", http.StatusSeeOther)

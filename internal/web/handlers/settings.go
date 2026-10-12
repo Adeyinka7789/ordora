@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
+	"github.com/Adeyinka7789/ordora/internal/auth"
 	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
@@ -169,6 +170,27 @@ type sessionRow struct {
 	CreatedAt string
 	ExpiresAt string
 	Current   bool
+}
+
+// buildSessionRows projects active sessions for the profile page. Pure
+// so the impersonated case (no current session: every device reads as
+// non-current) is unit-testable without a session store.
+func buildSessionRows(sessions []*auth.Session, current uuid.UUID, hasCurrent bool) []sessionRow {
+	rows := make([]sessionRow, 0, len(sessions))
+	for _, sess := range sessions {
+		if sess == nil {
+			continue
+		}
+		rows = append(rows, sessionRow{
+			ID:        sess.ID.String(),
+			UserAgent: sess.UserAgent,
+			IP:        sess.IP,
+			CreatedAt: sess.CreatedAt.Format("02-01-2006 · 15:04"),
+			ExpiresAt: sess.ExpiresAt.Format("02-01-2006"),
+			Current:   hasCurrent && sess.ID == current,
+		})
+	}
+	return rows
 }
 
 // ---------- Settings ----------
@@ -355,24 +377,13 @@ func (h *SettingsHandler) Profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sessions, _ := h.Service.ListSessions(r.Context(), s.User.ID)
-	rows := make([]sessionRow, 0, len(sessions))
-	for _, sess := range sessions {
-		rows = append(rows, sessionRow{
-			ID:        sess.ID.String(),
-			UserAgent: sess.UserAgent,
-			IP:        sess.IP,
-			CreatedAt: sess.CreatedAt.Format("02-01-2006 · 15:04"),
-			ExpiresAt: sess.ExpiresAt.Format("02-01-2006"),
-			Current:   sess.ID == s.Session.ID,
-		})
-	}
-
+	currentID, hasCurrent := s.CurrentSessionID()
 	data := profilePage{
 		Title:     "Profile",
 		CSRFToken: csrfFromCtx(r),
 		Name:      s.User.Name,
 		Email:     s.User.Email.String(),
-		Sessions:  rows,
+		Sessions:  buildSessionRows(sessions, currentID, hasCurrent),
 	}
 	if v := queryValue(r, "notice"); v != "" {
 		data.FlashNotice = v
@@ -431,7 +442,10 @@ func (h *SettingsHandler) ChangePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// A password change implies possible compromise: end every other session.
-	_ = h.Service.RevokeOtherSessions(r.Context(), s.User.ID, s.Session.ID)
+	// Impersonated contexts have no current session: Nil excepts nothing,
+	// so every owner session ends, which is the safe response there too.
+	currentID, _ := s.CurrentSessionID()
+	_ = h.Service.RevokeOtherSessions(r.Context(), s.User.ID, currentID)
 	http.Redirect(w, r, "/profile?notice=Password+changed.+Other+devices+signed+out.", http.StatusSeeOther)
 }
 
@@ -447,7 +461,8 @@ func (h *SettingsHandler) RevokeSession(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	if err := h.Service.RevokeSession(r.Context(), s.User.ID, id, s.Session.ID); err != nil {
+	currentID, _ := s.CurrentSessionID()
+	if err := h.Service.RevokeSession(r.Context(), s.User.ID, id, currentID); err != nil {
 		msg := "Could+not+sign+out+that+device."
 		if errors.Is(err, app.ErrCannotRevokeCurrent) {
 			msg = "Use+Sign+out+to+end+this+device."

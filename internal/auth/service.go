@@ -719,6 +719,17 @@ type ResolvedSession struct {
 	IsBooking bool
 }
 
+// CurrentSessionID returns the business session id, if the context has
+// one. Impersonated (synthetic) sessions have none: callers must treat
+// every listed device as non-current instead of dereferencing a nil
+// Session (which panics the request into a 500).
+func (s *ResolvedSession) CurrentSessionID() (uuid.UUID, bool) {
+	if s == nil || s.Session == nil {
+		return uuid.Nil, false
+	}
+	return s.Session.ID, true
+}
+
 // ResolveSession loads a session by raw token and constructs a TenantScope.
 // Returns ErrTokenInvalid if the token is missing, expired, or revoked.
 func (s *Service) ResolveSession(ctx context.Context, rawToken string) (*ResolvedSession, error) {
