@@ -115,10 +115,18 @@ var (
 	ErrSizeTooLarge      = errors.New("attachment: file exceeds size limit")
 	ErrSizeZero          = errors.New("attachment: file is empty")
 	ErrNotFound          = errors.New("attachment: not found")
+	ErrTooManyImages     = errors.New("attachment: product image limit reached")
 )
 
 // MaxSizeBytes is the upload cap: 10 MiB.
 const MaxSizeBytes int64 = 10 * 1024 * 1024
+
+// MaxProductImages caps the sample photos on one product (cover
+// included): 1 cover + 4 gallery. It keeps package cards and the public
+// gallery dialog light — a sample is a teaser, not a portfolio. Enforced
+// in UploadToProduct; the public storefront additionally displays at
+// most this many for older, over-limit galleries.
+const MaxProductImages = 5
 
 // allowedMIME is the whitelist of MIME types we accept. Extend deliberately.
 var allowedMIME = map[string]bool{

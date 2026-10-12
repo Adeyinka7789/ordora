@@ -52,6 +52,7 @@ func TestBookFormRenders(t *testing.T) {
 		`value="09:00"`, "09:00 – 10:00",
 		`name="name"`, `name="phone"`, `name="email"`, `name="notes"`,
 		"24h notice", "Request booking",
+		"Service &", "Stylist",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("book form missing %q", want)
@@ -70,6 +71,48 @@ func TestBookFormRenders(t *testing.T) {
 	}
 	if strings.Contains(out, "Request booking") {
 		t.Error("service-less form must not offer submit")
+	}
+}
+
+// TestBookFormPhotographyRenders covers the shoot-date wording: packages,
+// photographers, and the same slots/submit mechanics underneath.
+func TestBookFormPhotographyRenders(t *testing.T) {
+	r, err := render.New("../templates")
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	out, err := r.Raw("book/form.html", bookFormData{
+		Title: "Book an appointment", OrgName: "Ada Shots", Slug: "ada-shots",
+		Services: []bookServiceView{
+			{ID: uuid.NewString(), Name: "Wedding Premium", PriceMinor: 500000, Currency: "NGN", DurationMin: 480, DurationLabel: "8 hr"},
+		},
+		Staff: []bookStaffView{
+			{ID: uuid.NewString(), Name: "Ada"},
+		},
+		Date: "2026-10-13", MinDate: "2026-10-12", MaxDate: "2026-11-11",
+		Slots: []bookSlotView{
+			{Value: "09:00", Label: "09:00 – 17:00"},
+		},
+		Vocab: org.VocabForCategory(org.PhotographyCategory),
+	})
+	if err != nil {
+		t.Fatalf("book/form.html (photography): %v", err)
+	}
+	for _, want := range []string{
+		"Pick a package, choose a day", "Package &", "Photographer",
+		"Notes for the photographer", "Wedding Premium", "(8 hr)",
+		"Request booking",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("photography book form missing %q", want)
+		}
+	}
+	for _, notWant := range []string{
+		"Pick a service", "Service &", "Stylist",
+	} {
+		if strings.Contains(out, notWant) {
+			t.Errorf("photography book form must not say %q", notWant)
+		}
 	}
 }
 

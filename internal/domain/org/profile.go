@@ -41,12 +41,21 @@ func IsPerishableCategory(category string) bool {
 // BeautyCategory is the business_category for salons and stylists.
 const BeautyCategory = "Beauty & Salon"
 
+// PhotographyCategory is the business_category for photographers and
+// media businesses. It selects the photography storefront mode
+// (packages + event types); see StorefrontModeFor.
+const PhotographyCategory = "Photography & Media"
+
 // IsBookingCategory reports whether a business category unlocks the
-// appointment-booking module. Beauty & Salon first; other trades later
-// by extending this switch — never by folding booking into the
-// perishable gate.
+// appointment-booking module. Beauty & Salon first, Photography & Media
+// for shoot-date booking; other trades later by extending this switch —
+// never by folding booking into the perishable gate.
 func IsBookingCategory(category string) bool {
-	return strings.TrimSpace(category) == BeautyCategory
+	switch strings.TrimSpace(category) {
+	case BeautyCategory, PhotographyCategory:
+		return true
+	}
+	return false
 }
 
 // MaxCustomProfileLength caps free-text "Other" entries.
@@ -63,7 +72,7 @@ func BusinessCategories() []string {
 		"Beauty & Salon",
 		"Food & Catering",
 		"Poultry & Eggs",
-		"Photography & Media",
+		PhotographyCategory,
 		Other,
 	}
 }

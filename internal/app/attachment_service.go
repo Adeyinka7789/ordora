@@ -1,10 +1,12 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +14,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/infra/storage"
+	"github.com/Adeyinka7789/ordora/internal/thumbs"
 )
 
 // AttachmentRepoStore is the persistence contract for attachment metadata.
@@ -86,12 +89,23 @@ func (s *AttachmentService) Upload(ctx context.Context, scope tenant.TenantScope
 		return nil, attachment.ErrSizeTooLarge
 	}
 
+	// Buffer fully: product-image thumbnails need the bytes below, and
+	// both callers already buffer (the 10 MiB cap bounds this).
+	data, err := io.ReadAll(io.LimitReader(in.Body, attachment.MaxSizeBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("attachment: read bytes: %w", err)
+	}
+	if int64(len(data)) > attachment.MaxSizeBytes {
+		return nil, attachment.ErrSizeTooLarge
+	}
+	size := int64(len(data))
+
 	key := buildStorageKey(s.ids.New(), s.now())
 
 	a, err := attachment.New(
 		s.ids.New(), scope.OrgID,
 		in.EntityType, in.EntityID,
-		key, in.Filename, in.MimeType, in.Size,
+		key, in.Filename, in.MimeType, size,
 		scope.UserID, s.now(),
 	)
 	if err != nil {
@@ -106,7 +120,7 @@ func (s *AttachmentService) Upload(ctx context.Context, scope tenant.TenantScope
 		s.demoteOtherCovers(ctx, scope, a.EntityID, uuid.Nil)
 	}
 
-	if err := s.blobs.Put(ctx, key, in.Body, in.Size); err != nil {
+	if err := s.blobs.Put(ctx, key, bytes.NewReader(data), size); err != nil {
 		return nil, fmt.Errorf("attachment: store bytes: %w", err)
 	}
 
@@ -116,6 +130,7 @@ func (s *AttachmentService) Upload(ctx context.Context, scope tenant.TenantScope
 			// there now and retry once, then give up with the error.
 			s.demoteOtherCovers(ctx, scope, a.EntityID, a.ID)
 			if err2 := s.repo.Create(ctx, scope, a); err2 == nil {
+				s.storeThumbs(ctx, data, key, a)
 				return a, nil
 			} else {
 				err = err2
@@ -125,7 +140,33 @@ func (s *AttachmentService) Upload(ctx context.Context, scope tenant.TenantScope
 		_ = s.blobs.Delete(ctx, key)
 		return nil, err
 	}
+	s.storeThumbs(ctx, data, key, a)
 	return a, nil
+}
+
+// storeThumbs generates the sm/md display variants of a product image
+// beside the original. Best-effort by design: a variant failure (odd
+// file, storage hiccup) only logs — the public page falls back to the
+// original, so uploads must never fail here.
+func (s *AttachmentService) storeThumbs(ctx context.Context, data []byte, key string, a *attachment.Attachment) {
+	if a.EntityType != attachment.EntityProduct || !a.IsImage() {
+		return
+	}
+	for _, size := range []string{thumbs.SizeSm, thumbs.SizeMd} {
+		maxEdge, ok := thumbs.MaxEdge(size)
+		if !ok {
+			continue
+		}
+		out, ok := thumbs.Make(data, maxEdge)
+		if !ok {
+			slog.Warn("thumbs: skip variant", "size", size, "attachment", a.ID)
+			continue
+		}
+		vkey := thumbs.VariantKey(key, size)
+		if err := s.blobs.Put(ctx, vkey, bytes.NewReader(out), int64(len(out))); err != nil {
+			slog.Warn("thumbs: store failed", "size", size, "attachment", a.ID, "err", err)
+		}
+	}
 }
 
 // Open returns the bytes of an attachment along with its metadata.
@@ -172,8 +213,13 @@ func (s *AttachmentService) Delete(ctx context.Context, scope tenant.TenantScope
 	if err := s.repo.Delete(ctx, scope, id); err != nil {
 		return err
 	}
-	// Best-effort byte removal.
+	// Best-effort byte removal, including display variants.
 	_ = s.blobs.Delete(ctx, a.StorageKey)
+	if a.EntityType == attachment.EntityProduct && a.IsImage() {
+		for _, size := range []string{thumbs.SizeSm, thumbs.SizeMd} {
+			_ = s.blobs.Delete(ctx, thumbs.VariantKey(a.StorageKey, size))
+		}
+	}
 	return nil
 }
 

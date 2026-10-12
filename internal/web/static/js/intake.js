@@ -15,6 +15,13 @@
   var grid = document.getElementById('catalog-grid');
   if (!grid) return;
 
+  // Storefront vocabulary comes from data attributes on the grid
+  // (server-rendered per business category); English fallbacks keep
+  // older cached pages working.
+  var vocabItem = grid.getAttribute('data-vocab-item') || 'Product';
+  var vocabItems = (grid.getAttribute('data-vocab-items') || 'products').toLowerCase();
+  var vocabGroup = grid.getAttribute('data-vocab-group') || 'Category';
+
   function cards() {
     return Array.prototype.slice.call(grid.querySelectorAll('.catalog-card'));
   }
@@ -120,12 +127,12 @@
     if (!dialog || !card) return;
     dialogCard = card;
     var d = card.dataset;
-    if (dialogTitle) dialogTitle.textContent = d.name || 'Product';
+    if (dialogTitle) dialogTitle.textContent = d.name || vocabItem;
     if (dialogGallery) {
       var ids = (d.images || '').split(',').filter(function (x) { return x; });
       var html = '';
       ids.forEach(function (id) {
-        html += '<img src="/public/product-images/' + encodeURIComponent(id) + '" alt="" loading="lazy" class="w-24 h-24 rounded-lg object-cover shrink-0 bg-surface-container-low">';
+        html += '<img src="/public/product-images/' + encodeURIComponent(id) + '?size=sm" alt="" loading="lazy" class="w-24 h-24 rounded-lg object-cover shrink-0 bg-surface-container-low">';
       });
       dialogGallery.innerHTML = html;
       dialogGallery.style.display = ids.length ? '' : 'none';
@@ -134,7 +141,7 @@
       var rows = [];
       if (d.material) rows.push(['Material', d.material]);
       if (d.color) rows.push(['Color', d.color]);
-      if (d.category) rows.push(['Category', d.category]);
+      if (d.category) rows.push([vocabGroup, d.category]);
       if (d.availability === 'low_stock') rows.push(['Availability', 'Low stock']);
       if (d.availability === 'made_to_order') rows.push(['Availability', 'Made to order']);
       if (d.proddays && d.proddays !== '0') rows.push(['Lead time', '~' + d.proddays + ' days']);
@@ -229,7 +236,7 @@
     var hasDesc = !!field('description');
     var html = '';
     if (!items.length && !hasDesc) {
-      html += '<p class="font-body-md text-body-md text-on-surface-variant">Nothing to review yet — add a product above or describe what you need, then come back.</p>';
+      html += '<p class="font-body-md text-body-md text-on-surface-variant">Nothing to review yet — add ' + esc(vocabItems) + ' above or describe what you need, then come back.</p>';
     } else {
       html += '<dl class="grid grid-cols-[140px_1fr] gap-x-space-sm gap-y-1 font-body-md text-body-md">';
       html += '<dt class="text-on-surface-variant">Name</dt><dd class="text-on-surface font-semibold">' + esc(field('customer_name')) + '</dd>';

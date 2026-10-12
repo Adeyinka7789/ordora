@@ -25,15 +25,15 @@ func NewPublicOrderRepo(db *DB, ids app.IDGen) *PublicOrderRepo {
 	return &PublicOrderRepo{db: db, ids: ids}
 }
 
-// LookupOrgBySlug resolves a business slug to (id, name, currency).
-// Columns are named explicitly so a stale function shape fails loudly in
-// logs instead of silently shifting values.
+// LookupOrgBySlug resolves a business slug to (id, name, currency,
+// category). Columns are named explicitly so a stale function shape
+// fails loudly in logs instead of silently shifting values.
 func (r *PublicOrderRepo) LookupOrgBySlug(ctx context.Context, slug string) (*app.PublicOrg, error) {
 	var out *app.PublicOrg
 	err := r.db.WithTx(ctx, func(tx pgx.Tx) error {
-		const q = `SELECT org_id, org_name, currency, email, slug FROM lookup_public_org($1)`
+		const q = `SELECT org_id, org_name, currency, email, slug, business_category FROM lookup_public_org($1)`
 		var o app.PublicOrg
-		if err := tx.QueryRow(ctx, q, slug).Scan(&o.ID, &o.Name, &o.Currency, &o.Email, &o.Slug); err != nil {
+		if err := tx.QueryRow(ctx, q, slug).Scan(&o.ID, &o.Name, &o.Currency, &o.Email, &o.Slug, &o.BusinessCategory); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return app.ErrPublicOrgNotFound
 			}

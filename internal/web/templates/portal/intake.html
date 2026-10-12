@@ -1,4 +1,5 @@
 {{ define "portal/intake.html" }}
+{{ $v := .Vocab.OrGeneric }}
 <div class="w-full max-w-3xl mx-auto px-margin md:px-margin-desktop py-space-lg md:py-space-xl flex flex-col gap-space-lg">
 
   {{ if .Preview }}
@@ -79,7 +80,7 @@
 
       {{ if .Products }}
         <div class="flex flex-col gap-space-sm" id="catalog-section">
-          <span class="font-label-md text-label-md text-on-surface">Pick from the catalog <span class="text-on-surface-variant font-normal">(add what you need — review everything before sending)</span></span>
+          <span class="font-label-md text-label-md text-on-surface">Pick from our {{ lower $v.Items }} <span class="text-on-surface-variant font-normal">(add what you need — review everything before sending)</span></span>
           <details class="rounded-lg bg-surface-container-low px-space-sm py-space-xs">
             <summary class="font-label-sm text-label-sm text-on-surface font-semibold cursor-pointer">What do these labels mean?</summary>
             <ul class="font-body-sm text-body-sm text-on-surface-variant flex flex-col gap-1 py-space-xs list-disc pl-5">
@@ -90,29 +91,90 @@
             </ul>
           </details>
           <div class="flex flex-col md:flex-row gap-space-sm">
-            <input type="search" id="catalog-search" placeholder="Search products…" autocomplete="off" aria-label="Search products"
+            <input type="search" id="catalog-search" placeholder="Search {{ lower $v.Items }}…" autocomplete="off" aria-label="Search {{ lower $v.Items }}"
                    class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container md:flex-1">
             {{ if .Categories }}
-            <select id="catalog-category" aria-label="Filter by category"
+            <select id="catalog-category" aria-label="Filter by {{ lower $v.Group }}"
                     class="h-9 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
-              <option value="">All categories</option>
+              <option value="">All {{ lower $v.Groups }}</option>
               {{ range .Categories }}<option value="{{ . }}">{{ . }}</option>{{ end }}
             </select>
             {{ end }}
           </div>
-          <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-space-sm" role="list">
+          <div id="catalog-grid" class="{{ if $v.GalleryFirst }}grid grid-cols-1 md:grid-cols-2{{ else }}grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4{{ end }} gap-space-sm" role="list"
+               data-vocab-item="{{ $v.Item }}" data-vocab-items="{{ lower $v.Items }}" data-vocab-group="{{ $v.Group }}">
           {{ range .Products }}
             {{ $pid := .ID }}
+            {{ $pname := .Name }}
+            {{ if $v.GalleryFirst }}
+            <div class="catalog-card flex flex-col gap-space-sm p-space-md rounded-xl bg-surface-container-low" role="listitem"
+                 data-id="{{ .ID }}" data-name="{{ .Name }}" data-price="{{ .PriceMinor }}" data-currency="{{ .Currency }}"
+                 data-quote="{{ if .QuoteOnly }}1{{ end }}" data-material="{{ .Material }}" data-category="{{ .Category }}"
+                 data-availability="{{ .Availability }}" data-search="{{ .Name }} {{ .Material }} {{ .Category }}"
+                 data-specs="{{ .Specs }}" data-color="{{ .Color }}" data-proddays="{{ .ProductionDays }}"
+                 data-desc="{{ .Description }}" data-images="{{ range $i, $img := .ImageIDs }}{{ if lt $i 5 }}{{ if $i }},{{ end }}{{ $img }}{{ end }}{{ end }}">
+              {{ if .CoverImageID }}
+              <div class="rounded-lg overflow-hidden aspect-video bg-surface-container">
+                <img src="/public/product-images/{{ .CoverImageID }}?size=md" alt="{{ .Name }}" loading="lazy" class="w-full h-full object-cover">
+              </div>
+              {{ else }}
+              <div class="rounded-lg aspect-video bg-surface-container flex items-center justify-center text-outline" aria-hidden="true">
+                <span class="material-symbols-outlined text-[40px]">photo_camera</span>
+              </div>
+              {{ end }}
+              <div class="flex flex-col gap-1">
+                {{ if .Category }}<span class="self-start px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">{{ .Category }}</span>{{ end }}
+                <span class="font-headline-md text-headline-md text-on-surface font-bold">{{ .Name }}</span>
+                {{ if .ShortDescription }}<span class="font-body-md text-body-md text-on-surface-variant">{{ .ShortDescription }}</span>
+                {{ else if .Description }}<span class="font-body-md text-body-md text-on-surface-variant">{{ .Description }}</span>{{ end }}
+                {{ if .Specs }}<span class="font-body-sm text-body-sm text-on-surface-variant">{{ .Specs }}</span>{{ end }}
+                {{ if gt .ProductionDays 0 }}<span class="font-body-sm text-body-sm text-on-surface-variant">Delivery in ~{{ .ProductionDays }} days</span>{{ end }}
+                {{ if eq .Availability "low_stock" }}<span class="font-label-sm text-label-sm text-amber-700 font-semibold">Few dates left — book soon</span>{{ end }}
+                {{ if eq .Availability "made_to_order" }}<span class="font-label-sm text-label-sm text-on-surface-variant">Shot after you book</span>{{ end }}
+                <span class="font-code-md text-code-md text-primary font-bold">
+                  {{ if .QuoteOnly }}Request quote{{ else }}{{ if .StartingFrom }}Starting from {{ end }}{{ currency .PriceMinor .Currency }}{{ end }}
+                </span>
+              </div>
+              {{ if .Questions }}
+              <div class="flex flex-col gap-1">
+                {{ range .Questions }}
+                <label class="flex flex-col gap-0.5">
+                  <span class="font-label-sm text-label-sm text-on-surface">{{ .Label }}{{ if .Required }} *{{ end }}</span>
+                  <input type="text" name="pq_{{ $pid }}_{{ .Key }}" value="{{ index $.Answers (printf "pq_%s_%s" $pid .Key) }}" maxlength="500"
+                         aria-label="{{ .Label }} for {{ $pname }}"
+                         class="h-8 px-2 rounded bg-surface-container-lowest text-on-surface font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
+                </label>
+                {{ end }}
+              </div>
+              {{ end }}
+              <div class="flex items-center gap-2">
+                <button type="button" class="catalog-details h-10 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex-1" data-card-details="{{ .ID }}">{{ $v.Details }}</button>
+                <div class="catalog-actions flex items-center gap-2 flex-1">
+                  <button type="button" class="catalog-add h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold w-full" data-card-add="{{ .ID }}">{{ $v.Select }}</button>
+                  <div class="catalog-stepper hidden items-center gap-1" data-stepper="{{ .ID }}">
+                    <button type="button" class="w-10 h-10 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-lg" data-step-dec="{{ .ID }}" aria-label="Remove one {{ .Name }}">−</button>
+                    <input type="number" name="qty_{{.ID}}" value="{{ index $.Quantities .ID }}" min="0" step="1" inputmode="numeric" aria-label="Quantity of {{ .Name }}"
+                           class="catalog-qty h-10 w-16 px-2 rounded bg-surface-container-lowest text-on-surface font-code-md text-code-md text-center focus:outline-none focus:ring-2 focus:ring-primary-container">
+                    <button type="button" class="w-10 h-10 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-lg" data-step-inc="{{ .ID }}" aria-label="Add one {{ .Name }}">+</button>
+                  </div>
+                </div>
+              </div>
+              <a href="/book/{{ $.Slug }}?service={{ .ID }}" class="h-10 px-3 rounded border border-outline-variant/40 text-on-surface font-label-md text-label-md font-semibold flex items-center justify-center gap-1 hover:bg-surface-container-low transition-colors">
+                <span aria-hidden="true" class="material-symbols-outlined text-[18px]">calendar_month</span>
+                <span>Book a date</span>
+              </a>
+            </div>
+            {{ else }}
             <div class="catalog-card ecommerce-product-card flex flex-col gap-space-sm p-space-sm rounded-xl bg-surface-container-low" role="listitem"
                  data-id="{{ .ID }}" data-name="{{ .Name }}" data-price="{{ .PriceMinor }}" data-currency="{{ .Currency }}"
                  data-quote="{{ if .QuoteOnly }}1{{ end }}" data-material="{{ .Material }}" data-category="{{ .Category }}"
                  data-availability="{{ .Availability }}" data-search="{{ .Name }} {{ .Material }} {{ .Category }}"
                  data-specs="{{ .Specs }}" data-color="{{ .Color }}" data-proddays="{{ .ProductionDays }}"
-                 data-desc="{{ .Description }}" data-images="{{ range $i, $img := .ImageIDs }}{{ if $i }},{{ end }}{{ $img }}{{ end }}">
+                 data-desc="{{ .Description }}" data-images="{{ range $i, $img := .ImageIDs }}{{ if lt $i 5 }}{{ if $i }},{{ end }}{{ $img }}{{ end }}{{ end }}">
               <div class="flex flex-col gap-space-sm">
                 {{ if .CoverImageID }}
                 <div class="catalog-product-media">
-                  <img src="/public/product-images/{{ .CoverImageID }}" alt="{{ .Name }}" loading="lazy" class="w-full h-full object-cover">
+                  <img src="/public/product-images/{{ .CoverImageID }}?size=md" alt="{{ .Name }}" loading="lazy" class="w-full h-full object-cover">
                 </div>
                 {{ else }}
                 <div class="catalog-product-media catalog-product-placeholder" aria-hidden="true">
@@ -139,16 +201,16 @@
                 <label class="flex flex-col gap-0.5">
                   <span class="font-label-sm text-label-sm text-on-surface">{{ .Label }}{{ if .Required }} *{{ end }}</span>
                   <input type="text" name="pq_{{ $pid }}_{{ .Key }}" value="{{ index $.Answers (printf "pq_%s_%s" $pid .Key) }}" maxlength="500"
-                         aria-label="{{ .Label }} for {{ .Name }}"
+                         aria-label="{{ .Label }} for {{ $pname }}"
                          class="h-8 px-2 rounded bg-surface-container-lowest text-on-surface font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
                 </label>
                 {{ end }}
 </div>
 {{ end }}
               <div class="flex items-center justify-between gap-2">
-                <button type="button" class="catalog-details h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold" data-card-details="{{ .ID }}">Details</button>
+                <button type="button" class="catalog-details h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold" data-card-details="{{ .ID }}">{{ $v.Details }}</button>
                 <div class="catalog-actions flex items-center gap-2">
-                  <button type="button" class="catalog-add h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold" data-card-add="{{ .ID }}">Add to request</button>
+                  <button type="button" class="catalog-add h-10 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold" data-card-add="{{ .ID }}">{{ $v.Select }}</button>
                   <div class="catalog-stepper hidden items-center gap-1" data-stepper="{{ .ID }}">
                     <button type="button" class="w-10 h-10 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-lg" data-step-dec="{{ .ID }}" aria-label="Remove one {{ .Name }}">−</button>
                     <input type="number" name="qty_{{.ID}}" value="{{ index $.Quantities .ID }}" min="0" step="1" inputmode="numeric" aria-label="Quantity of {{ .Name }}"
@@ -159,8 +221,9 @@
               </div>
             </div>
           {{ end }}
+          {{ end }}
           </div>
-          <p id="catalog-empty" class="hidden font-body-md text-body-md text-on-surface-variant">No products match your search.</p>
+          <p id="catalog-empty" class="hidden font-body-md text-body-md text-on-surface-variant">No {{ lower $v.Items }} match your search.</p>
 
           <dialog id="product-dialog" class="rounded-xl p-0 max-w-lg w-[calc(100vw-2rem)]" aria-labelledby="product-dialog-title">
             <div class="flex flex-col gap-space-sm p-space-lg">
@@ -171,7 +234,7 @@
               <div id="product-dialog-gallery" class="flex gap-2 overflow-x-auto"></div>
               <dl id="product-dialog-facts" class="grid grid-cols-[120px_1fr] gap-x-space-sm gap-y-1 font-body-md text-body-md"></dl>
               <p id="product-dialog-desc" class="font-body-md text-body-md text-on-surface-variant whitespace-pre-wrap"></p>
-              <button type="button" id="product-dialog-add" class="h-11 px-space-md rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">Add to request</button>
+              <button type="button" id="product-dialog-add" class="h-11 px-space-md rounded bg-primary-container text-on-primary font-label-md text-label-md font-semibold">{{ $v.Select }}</button>
             </div>
           </dialog>
         </div>
@@ -231,7 +294,7 @@
 
     <div id="request-summary" class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm lg:sticky lg:top-24" aria-live="polite" aria-atomic="true" aria-label="Request summary">
       <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Your request</h2>
-      <p id="request-empty" class="font-body-md text-body-md text-on-surface-variant">Nothing added yet — pick products above or describe what you need below.</p>
+      <p id="request-empty" class="font-body-md text-body-md text-on-surface-variant">Nothing added yet — pick {{ lower $v.Items }} above or describe what you need below.</p>
       <ul id="request-lines" class="flex flex-col gap-1"></ul>
       <div class="flex justify-between border-t border-outline-variant/30 pt-space-sm font-headline-md text-headline-md font-bold text-on-surface">
         <span>Estimated total</span><span id="request-total" class="tabular-nums">—</span>

@@ -257,6 +257,21 @@ func TestBookingRepo_GateMatrix(t *testing.T) {
 	if cfg, _ := repo.BookingConfig(ctx, slug); cfg.Eligible {
 		t.Error("tailoring org must not be eligible")
 	}
+
+	// Photography (flag still on): shoot-date booking applies.
+	if err := db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx,
+			`UPDATE organizations SET business_category = 'Photography & Media' WHERE id = $1`, scope.OrgID)
+		return err
+	}); err != nil {
+		t.Fatalf("recategorize photo: %v", err)
+	}
+	if cfg, _ := repo.BookingConfig(ctx, slug); !cfg.BookingApplies() {
+		t.Fatal("photography org must apply booking")
+	}
+	if cfg, _ := repo.BookingConfig(ctx, slug); !cfg.Eligible {
+		t.Error("photography org must be eligible")
+	}
 }
 
 // TestBookingRepo_SameSlotRace proves one winner: two concurrent bookings

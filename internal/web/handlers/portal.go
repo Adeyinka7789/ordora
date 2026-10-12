@@ -17,8 +17,10 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/app"
 	"github.com/Adeyinka7789/ordora/internal/domain/attachment"
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/infra/id"
 	"github.com/Adeyinka7789/ordora/internal/infra/storage"
+	"github.com/Adeyinka7789/ordora/internal/thumbs"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
@@ -173,6 +175,9 @@ type intakePageData struct {
 	Quantities map[string]string
 	Answers    map[string]string // pq_<product>_<key> -> raw answer (error re-render)
 	Preview    bool              // staff preview (?preview=1): banner only
+	// Vocab is the customer-facing storefront wording derived from the
+	// org's business category. Staff-facing language is untouched.
+	Vocab org.StorefrontVocab
 	// Egg is the perishable-module block. Nil for normal businesses.
 	Egg *eggIntakeData
 }
@@ -299,6 +304,7 @@ func (h *PortalHandler) IntakeForm(w http.ResponseWriter, r *http.Request) {
 		Products:   h.intakeProducts(r, slug),
 		Quantities: map[string]string{},
 		Egg:        buildEggData(h.Public.EggConfig(r.Context(), slug)),
+		Vocab:      org.Vocab(),
 	}
 	data.Categories = productCategories(data.Products)
 	// Preview mode: staff opening ?preview=1 see exactly what customers
@@ -610,7 +616,7 @@ func (h *PortalHandler) IntakeSubmit(w http.ResponseWriter, r *http.Request) {
 		if receiptKey != "" {
 			_ = h.Blobs.Delete(r.Context(), receiptKey)
 		}
-		fail(humanizePublicOrderError(err))
+		fail(humanizePublicOrderError(err, org.Vocab()))
 		return
 	}
 
@@ -709,6 +715,7 @@ func (h *PortalHandler) intakeError(w http.ResponseWriter, r *http.Request, org 
 		Quantities: echo,
 		Answers:    answersEcho,
 		Egg:        buildEggData(h.Public.EggConfig(r.Context(), form.Slug)),
+		Vocab:      org.Vocab(),
 		Form: intakeForm{
 			CustomerName:  form.CustomerName,
 			CustomerEmail: form.CustomerEmail,
@@ -727,7 +734,7 @@ func (h *PortalHandler) intakeError(w http.ResponseWriter, r *http.Request, org 
 	h.Renderer.PagePublic(w, http.StatusBadRequest, "layouts/public.html", "portal/intake.html", data)
 }
 
-func humanizePublicOrderError(err error) string {
+func humanizePublicOrderError(err error, vocab org.StorefrontVocab) string {
 	var soldOut *app.EggSoldOutError
 	switch {
 	case errors.As(err, &soldOut):
@@ -752,7 +759,7 @@ func humanizePublicOrderError(err error) string {
 	case errors.Is(err, app.ErrPublicDescRequired):
 		return "Please tell us what you'd like to order."
 	case errors.Is(err, app.ErrPublicOrderEmpty):
-		return "Pick at least one product or tell us what you'd like to order."
+		return "Pick at least one " + strings.ToLower(vocab.OrGeneric().Item) + " or tell us what you'd like to order."
 	case errors.Is(err, app.ErrPublicTooManyItems):
 		return "Too many items — please keep it to 25 or fewer."
 	case errors.Is(err, app.ErrPublicQtyInvalid):
@@ -797,13 +804,23 @@ func (h *PortalHandler) ProofDownload(w http.ResponseWriter, r *http.Request) {
 
 // ProductImage handles GET /public/product-images/{id}: public catalog
 // imagery. Only images on active, visible products resolve; the response
-// is cacheable (image ids are content-stable).
+// is cacheable (image ids are content-stable). ?size=sm|md serves the
+// display variant (legacy images without one fall back to the original).
 func (h *PortalHandler) ProductImage(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUUIDParam(w, r, "id")
 	if !ok {
 		return
 	}
-	f, err := h.Portal.LoadProductImage(r.Context(), id)
+	size := r.URL.Query().Get("size")
+	var (
+		f   *app.PortalFile
+		err error
+	)
+	if thumbs.ValidSize(size) {
+		f, err = h.Portal.LoadProductImageVariant(r.Context(), id, size)
+	} else {
+		f, err = h.Portal.LoadProductImage(r.Context(), id)
+	}
 	if err != nil {
 		http.NotFound(w, r)
 		return

@@ -182,6 +182,18 @@ func (h *AttachmentHandler) UploadToProduct(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Sample-photo cap: at most MaxProductImages cover+gallery images per
+	// product. Checked before buffering bytes so rejected uploads cost
+	// nothing. Older over-limit galleries keep working; the public
+	// storefront only displays the first MaxProductImages.
+	if n, err := h.productImageCount(r.Context(), scope, productID); err != nil {
+		http.Error(w, "could not load images", http.StatusInternalServerError)
+		return
+	} else if n >= attachment.MaxProductImages {
+		http.Error(w, humanizeAttachmentError(attachment.ErrTooManyImages), http.StatusBadRequest)
+		return
+	}
+
 	// The upload form carries purpose=gallery or purpose=cover;
 	// readAndStore normalizes anything else to gallery.
 	a, err := h.readAndStore(r, scope, attachment.EntityProduct, productID)
@@ -299,6 +311,28 @@ func (h *AttachmentHandler) readAndStore(r *http.Request, scope tenant.TenantSco
 	})
 }
 
+// productImageCount counts a product's display images (cover + gallery)
+// for the sample-photo cap.
+func (h *AttachmentHandler) productImageCount(ctx context.Context, scope tenant.TenantScope, productID uuid.UUID) (int, error) {
+	list, err := h.Service.List(ctx, scope, attachment.EntityProduct, productID)
+	if err != nil {
+		return 0, err
+	}
+	return countProductImages(list), nil
+}
+
+// countProductImages counts display images (cover + gallery) in a list.
+// Pure so the cap rule is unit-testable without storage.
+func countProductImages(list []*attachment.Attachment) int {
+	n := 0
+	for _, a := range list {
+		if a != nil && a.IsProductImage() {
+			n++
+		}
+	}
+	return n
+}
+
 func (h *AttachmentHandler) renderAttachmentsFragment(w http.ResponseWriter, r *http.Request, scope tenant.TenantScope, orderID uuid.UUID) {
 	list, err := h.Service.List(r.Context(), scope, attachment.EntityOrder, orderID)
 	if err != nil {
@@ -323,6 +357,8 @@ func humanizeAttachmentError(err error) string {
 		return "The file is empty."
 	case errors.Is(err, attachment.ErrFilenameRequired):
 		return "Please choose a file."
+	case errors.Is(err, attachment.ErrTooManyImages):
+		return "A product can show at most 5 sample photos. Delete one before uploading another."
 	default:
 		return "Could not upload file: " + err.Error()
 	}

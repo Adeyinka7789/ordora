@@ -5,9 +5,9 @@ import (
 )
 
 // RequireBooking gates a route behind the appointment-booking business
-// categories (salons first). Other orgs 404, indistinguishable from "no
-// such page" so trade-specific features don't leak their existence — the
-// same posture as RequireTailoring/RequirePerishable/RequireFlag.
+// categories (salons + photography). Other orgs 404, indistinguishable
+// from "no such page" so trade-specific features don't leak their
+// existence — the same posture as RequireTailoring/RequirePerishable/RequireFlag.
 //
 // Compose inside RequireTenant, e.g. for /dashboard/bookings:
 //

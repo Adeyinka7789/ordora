@@ -143,6 +143,9 @@ func TestIsBookingCategory(t *testing.T) {
 	if !IsBookingCategory("Beauty & Salon") {
 		t.Error("Beauty & Salon must unlock booking")
 	}
+	if !IsBookingCategory(PhotographyCategory) {
+		t.Error("Photography & Media must unlock booking")
+	}
 	for _, cat := range []string{"", "Tailoring & Fashion", "Poultry & Eggs", "Food & Catering", "beauty & salon"} {
 		if IsBookingCategory(cat) {
 			t.Errorf("%q must not unlock booking", cat)

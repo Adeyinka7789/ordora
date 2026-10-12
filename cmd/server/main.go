@@ -950,7 +950,7 @@ func run() error {
 	mux.Handle("POST /dashboard/egg-orders/{id}/complete", perishWrite(http.HandlerFunc(eggH.Complete)))
 	mux.Handle("POST /dashboard/egg-orders/toggle", perishOwner(http.HandlerFunc(eggH.Toggle)))
 	mux.Handle("POST /settings/egg", perishOwner(http.HandlerFunc(eggH.UpdateSettings)))
-	// ---- Booking module (Beauty & Salon + booking_module flag) ----
+	// ---- Booking module (Beauty & Salon + Photography & Media, booking_module flag) ----
 	mux.Handle("GET /dashboard/bookings", booking(http.HandlerFunc(bookingsH.Index)))
 	mux.Handle("POST /dashboard/bookings/{id}/confirm", bookingWrite(http.HandlerFunc(bookingsH.Confirm)))
 	mux.Handle("POST /dashboard/bookings/{id}/complete", bookingWrite(http.HandlerFunc(bookingsH.Complete)))

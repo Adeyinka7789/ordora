@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
@@ -12,6 +13,7 @@ import (
 	"github.com/skip2/go-qrcode"
 
 	"github.com/Adeyinka7789/ordora/internal/app"
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 	"github.com/Adeyinka7789/ordora/internal/domain/tenant"
 	"github.com/Adeyinka7789/ordora/internal/web/middleware"
 	"github.com/Adeyinka7789/ordora/internal/web/render"
@@ -67,6 +69,9 @@ type bookFormData struct {
 	DayClosed    bool
 	DayClosedWhy string
 	Preview      bool
+	// Vocab is the customer-facing wording (packages for photographers,
+	// services for salons). Staff-facing language is untouched.
+	Vocab org.StorefrontVocab
 }
 
 type bookStaffView struct {
@@ -154,6 +159,17 @@ func defaultBookDate(tz string, now time.Time) string {
 	return now.In(app.BookingTimezone(tz)).Format("2006-01-02")
 }
 
+// bookVocab resolves the customer-facing wording for a booking slug.
+// Best-effort: unknown slugs read as the generic storefront.
+func (h *BookHandler) bookVocab(ctx context.Context, slug string) org.StorefrontVocab {
+	if h.Catalog != nil {
+		if o, err := h.Catalog.LookupOrg(ctx, slug); err == nil && o != nil {
+			return o.Vocab()
+		}
+	}
+	return org.VocabForCategory("")
+}
+
 // renderBookForm loads config + catalog + slots and renders the form.
 // slug404 decides unknown slugs (plain 404 either way).
 func (h *BookHandler) renderBookForm(w http.ResponseWriter, r *http.Request, slug string, status int, errMsg string, echo url.Values) {
@@ -162,6 +178,9 @@ func (h *BookHandler) renderBookForm(w http.ResponseWriter, r *http.Request, slu
 		http.NotFound(w, r)
 		return
 	}
+	// Vocabulary follows the org's trade; unknown slugs keep the generic
+	// words. Best-effort: a catalog failure must never break the form.
+	vocab := h.bookVocab(r.Context(), slug)
 	services := servicesForBook(r, h.Catalog, slug)
 	staff := staffForBook(r, h.Booking, slug)
 	date := echo.Get("date")
@@ -196,6 +215,7 @@ func (h *BookHandler) renderBookForm(w http.ResponseWriter, r *http.Request, slu
 		Email:        echo.Get("email"),
 		Notes:        echo.Get("notes"),
 		CancelPolicy: cfg.CancelPolicy,
+		Vocab:        vocab,
 	}
 	if r.URL.Query().Get("preview") == "1" {
 		if s := middleware.SessionFromContext(r.Context()); s != nil && !s.Scope.IsZero() {
@@ -249,12 +269,12 @@ func (h *BookHandler) BookSubmit(w http.ResponseWriter, r *http.Request) {
 
 	svc, serviceID, ok := resolveService(servicesForBook(r, h.Catalog, slug), echo.Get("service"))
 	if !ok {
-		fail("Choose a service first.")
+		fail("Choose a " + strings.ToLower(h.bookVocab(r.Context(), slug).OrGeneric().Item) + " first.")
 		return
 	}
 	staffID, ok := resolveStaff(staffForBook(r, h.Booking, slug), echo.Get("staff"))
 	if !ok {
-		fail("Choose a stylist (or anyone available).")
+		fail("Choose a " + strings.ToLower(h.bookVocab(r.Context(), slug).OrGeneric().Staff) + " (or anyone available).")
 		return
 	}
 
@@ -267,7 +287,7 @@ func (h *BookHandler) BookSubmit(w http.ResponseWriter, r *http.Request) {
 		Date:        echo.Get("date"), StartTime: echo.Get("start"),
 	})
 	if err != nil {
-		fail(humanizeBookingError(err))
+		fail(humanizeBookingError(err, h.bookVocab(r.Context(), slug)))
 		return
 	}
 	h.Renderer.PagePublic(w, http.StatusOK, "layouts/public.html", "book/confirmation.html", struct {
@@ -320,7 +340,7 @@ func (h *BookHandler) QR(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(png)
 }
 
-func humanizeBookingError(err error) string {
+func humanizeBookingError(err error, vocab org.StorefrontVocab) string {
 	switch {
 	case errors.Is(err, app.ErrBookingNotEligible):
 		return "Online booking is not available for this business."
@@ -335,7 +355,7 @@ func humanizeBookingError(err error) string {
 	case errors.Is(err, app.ErrBookingContactNeeded):
 		return "Please give an email or a phone number so the shop can reach you."
 	case errors.Is(err, app.ErrBookingNoService):
-		return "Choose a service first."
+		return "Choose a " + strings.ToLower(vocab.OrGeneric().Item) + " first."
 	default:
 		return "Something went wrong. Please try again."
 	}

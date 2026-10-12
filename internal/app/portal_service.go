@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -15,6 +16,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/domain/order"
 	"github.com/Adeyinka7789/ordora/internal/domain/payment"
 	"github.com/Adeyinka7789/ordora/internal/domain/portal"
+	"github.com/Adeyinka7789/ordora/internal/thumbs"
 )
 
 // PortalRepoStore is the read contract for the public portal.
@@ -190,6 +192,17 @@ func (s *PortalService) LoadAttachment(ctx context.Context, rawToken string, att
 
 // LoadProductImage resolves one public catalog image and opens its bytes.
 func (s *PortalService) LoadProductImage(ctx context.Context, attachmentID uuid.UUID) (*PortalFile, error) {
+	return s.loadProductImage(ctx, attachmentID, "")
+}
+
+// LoadProductImageVariant serves the sm/md display variant of a catalog
+// image. Unknown sizes and legacy images without a stored variant fall
+// back to the original — thumbs must never 404 what the original serves.
+func (s *PortalService) LoadProductImageVariant(ctx context.Context, attachmentID uuid.UUID, size string) (*PortalFile, error) {
+	return s.loadProductImage(ctx, attachmentID, size)
+}
+
+func (s *PortalService) loadProductImage(ctx context.Context, attachmentID uuid.UUID, size string) (*PortalFile, error) {
 	if attachmentID == uuid.Nil {
 		return nil, ErrPortalNotFound
 	}
@@ -199,6 +212,12 @@ func (s *PortalService) LoadProductImage(ctx context.Context, attachmentID uuid.
 	img, err := s.repo.GetPublicProductImage(ctx, attachmentID)
 	if err != nil {
 		return nil, err
+	}
+	if size != "" && thumbs.ValidSize(size) {
+		if f, ok := s.openVariant(ctx, img, size); ok {
+			return f, nil
+		}
+		// No stored variant (legacy upload): fall through to original.
 	}
 	body, err := s.blobs.Get(ctx, img.StorageKey)
 	if err != nil {
@@ -210,6 +229,26 @@ func (s *PortalService) LoadProductImage(ctx context.Context, attachmentID uuid.
 		SizeBytes: img.SizeBytes,
 		Body:      body,
 	}, nil
+}
+
+// openVariant reads a stored display variant. ok=false on any miss so
+// the caller falls back to the original.
+func (s *PortalService) openVariant(ctx context.Context, img *PublicProductImage, size string) (f *PortalFile, ok bool) {
+	body, err := s.blobs.Get(ctx, thumbs.VariantKey(img.StorageKey, size))
+	if err != nil {
+		return nil, false
+	}
+	defer body.Close()
+	data, err := io.ReadAll(body)
+	if err != nil || len(data) == 0 {
+		return nil, false
+	}
+	return &PortalFile{
+		Filename:  img.Filename,
+		MimeType:  thumbs.Mime,
+		SizeBytes: int64(len(data)),
+		Body:      io.NopCloser(bytes.NewReader(data)),
+	}, true
 }
 
 func HashToken(raw string) []byte {

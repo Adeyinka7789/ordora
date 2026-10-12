@@ -1,4 +1,5 @@
 {{ define "book/form.html" }}
+{{ $b := .Vocab.OrBooking }}
 <div class="w-full max-w-3xl mx-auto px-margin md:px-margin-desktop py-space-lg md:py-space-xl flex flex-col gap-space-lg">
 
   {{ if .Preview }}
@@ -8,7 +9,7 @@
   <div class="flex flex-col gap-space-sm">
     <span class="font-label-md text-label-md uppercase tracking-wider text-primary font-semibold">Book an Appointment</span>
     <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Book with {{ .OrgName }}</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant">Pick a service, choose a day, take a time. Your request is confirmed by the business.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">Pick a {{ lower $b.Item }}, choose a day, take a time. Your request is confirmed by the business.</p>
   </div>
 
   {{ if .Error }}<div role="alert" class="p-space-md rounded bg-error-container text-on-error-container font-label-md text-label-md">{{ .Error }}</div>{{ end }}
@@ -20,11 +21,11 @@
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-md">
       <div class="flex items-center gap-2 pb-space-xs border-b border-outline-variant/30">
         <span aria-hidden="true" class="material-symbols-outlined text-primary text-[20px]">content_cut</span>
-        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">Service &amp; Day</h2>
+        <h2 class="font-headline-md text-headline-md text-on-surface font-bold">{{ $b.Item }} &amp; Day</h2>
       </div>
 
       <label class="flex flex-col gap-1">
-        <span class="font-label-md text-label-md text-on-surface">Service *</span>
+        <span class="font-label-md text-label-md text-on-surface">{{ $b.Item }} *</span>
         <select name="service" required
                 class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
           <option value="">Choose…</option>
@@ -34,7 +35,7 @@
 
       {{ if .Staff }}
       <label class="flex flex-col gap-1">
-        <span class="font-label-md text-label-md text-on-surface">Stylist</span>
+        <span class="font-label-md text-label-md text-on-surface">{{ $b.Staff }}</span>
         <select name="staff"
                 class="h-10 px-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container">
           <option value="">Anyone available</option>
@@ -75,7 +76,7 @@
           {{ end }}
         </div>
       {{ else }}
-        <p class="font-body-md text-body-md text-on-surface-variant">Pick a service and day, then press “Check availability” to see open times.</p>
+        <p class="font-body-md text-body-md text-on-surface-variant">Pick a {{ lower $b.Item }} and day, then press “Check availability” to see open times.</p>
       {{ end }}
     </div>
 
@@ -106,7 +107,7 @@
       </label>
 
       <label class="flex flex-col gap-1">
-        <span class="font-label-md text-label-md text-on-surface">Notes for the stylist (optional)</span>
+        <span class="font-label-md text-label-md text-on-surface">Notes for the {{ lower $b.Staff }} (optional)</span>
         <textarea name="notes" rows="3" maxlength="2000" placeholder="Anything they should know before your visit."
                   class="p-3 rounded bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container resize-none">{{ .Notes }}</textarea>
       </label>

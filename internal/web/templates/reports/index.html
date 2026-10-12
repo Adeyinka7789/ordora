@@ -99,14 +99,22 @@
   <!-- Main chart + stages -->
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
     <div class="lg:col-span-8 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-space-sm">
         <div>
           <h2 class="font-headline-md font-bold text-on-surface">Revenue &amp; cash flow</h2>
           <p class="font-body-sm text-on-surface-variant">Invoiced vs cash settled per bucket</p>
         </div>
+        <div class="flex items-center gap-3 text-label-sm text-on-surface-variant shrink-0" aria-hidden="true">
+          <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#0077BE"></span>Invoiced</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#006e4b"></span>Settled</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full" style="background:#d97706"></span>Profit</span>
+        </div>
       </div>
       <div class="h-72 relative">
-        <canvas id="trend-chart"></canvas>
+        <div id="trend-chart" class="absolute inset-0" role="img" aria-label="Revenue and cash flow chart"></div>
+        <div id="trend-empty" class="absolute inset-x-0 top-10 hidden justify-center pointer-events-none">
+          <p class="px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md shadow-sm">No data in this range yet — the axes above will fill in as orders arrive.</p>
+        </div>
       </div>
     </div>
 
@@ -282,9 +290,15 @@
 
 <script>
   window.__ORDORA_REPORTS__ = {
+    currency: "{{ $.Currency }}",
     trend: [
       {{ range $i, $p := $b.Trend }}{{ if $i }},{{ end }}
         { bucket_start: "{{ $p.BucketStart.Format "2006-01-02T15:04:05Z07:00" }}", invoiced_minor: {{ $p.InvoicedMinor }}, settled_minor: {{ $p.SettledMinor }} }
+      {{ end }}
+    ],
+    profit: [
+      {{ range $i, $p := $b.ProfitTrend }}{{ if $i }},{{ end }}
+        { bucket_start: "{{ $p.BucketStart.Format "2006-01-02T15:04:05Z07:00" }}", profit_minor: {{ $p.ProfitMinor }} }
       {{ end }}
     ]
   };

@@ -33,6 +33,26 @@ func TestPublicOrderRepo_LookupOrg(t *testing.T) {
 		t.Fatalf("expected slug in projection: %+v", got)
 	}
 
+	// The storefront vocabulary rides on the lookup: set a trade
+	// category and it must round-trip for the public page to read.
+	err = db.WithTenant(ctx, scope.OrgID, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, `UPDATE organizations SET business_category = 'Photography & Media' WHERE id = $1`, scope.OrgID)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("set category: %v", err)
+	}
+	got, err = repo.LookupOrgBySlug(ctx, slug)
+	if err != nil {
+		t.Fatalf("lookup after category set: %v", err)
+	}
+	if got.BusinessCategory != "Photography & Media" {
+		t.Fatalf("expected business_category to round-trip, got %q", got.BusinessCategory)
+	}
+	if v := got.Vocab(); v.Item != "Package" || v.Group != "Event type" {
+		t.Fatalf("photo org must read the package vocab, got %+v", v)
+	}
+
 	if _, err := repo.LookupOrgBySlug(ctx, "no-such-shop-xyz"); err == nil {
 		t.Fatal("unknown slug should fail")
 	} else if err != app.ErrPublicOrgNotFound {

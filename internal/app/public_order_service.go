@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/Adeyinka7789/ordora/internal/domain/org"
 )
 
 // PublicOrderInput is the incoming submission data.
@@ -120,6 +122,18 @@ type PublicOrg struct {
 	Currency string
 	Email    string
 	Slug     string
+	// BusinessCategory is the org's trade taxonomy value (may be blank
+	// for older orgs). The public storefront derives its vocabulary
+	// from it at read time; blank reads as the generic storefront.
+	BusinessCategory string
+}
+
+// Vocab returns the customer-facing storefront vocabulary for this org.
+func (o *PublicOrg) Vocab() org.StorefrontVocab {
+	if o == nil {
+		return org.VocabFor(org.StorefrontGeneric)
+	}
+	return org.VocabForCategory(o.BusinessCategory)
 }
 
 // PublicOrderDB is the persistence contract for public submissions.
