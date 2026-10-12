@@ -16,6 +16,12 @@
     <span aria-hidden="true" class="material-symbols-outlined mnav-icon">receipt_long</span>
     <span class="mnav-label">Orders</span>
   </a>
+  {{ if and (flag "booking_module" .Shell.OrgID) .Shell.IsBooking }}
+  <a href="/dashboard/bookings" class="mnav-item" data-mnav="bookings" aria-label="Bookings">
+    <span aria-hidden="true" class="material-symbols-outlined mnav-icon">event</span>
+    <span class="mnav-label">Bookings</span>
+  </a>
+  {{ end }}
   {{ if flag "customers" .Shell.OrgID }}
   <a href="/customers" class="mnav-item" data-mnav="customers" aria-label="Customers">
     <span aria-hidden="true" class="material-symbols-outlined mnav-icon">group</span>

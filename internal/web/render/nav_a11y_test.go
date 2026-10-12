@@ -67,6 +67,10 @@ func TestNavA11yFoundations(t *testing.T) {
 	if !strings.Contains(string(bottomnav), `{{ if flag "customers"`) {
 		t.Error("bottomnav customers tab must be flag-gated like the sidebar")
 	}
+	if !strings.Contains(string(bottomnav), `data-mnav="bookings"`) ||
+		!strings.Contains(string(bottomnav), `flag "booking_module"`) {
+		t.Error("bottomnav bookings tab must be present and feature-gated")
+	}
 
 	// Breadcrumb trail renders linked parents + aria-current page.
 	out, err := r.Raw("partials/breadcrumbs.html", map[string]any{

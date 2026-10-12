@@ -1,19 +1,39 @@
 {{ define "calendar/index.html" }}
 <div class="p-space-lg lg:p-space-xl flex flex-col gap-space-lg max-w-[1440px] mx-auto">
 
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+  <div class="calendar-header flex flex-col md:flex-row md:items-center justify-between gap-space-md">
     <div class="flex flex-col">
       <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Occasion Calendar</h1>
-      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .WeekLabel }} · due dates, party occasions, overdue follow-ups.</p>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-0.5">{{ .MonthLabel }} · due dates, party occasions, overdue follow-ups.</p>
     </div>
-    <div class="flex items-center gap-space-xs">
-      <a href="/calendar?date={{ .PrevWeek }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center">← Prev</a>
-      <a href="/calendar?date={{ .ThisWeek }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center">Today</a>
-      <a href="/calendar?date={{ .NextWeek }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center">Next →</a>
+    <div class="calendar-month-controls flex items-center gap-space-xs flex-wrap">
+      <a href="/calendar?month={{ .PrevMonth }}&filter={{ .Filter }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center justify-center">← Prev</a>
+      <a href="/calendar?month={{ .ThisMonth }}&filter={{ .Filter }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center justify-center">Today</a>
+      <a href="/calendar?month={{ .NextMonth }}&filter={{ .Filter }}" class="h-9 px-3 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold inline-flex items-center justify-center">Next →</a>
     </div>
   </div>
 
-  {{ if .Overdue }}
+  <div class="calendar-period-bar flex flex-col md:flex-row md:items-center justify-between gap-space-sm bg-surface-container-lowest rounded-lg p-space-sm shadow-sm">
+    <div class="calendar-quarter-controls flex items-center gap-1 flex-wrap" aria-label="Quarter navigation">
+      <span class="font-label-sm text-label-sm text-on-surface-variant font-semibold mr-1">{{ .Year }}</span>
+      {{ range $q := (list 1 2 3 4) }}
+        {{ $month := printf "%04d-%02d" $.Year (index (list 1 4 7 10) (sub $q 1)) }}
+        <a href="/calendar?month={{ $month }}&filter={{ $.Filter }}" class="h-8 px-3 rounded {{ if eq $.Quarter $q }}bg-primary-container text-on-primary{{ else }}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{{ end }} font-label-sm text-label-sm font-semibold inline-flex items-center justify-center">Q{{ $q }}</a>
+      {{ end }}
+    </div>
+    <form method="get" action="/calendar" class="calendar-filter-form flex items-center gap-space-xs">
+      <input type="hidden" name="month" value="{{ .Month }}">
+      <label for="calendar-filter" class="sr-only">Calendar filter</label>
+      <select id="calendar-filter" name="filter" onchange="this.form.submit()" class="h-9 px-3 rounded bg-surface-container text-on-surface font-label-sm text-label-sm focus:outline-none focus:ring-2 focus:ring-primary-container">
+        <option value="all" {{ if eq .Filter "all" }}selected{{ end }}>All activity</option>
+        <option value="orders" {{ if eq .Filter "orders" }}selected{{ end }}>Orders</option>
+        <option value="occasions" {{ if eq .Filter "occasions" }}selected{{ end }}>Occasions</option>
+        <option value="overdue" {{ if eq .Filter "overdue" }}selected{{ end }}>Overdue</option>
+      </select>
+    </form>
+  </div>
+
+  {{ if and .Overdue (or (eq .Filter "all") (eq .Filter "") (eq .Filter "overdue")) }}
     <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col gap-space-sm accent-card" style="border-left-color:#ba1a1a">
       <div class="flex items-center gap-2">
         <span aria-hidden="true" class="material-symbols-outlined text-error text-[22px]">warning</span>
@@ -41,15 +61,18 @@
     </div>
   {{ end }}
 
-  <div class="grid grid-cols-1 md:grid-cols-7 gap-space-sm">
+  <div class="grid grid-cols-7 gap-1 sm:gap-space-xs" aria-label="{{ .MonthLabel }} calendar">
+    {{ range (list "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun") }}
+      <div class="px-1 py-1.5 text-center font-label-sm text-label-sm uppercase tracking-wider text-outline">{{ . }}</div>
+    {{ end }}
     {{ range .Days }}
-      <div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-xs min-h-[140px] {{ if .IsToday }}ring-2 ring-primary-container{{ end }}">
+      <div title="{{ .Date.Format "02 January 2006" }} — open the linked activity below" class="calendar-day {{ if ne (.Date.Format "2006-01") $.Month }}is-adjacent{{ end }} bg-surface-container-lowest rounded-lg shadow-sm p-1.5 sm:p-space-sm flex flex-col gap-1 min-h-[100px] sm:min-h-[140px] {{ if .IsToday }}ring-2 ring-primary-container{{ end }}">
         <div class="flex items-center justify-between">
           <span class="font-label-md text-label-md font-bold {{ if .IsToday }}text-primary{{ else }}text-on-surface{{ end }}">{{ .Label }}</span>
           {{ if .IsToday }}<span class="pill-badge bg-primary-container text-on-primary">Today</span>{{ end }}
         </div>
         {{ range .Occasion }}
-          <a href="/groups/{{ .ID }}" class="block p-space-xs rounded-lg bg-tertiary-fixed/40 border border-tertiary-fixed">
+          <a title="{{ .Name }} · {{ .Members }} member(s)" href="/groups/{{ .ID }}" class="calendar-event calendar-event-occasion block p-space-xs rounded bg-tertiary-fixed/40 border border-tertiary-fixed">
             <span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-1">
               <span aria-hidden="true" class="material-symbols-outlined text-[14px]">celebration</span>
               <span class="truncate">{{ .Name }}</span>
@@ -58,7 +81,7 @@
           </a>
         {{ end }}
         {{ range .Due }}
-          <a href="/orders/{{ .OrderID }}" class="block p-space-xs rounded-lg bg-surface-container-low hover:bg-surface-container">
+          <a title="{{ .OrderNumber }} · {{ .Customer }} · {{ .Title }}" href="/orders/{{ .OrderID }}" class="calendar-event calendar-event-order block p-space-xs rounded bg-surface-container-low hover:bg-surface-container">
             <span class="font-code-md text-code-md font-semibold text-primary">{{ .OrderNumber }}</span>
             <span class="block font-body-sm text-body-sm text-on-surface truncate">{{ .Customer }} · {{ .Title }}</span>
           </a>

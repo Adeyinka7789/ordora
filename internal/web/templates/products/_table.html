@@ -25,7 +25,11 @@
           {{ range .Products }}
             <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20 {{ if not .Active }}opacity-60{{ end }}">
               <td class="py-3 px-space-md" data-th="Name">
-                <a href="/products/{{ .ID }}" class="font-label-md text-label-md font-semibold text-on-surface hover:text-primary">{{ .Name }}</a>
+                <a href="/products/{{ .ID }}" class="product-list-link flex items-center gap-2.5 font-label-md text-label-md font-semibold text-on-surface hover:text-primary">
+                  {{ $cover := index $.Covers (.ID.String) }}
+                  {{ if $cover }}<img src="/public/product-images/{{ $cover }}" alt="" loading="lazy" class="product-list-thumb w-10 h-10 rounded object-cover shrink-0">{{ else }}<span class="product-list-thumb product-list-placeholder w-10 h-10 rounded flex items-center justify-center bg-primary-fixed text-primary font-bold">{{ slice .Name 0 1 }}</span>{{ end }}
+                  <span class="truncate">{{ .Name }}</span>
+                </a>
               </td>
               <td class="py-3 px-space-md" data-th="SKU">
                 {{ if .SKU }}<span class="font-code-md text-code-md text-on-surface-variant">{{ .SKU }}</span>{{ else }}<span class="text-outline">—</span>{{ end }}

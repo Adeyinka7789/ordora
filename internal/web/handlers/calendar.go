@@ -11,8 +11,7 @@ import (
 	"github.com/Adeyinka7789/ordora/internal/web/render"
 )
 
-// CalendarHandler serves /calendar — occasion deadlines, due dates and
-// overdue escalation for the week.
+// CalendarHandler serves /calendar — a month-based business planning view.
 type CalendarHandler struct {
 	Orders   *postgres.OrderRepo
 	Groups   *postgres.GroupRepo
@@ -46,6 +45,14 @@ type overdueView struct {
 type calendarPage struct {
 	Title       string
 	CSRFToken   string
+	MonthLabel  string
+	Month       string
+	PrevMonth   string
+	NextMonth   string
+	ThisMonth   string
+	Filter      string
+	Quarter     int
+	Year        int
 	WeekLabel   string
 	PrevWeek    string
 	NextWeek    string
@@ -56,32 +63,35 @@ type calendarPage struct {
 	FlashError  string
 }
 
-// Index renders the week containing ?date=YYYY-MM-DD (default today).
+// Index renders the month containing ?month=YYYY-MM (default current month).
 func (h *CalendarHandler) Index(w http.ResponseWriter, r *http.Request) {
 	scope, ok := requireScope(w, r)
 	if !ok {
 		return
 	}
 	now := time.Now()
-	anchor := now
-	if raw := queryValue(r, "date"); raw != "" {
-		if t, err := time.Parse("2006-01-02", raw); err == nil {
+	anchor := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	if raw := queryValue(r, "month"); raw != "" {
+		if t, err := time.ParseInLocation("2006-01", raw, now.Location()); err == nil {
 			anchor = t
+		} else if t, err := time.ParseInLocation("2006-01-02", raw, now.Location()); err == nil {
+			anchor = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, now.Location())
 		}
 	}
-	monday := startOfWeek(anchor)
-	days := make([]calendarDay, 0, 7)
-	for i := 0; i < 7; i++ {
-		d := monday.AddDate(0, 0, i)
+	monthStart := time.Date(anchor.Year(), anchor.Month(), 1, 0, 0, 0, 0, anchor.Location())
+	gridStart := startOfWeek(monthStart)
+	days := make([]calendarDay, 0, 42)
+	for i := 0; i < 42; i++ {
+		d := gridStart.AddDate(0, 0, i)
 		days = append(days, calendarDay{
 			Date:    d,
-			Label:   d.Format("Mon 02"),
+			Label:   d.Format("2"),
 			IsToday: sameDay(d, now),
 		})
 	}
-	weekEnd := monday.AddDate(0, 0, 7).Add(-time.Second)
+	gridEnd := gridStart.AddDate(0, 0, 42).Add(-time.Second)
 
-	due, err := h.Orders.DueBetween(r.Context(), scope, monday, weekEnd)
+	due, err := h.Orders.DueBetween(r.Context(), scope, gridStart, gridEnd)
 	if err != nil {
 		http.Error(w, "could not load calendar", http.StatusInternalServerError)
 		return
@@ -96,7 +106,7 @@ func (h *CalendarHandler) Index(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	occasions, err := h.Groups.OccasionsInRange(r.Context(), scope, monday, weekEnd)
+	occasions, err := h.Groups.OccasionsInRange(r.Context(), scope, gridStart, gridEnd)
 	if err != nil {
 		http.Error(w, "could not load calendar", http.StatusInternalServerError)
 		return
@@ -143,15 +153,41 @@ func (h *CalendarHandler) Index(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	filter := queryValue(r, "filter")
+	if filter != "orders" && filter != "occasions" && filter != "overdue" {
+		filter = "all"
+	}
+	if filter == "orders" {
+		for i := range days {
+			days[i].Occasion = nil
+		}
+	} else if filter == "occasions" {
+		for i := range days {
+			days[i].Due = nil
+		}
+	} else if filter == "overdue" {
+		for i := range days {
+			days[i].Due = nil
+			days[i].Occasion = nil
+		}
+	}
 	page := calendarPage{
-		Title:     "Calendar",
-		CSRFToken: csrfFromCtx(r),
-		WeekLabel: "Week of " + monday.Format("02 Jan 2006"),
-		PrevWeek:  monday.AddDate(0, 0, -7).Format("2006-01-02"),
-		NextWeek:  monday.AddDate(0, 0, 7).Format("2006-01-02"),
-		ThisWeek:  now.Format("2006-01-02"),
-		Days:      days,
-		Overdue:   overdue,
+		Title:      "Calendar",
+		CSRFToken:  csrfFromCtx(r),
+		MonthLabel: monthStart.Format("January 2006"),
+		Month:      monthStart.Format("2006-01"),
+		PrevMonth:  monthStart.AddDate(0, -1, 0).Format("2006-01"),
+		NextMonth:  monthStart.AddDate(0, 1, 0).Format("2006-01"),
+		ThisMonth:  now.Format("2006-01"),
+		Filter:     filter,
+		Quarter:    (int(monthStart.Month())-1)/3 + 1,
+		Year:       monthStart.Year(),
+		WeekLabel:  "Month of " + monthStart.Format("02 Jan 2006"),
+		PrevWeek:   monthStart.AddDate(0, -1, 0).Format("2006-01"),
+		NextWeek:   monthStart.AddDate(0, 1, 0).Format("2006-01"),
+		ThisWeek:   now.Format("2006-01"),
+		Days:       days,
+		Overdue:    overdue,
 	}
 	renderPage(w, r, h.Renderer, http.StatusOK, "layouts/app.html", "calendar/index.html", page)
 }

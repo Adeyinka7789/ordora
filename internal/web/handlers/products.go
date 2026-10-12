@@ -33,6 +33,7 @@ type productsIndexPage struct {
 	Query       string
 	IncludeArch bool
 	Products    []*product.Product
+	Covers      map[string]string
 	Pagination  Pagination
 	FlashNotice string
 	FlashError  string
@@ -197,6 +198,7 @@ func (h *ProductHandler) Index(w http.ResponseWriter, r *http.Request) {
 		Query:       query,
 		IncludeArch: includeArch,
 		Products:    res.Products,
+		Covers:      h.productCovers(r.Context(), scope, res.Products),
 		Pagination:  newPagination(res.Total, res.Limit, res.Offset),
 	}
 	if v := queryValue(r, "notice"); v != "" {
@@ -268,7 +270,7 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.Service.Create(r.Context(), scope, app.CreateProductInput{
+	created, err := h.Service.Create(r.Context(), scope, app.CreateProductInput{
 		Name:           formValue(r, "name"),
 		Description:    formValue(r, "description"),
 		SKU:            formValue(r, "sku"),
@@ -299,7 +301,9 @@ func (h *ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/products?notice=Product+created.", http.StatusSeeOther)
+	// Land on the product page so the owner can immediately add a cover photo
+	// and gallery images before sharing the public order link.
+	http.Redirect(w, r, "/products/"+created.ID.String()+"?notice=Product+created.+Add+photos+before+sharing+your+link.", http.StatusSeeOther)
 }
 
 // Show / Edit / Update / Archive.

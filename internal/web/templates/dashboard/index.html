@@ -22,7 +22,7 @@
       </p>
     </div>
     <div class="flex items-center gap-space-sm flex-wrap">
-      <a href="/orders/new" class="h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
+      <a href="/orders/new" class="mobile-primary-action h-9 px-space-md rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md font-semibold flex items-center gap-2 shadow-sm transition-colors">
         <span aria-hidden="true" class="material-symbols-outlined text-[18px]">add</span>
         <span>New Order</span>
       </a>
@@ -99,7 +99,7 @@
 
         {{ if .Stats.RecentOrders }}
           <div class="w-full overflow-x-auto">
-            <table class="w-full text-left font-body-md text-body-md">
+            <table class="data-table w-full text-left font-body-md text-body-md">
               <thead>
                 <tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
                   <th class="py-2.5 px-space-md font-semibold">Order</th>
@@ -113,22 +113,22 @@
               <tbody>
                 {{ range .Stats.RecentOrders }}
                   <tr class="hover:bg-surface-container-low/60 transition-colors border-b border-outline-variant/20">
-                    <td class="py-3 px-space-md">
+                    <td class="py-3 px-space-md" data-th="Order">
                       <a href="/orders/{{ .ID }}" class="font-code-md text-code-md font-semibold text-primary hover:underline">{{ .Number }}</a>
                     </td>
-                    <td class="py-3 px-space-md">
+                    <td class="py-3 px-space-md" data-th="Customer">
                       <span class="font-label-md text-label-md font-semibold text-on-surface">{{ .CustomerName }}</span>
                     </td>
-                    <td class="py-3 px-space-md">
+                    <td class="py-3 px-space-md" data-th="Title">
                       <span class="font-label-md text-label-md text-on-surface truncate max-w-[200px] inline-block">{{ .Title }}</span>
                     </td>
-                    <td class="py-3 px-space-md">
+                    <td class="py-3 px-space-md" data-th="Status">
                       {{ template "partials/status_badge.html" .Status }}
                     </td>
-                    <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold">
+                    <td class="py-3 px-space-md text-right tabular-nums font-code-md text-code-md font-semibold" data-th="Total">
                       {{ currency .TotalMinor $.Stats.Currency }}
                     </td>
-                    <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant">
+                    <td class="py-3 px-space-md font-code-md text-code-md text-on-surface-variant" data-th="Due">
                       {{ if .ExpectedDate }}{{ .ExpectedDate.Format "02-01" }}{{ else }}—{{ end }}
                     </td>
                   </tr>
